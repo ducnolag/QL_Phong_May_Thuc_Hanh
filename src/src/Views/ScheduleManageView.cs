@@ -17,25 +17,7 @@ namespace src.Views
 
         private void ApplyCustomStyles()
         {
-            toolbar.Paint += (s, e) =>
-            {
-                using (var p = UIHelper.GetRoundedRectPath(toolbar.ClientRectangle, 10))
-                    toolbar.Region = new Region(p);
-            };
-
-            btnAdd.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
-                    btnAdd.Region = new Region(p);
-            };
-
-            pnlGrid.Paint += (s, e) =>
-            {
-                using (var p = UIHelper.GetRoundedRectPath(pnlGrid.ClientRectangle, 10))
-                    pnlGrid.Region = new Region(p);
-            };
-
+            // Removed GDI+ Paint events to ensure full Designer compatibility
             cboCa.SelectedIndex = 0;
 
             SetupGridStyles();

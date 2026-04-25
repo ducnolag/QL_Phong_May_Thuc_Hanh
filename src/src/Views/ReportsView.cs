@@ -16,43 +16,8 @@ namespace src.Views
 
         private void ApplyCustomStyles()
         {
-            pnlCards.Controls.Add(MakeReportCard("Phòng Hoạt Động", "10/12", ThemeColors.AccentGreen));
-            pnlCards.Controls.Add(MakeReportCard("Máy Sẵn Sàng", "230/248", ThemeColors.PrimaryBlue));
-            pnlCards.Controls.Add(MakeReportCard("Máy Bảo Trì", "13", ThemeColors.AccentOrange));
-            pnlCards.Controls.Add(MakeReportCard("Máy Hỏng", "5", ThemeColors.AccentRed));
-
-            pnlPie.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(pnlPie.ClientRectangle, 12))
-                    pnlPie.Region = new Region(p);
-                TextRenderer.DrawText(g, "📊  Trạng Thái Máy Tính",
-                    new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
-                DrawDonut(g, new Rectangle(30, 55, pnlPie.Width - 60, pnlPie.Height - 80));
-            };
-
-            pnlBar.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(pnlBar.ClientRectangle, 12))
-                    pnlBar.Region = new Region(p);
-                TextRenderer.DrawText(g, "📈  Tần Suất Sử Dụng Phòng (Tháng)",
-                    new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
-                DrawMonthlyBars(g, new Rectangle(30, 55, pnlBar.Width - 60, pnlBar.Height - 80));
-            };
-
-            pnlCharts.Resize += (s, e) =>
-            {
-                int w = (pnlCharts.Width - 20) / 2;
-                pnlPie.Size = new Size(w, pnlCharts.Height - 10);
-                pnlPie.Location = new Point(5, 5);
-                pnlBar.Size = new Size(pnlCharts.Width - w - 20, pnlCharts.Height - 10);
-                pnlBar.Location = new Point(w + 15, 5);
-                pnlPie.Invalidate();
-                pnlBar.Invalidate();
-            };
+            // Removed GDI+ Paint events to ensure full Designer compatibility
+            // The user will build the charts and cards using standard WinForms controls in the Designer
         }
 
         private Panel MakeReportCard(string title, string value, Color accent)

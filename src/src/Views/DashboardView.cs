@@ -16,43 +16,8 @@ namespace src.Views
 
         private void ApplyCustomStyles()
         {
-            pnlCards.Controls.Add(MakeCard("Tổng Phòng Máy", "12", "🏢", ThemeColors.PrimaryBlue));
-            pnlCards.Controls.Add(MakeCard("Tổng Máy Tính", "248", "💻", ThemeColors.AccentGreen));
-            pnlCards.Controls.Add(MakeCard("Lịch Hôm Nay", "8", "📅", ThemeColors.AccentOrange));
-            pnlCards.Controls.Add(MakeCard("Bảo Trì", "5", "🔧", ThemeColors.AccentRed));
-
-            pnlChart.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(pnlChart.ClientRectangle, 12))
-                    pnlChart.Region = new Region(p);
-                TextRenderer.DrawText(g, "📊  Tình Trạng Sử Dụng Phòng Máy",
-                    new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
-                DrawBars(g, new Rectangle(40, 55, pnlChart.Width - 70, pnlChart.Height - 85));
-            };
-
-            pnlActivity.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(pnlActivity.ClientRectangle, 12))
-                    pnlActivity.Region = new Region(p);
-                TextRenderer.DrawText(g, "🕐  Hoạt Động Gần Đây",
-                    new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
-                DrawActivityItems(g, new Rectangle(20, 52, pnlActivity.Width - 40, pnlActivity.Height - 65));
-            };
-
-            pnlBottom.Resize += (s, e) =>
-            {
-                int w = (pnlBottom.Width - 20) * 55 / 100;
-                pnlChart.Size = new Size(w, pnlBottom.Height - 10);
-                pnlChart.Location = new Point(5, 5);
-                pnlActivity.Size = new Size(pnlBottom.Width - w - 20, pnlBottom.Height - 10);
-                pnlActivity.Location = new Point(w + 15, 5);
-                pnlChart.Invalidate();
-                pnlActivity.Invalidate();
-            };
+            // Removed GDI+ Paint events to ensure full Designer compatibility
+            // The user will build the charts and cards using standard WinForms controls in the Designer
         }
 
         private Panel MakeCard(string title, string value, string icon, Color accent)
