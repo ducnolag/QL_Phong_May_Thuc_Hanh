@@ -7,60 +7,41 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class UserManageView : UserControl
+    public partial class UserManageView : UserControl
     {
-        private DataGridView dgv;
-
         public UserManageView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOOLBAR ═══
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 55, BackColor = Color.White };
             toolbar.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(toolbar.ClientRectangle, 10))
                     toolbar.Region = new Region(p);
             };
-            this.Controls.Add(toolbar);
 
-            var txtSearch = new TextBox
+            btnAdd.Paint += (s, e) =>
             {
-                Size = new Size(240, 28), Location = new Point(14, 14),
-                Font = new Font("Segoe UI", 9.5F),
-                BorderStyle = BorderStyle.FixedSingle,
-                BackColor = Color.FromArgb(245, 247, 252),
-                PlaceholderText = "🔍 Tìm người dùng..."
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
+                    btnAdd.Region = new Region(p);
             };
-            toolbar.Controls.Add(txtSearch);
 
-            var btnAdd = RoomManageView.MakeButton("➕  Thêm User", ThemeColors.PrimaryBlue);
-            btnAdd.Size = new Size(150, 34);
-            btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            toolbar.Controls.Add(btnAdd);
-            toolbar.Resize += (s, e) => btnAdd.Location = new Point(toolbar.Width - 165, 10);
-            btnAdd.Location = new Point(toolbar.Width - 165, 10);
-
-            // ═══ GRID ═══
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill, BackColor = Color.White,
-                Padding = new Padding(12), Margin = new Padding(0, 8, 0, 0)
-            };
             pnlGrid.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(pnlGrid.ClientRectangle, 10))
                     pnlGrid.Region = new Region(p);
             };
-            this.Controls.Add(pnlGrid);
-            pnlGrid.BringToFront();
 
-            dgv = RoomManageView.CreateStyledGrid();
+            SetupGridStyles();
+            LoadData();
+        }
+
+        private void SetupGridStyles()
+        {
             dgv.Columns.Add("MaND", "Mã");
             dgv.Columns.Add("HoTen", "Họ Tên");
             dgv.Columns.Add("TenDN", "Tên Đăng Nhập");
@@ -76,9 +57,33 @@ namespace src.Views
                 if (col == "TrangThai" || col == "VaiTro")
                     RoomManageView.ColorStatusCell(e, col);
             };
-            pnlGrid.Controls.Add(dgv);
 
-            LoadData();
+            dgv.Font = new Font("Segoe UI", 9.5F);
+            dgv.ColumnHeadersHeight = 44;
+            dgv.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(245, 247, 252),
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                SelectionBackColor = Color.FromArgb(245, 247, 252),
+                SelectionForeColor = ThemeColors.TextSecondary,
+                Padding = new Padding(6),
+                Alignment = DataGridViewContentAlignment.MiddleLeft
+            };
+            dgv.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White,
+                ForeColor = ThemeColors.TextPrimary,
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary,
+                Padding = new Padding(6)
+            };
+            dgv.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(250, 251, 254),
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary
+            };
         }
 
         private void LoadData()

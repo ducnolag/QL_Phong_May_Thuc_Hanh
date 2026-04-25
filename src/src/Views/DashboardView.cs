@@ -6,45 +6,21 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class DashboardView : UserControl
+    public partial class DashboardView : UserControl
     {
         public DashboardView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            this.Padding = new Padding(5);
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOP: stat cards ═══
-            var pnlCards = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                Height = 130,
-                BackColor = Color.Transparent,
-                WrapContents = false,
-                Padding = new Padding(2)
-            };
-            this.Controls.Add(pnlCards);
-
             pnlCards.Controls.Add(MakeCard("Tổng Phòng Máy", "12", "🏢", ThemeColors.PrimaryBlue));
             pnlCards.Controls.Add(MakeCard("Tổng Máy Tính", "248", "💻", ThemeColors.AccentGreen));
             pnlCards.Controls.Add(MakeCard("Lịch Hôm Nay", "8", "📅", ThemeColors.AccentOrange));
             pnlCards.Controls.Add(MakeCard("Bảo Trì", "5", "🔧", ThemeColors.AccentRed));
 
-            // ═══ BOTTOM: chart + activity ═══
-            var pnlBottom = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Padding = new Padding(2, 8, 2, 2)
-            };
-            this.Controls.Add(pnlBottom);
-            pnlBottom.BringToFront();
-
-            var pnlChart = new Panel { BackColor = Color.White, Location = new Point(5, 5) };
             pnlChart.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -55,9 +31,7 @@ namespace src.Views
                     new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
                 DrawBars(g, new Rectangle(40, 55, pnlChart.Width - 70, pnlChart.Height - 85));
             };
-            pnlBottom.Controls.Add(pnlChart);
 
-            var pnlActivity = new Panel { BackColor = Color.White };
             pnlActivity.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -68,9 +42,7 @@ namespace src.Views
                     new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
                 DrawActivityItems(g, new Rectangle(20, 52, pnlActivity.Width - 40, pnlActivity.Height - 65));
             };
-            pnlBottom.Controls.Add(pnlActivity);
 
-            // resize handler
             pnlBottom.Resize += (s, e) =>
             {
                 int w = (pnlBottom.Width - 20) * 55 / 100;

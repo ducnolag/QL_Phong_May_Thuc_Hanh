@@ -10,11 +10,6 @@ namespace src
 {
     public partial class MainForm : Form
     {
-        private Panel pnlSidebar;
-        private Panel pnlTopbar;
-        private Panel pnlContent;
-        private Panel pnlSidebarMenu;
-        private Label lblPageTitle;
         private Button btnActiveMenu;
         private string _currentUser;
         private bool _isAdmin;
@@ -33,14 +28,6 @@ namespace src
 
         private void SetupUI()
         {
-            // ── Form ──
-            this.Text = "Quản Lý Phòng Máy Thực Hành";
-            this.ClientSize = new Size(1280, 720);
-            this.MinimumSize = new Size(1100, 650);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-
             // Menu items
             _menuItems.Add(("📊", "Dashboard", "Dashboard"));
             _menuItems.Add(("🏢", "Phòng Máy", "RoomManage"));
@@ -52,36 +39,24 @@ namespace src
                 _menuItems.Add(("📈", "Báo Cáo", "Reports"));
             }
 
-            // ══════════════════════════════════════
-            // IMPORTANT: WinForms Dock order matters!
-            // Add in REVERSE order for correct layout:
-            //   1. Sidebar (Left)  – added first
-            //   2. Topbar  (Top)   – added second (fills top of remaining)
-            //   3. Content (Fill)  – added last
-            // ══════════════════════════════════════
+            ApplyCustomStyles();
 
-            BuildSidebar();    // Dock = Left
-            BuildTopbar();     // Dock = Top (in remaining space)
-            BuildContentArea();// Dock = Fill
+            // Build dynamic menu buttons
+            int y = 38;
+            foreach (var item in _menuItems)
+            {
+                var btn = MakeMenuButton(item.Icon, item.Text, item.ViewName);
+                btn.Location = new Point(6, y);
+                pnlSidebarMenu.Controls.Add(btn);
+                y += 46;
+            }
 
             NavigateTo("Dashboard");
         }
 
-        // ═══════════════════════════════════════════
-        // SIDEBAR
-        // ═══════════════════════════════════════════
-        private void BuildSidebar()
+        private void ApplyCustomStyles()
         {
-            pnlSidebar = new Panel
-            {
-                Width = 250,
-                Dock = DockStyle.Left,
-                BackColor = ThemeColors.BackgroundSidebar
-            };
-            this.Controls.Add(pnlSidebar);
-
             // ── Logo ──
-            var pnlLogo = new Panel { Height = 70, Dock = DockStyle.Top, BackColor = Color.Transparent };
             pnlLogo.Paint += (s, e) =>
             {
                 TextRenderer.DrawText(e.Graphics, "🎓  LabManager",
@@ -91,14 +66,8 @@ namespace src
                 using (var pen = new Pen(Color.FromArgb(40, 255, 255, 255)))
                     e.Graphics.DrawLine(pen, 18, 69, 232, 69);
             };
-            pnlSidebar.Controls.Add(pnlLogo);
 
             // ── User profile at bottom ──
-            var pnlProfile = new Panel
-            {
-                Height = 65, Dock = DockStyle.Bottom,
-                BackColor = Color.FromArgb(22, 30, 60)
-            };
             pnlProfile.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -120,17 +89,8 @@ namespace src
                 TextRenderer.DrawText(g, _isAdmin ? "Quản trị viên" : "Nhân viên",
                     new Font("Segoe UI", 8.5F), new Point(58, 32), ThemeColors.SidebarText);
             };
-            pnlSidebar.Controls.Add(pnlProfile);
 
-            // Logout
-            var btnLogout = new Label
-            {
-                Text = "🚪", Font = new Font("Segoe UI", 13F),
-                Size = new Size(30, 30), Location = new Point(210, 18),
-                TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = ThemeColors.SidebarText, Cursor = Cursors.Hand,
-                BackColor = Color.Transparent
-            };
+            // Logout events
             btnLogout.MouseEnter += (s, e) => btnLogout.ForeColor = ThemeColors.AccentRed;
             btnLogout.MouseLeave += (s, e) => btnLogout.ForeColor = ThemeColors.SidebarText;
             btnLogout.Click += (s, e) =>
@@ -140,41 +100,19 @@ namespace src
                 {
                     this.Hide();
                     new Forms.LoginForm().Show();
+                    // Application.Exit is hooked in Program or login, here we just close
                     this.Close();
                 }
             };
-            pnlProfile.Controls.Add(btnLogout);
 
-            // ── Menu area ──
-            pnlSidebarMenu = new Panel
+            // ── Topbar ──
+            pnlTopbar.Paint += (s, e) =>
             {
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Padding = new Padding(10, 8, 10, 8)
+                using (var pen = new Pen(Color.FromArgb(25, 0, 0, 0)))
+                    e.Graphics.DrawLine(pen, 0, pnlTopbar.Height - 1, pnlTopbar.Width, pnlTopbar.Height - 1);
             };
-            pnlSidebar.Controls.Add(pnlSidebarMenu);
-            pnlSidebarMenu.BringToFront();
 
-            // section label
-            var lblSection = new Label
-            {
-                Text = "  MENU CHÍNH",
-                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(90, 255, 255, 255),
-                Dock = DockStyle.Top, Height = 32,
-                TextAlign = ContentAlignment.BottomLeft
-            };
-            pnlSidebarMenu.Controls.Add(lblSection);
-
-            // menu buttons
-            int y = 38;
-            foreach (var item in _menuItems)
-            {
-                var btn = MakeMenuButton(item.Icon, item.Text, item.ViewName);
-                btn.Location = new Point(6, y);
-                pnlSidebarMenu.Controls.Add(btn);
-                y += 46;
-            }
+            lblDate.Text = DateTime.Now.ToString("dddd, dd/MM/yyyy");
         }
 
         private Button MakeMenuButton(string icon, string text, string viewName)
@@ -236,67 +174,6 @@ namespace src
             btn.Invalidate();
         }
 
-        // ═══════════════════════════════════════════
-        // TOPBAR
-        // ═══════════════════════════════════════════
-        private void BuildTopbar()
-        {
-            pnlTopbar = new Panel
-            {
-                Height = 60, Dock = DockStyle.Top,
-                BackColor = ThemeColors.BackgroundTopbar
-            };
-            pnlTopbar.Paint += (s, e) =>
-            {
-                using (var pen = new Pen(Color.FromArgb(25, 0, 0, 0)))
-                    e.Graphics.DrawLine(pen, 0, pnlTopbar.Height - 1, pnlTopbar.Width, pnlTopbar.Height - 1);
-            };
-            this.Controls.Add(pnlTopbar);
-
-            lblPageTitle = new Label
-            {
-                Text = "Dashboard", AutoSize = true,
-                Font = new Font("Segoe UI", 17F, FontStyle.Bold),
-                ForeColor = ThemeColors.TextPrimary,
-                Location = new Point(22, 14),
-                BackColor = Color.Transparent
-            };
-            pnlTopbar.Controls.Add(lblPageTitle);
-
-            var lblDate = new Label
-            {
-                Text = DateTime.Now.ToString("dddd, dd/MM/yyyy"),
-                Font = new Font("Segoe UI", 9F),
-                ForeColor = ThemeColors.TextSecondary,
-                AutoSize = true, BackColor = Color.Transparent,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
-            };
-            pnlTopbar.Controls.Add(lblDate);
-            pnlTopbar.Resize += (s, e) =>
-            {
-                lblDate.Location = new Point(pnlTopbar.Width - lblDate.Width - 25, 22);
-            };
-            lblDate.Location = new Point(pnlTopbar.Width - lblDate.Width - 25, 22);
-        }
-
-        // ═══════════════════════════════════════════
-        // CONTENT
-        // ═══════════════════════════════════════════
-        private void BuildContentArea()
-        {
-            pnlContent = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = ThemeColors.BackgroundMain,
-                Padding = new Padding(15)
-            };
-            this.Controls.Add(pnlContent);
-            pnlContent.BringToFront();
-        }
-
-        // ═══════════════════════════════════════════
-        // NAVIGATION
-        // ═══════════════════════════════════════════
         private void NavigateTo(string viewName)
         {
             if (_currentView != null)

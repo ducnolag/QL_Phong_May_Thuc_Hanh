@@ -6,39 +6,21 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class ReportsView : UserControl
+    public partial class ReportsView : UserControl
     {
         public ReportsView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOP: summary cards ═══
-            var pnlCards = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top, Height = 115,
-                BackColor = Color.Transparent, WrapContents = false, Padding = new Padding(2)
-            };
-            this.Controls.Add(pnlCards);
-
             pnlCards.Controls.Add(MakeReportCard("Phòng Hoạt Động", "10/12", ThemeColors.AccentGreen));
             pnlCards.Controls.Add(MakeReportCard("Máy Sẵn Sàng", "230/248", ThemeColors.PrimaryBlue));
             pnlCards.Controls.Add(MakeReportCard("Máy Bảo Trì", "13", ThemeColors.AccentOrange));
             pnlCards.Controls.Add(MakeReportCard("Máy Hỏng", "5", ThemeColors.AccentRed));
 
-            // ═══ BOTTOM: charts ═══
-            var pnlCharts = new Panel
-            {
-                Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(2, 6, 2, 2)
-            };
-            this.Controls.Add(pnlCharts);
-            pnlCharts.BringToFront();
-
-            var pnlPie = new Panel { BackColor = Color.White, Location = new Point(5, 5) };
             pnlPie.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -49,9 +31,7 @@ namespace src.Views
                     new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
                 DrawDonut(g, new Rectangle(30, 55, pnlPie.Width - 60, pnlPie.Height - 80));
             };
-            pnlCharts.Controls.Add(pnlPie);
 
-            var pnlBar = new Panel { BackColor = Color.White };
             pnlBar.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -62,7 +42,6 @@ namespace src.Views
                     new Font("Segoe UI", 13F, FontStyle.Bold), new Point(20, 16), ThemeColors.TextPrimary);
                 DrawMonthlyBars(g, new Rectangle(30, 55, pnlBar.Width - 60, pnlBar.Height - 80));
             };
-            pnlCharts.Controls.Add(pnlBar);
 
             pnlCharts.Resize += (s, e) =>
             {

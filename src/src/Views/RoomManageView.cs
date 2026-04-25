@@ -7,65 +7,41 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class RoomManageView : UserControl
+    public partial class RoomManageView : UserControl
     {
-        private DataGridView dgv;
-        private TextBox txtSearch;
-
         public RoomManageView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOOLBAR ═══
-            var toolbar = new Panel
-            {
-                Dock = DockStyle.Top, Height = 55,
-                BackColor = Color.White
-            };
             toolbar.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(toolbar.ClientRectangle, 10))
                     toolbar.Region = new Region(p);
             };
-            this.Controls.Add(toolbar);
 
-            txtSearch = new TextBox
+            btnAdd.Paint += (s, e) =>
             {
-                Size = new Size(260, 28), Location = new Point(14, 14),
-                Font = new Font("Segoe UI", 10F),
-                BorderStyle = BorderStyle.FixedSingle,
-                BackColor = Color.FromArgb(245, 247, 252),
-                PlaceholderText = "🔍 Tìm kiếm phòng máy..."
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
+                    btnAdd.Region = new Region(p);
             };
-            txtSearch.TextChanged += (s, e) => FilterRows();
-            toolbar.Controls.Add(txtSearch);
 
-            var btnAdd = MakeButton("➕  Thêm Phòng", ThemeColors.PrimaryBlue);
-            btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            toolbar.Controls.Add(btnAdd);
-            toolbar.Resize += (s, e) => btnAdd.Location = new Point(toolbar.Width - 155, 10);
-            btnAdd.Location = new Point(toolbar.Width - 155, 10);
-
-            // ═══ GRID ═══
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill, BackColor = Color.White,
-                Padding = new Padding(12), Margin = new Padding(0, 8, 0, 0)
-            };
             pnlGrid.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(pnlGrid.ClientRectangle, 10))
                     pnlGrid.Region = new Region(p);
             };
-            this.Controls.Add(pnlGrid);
-            pnlGrid.BringToFront();
 
-            dgv = CreateStyledGrid();
+            SetupGridStyles();
+            LoadData();
+        }
+
+        private void SetupGridStyles()
+        {
             dgv.Columns.Add("MaPhong", "Mã Phòng");
             dgv.Columns.Add("TenPhong", "Tên Phòng");
             dgv.Columns.Add("ViTri", "Vị Trí");
@@ -75,9 +51,33 @@ namespace src.Views
             dgv.Columns["SucChua"].Width = 90;
             dgv.Columns["TrangThai"].Width = 130;
             dgv.CellFormatting += (s, e) => ColorStatusCell(e, "TrangThai");
-            pnlGrid.Controls.Add(dgv);
 
-            LoadData();
+            dgv.Font = new Font("Segoe UI", 9.5F);
+            dgv.ColumnHeadersHeight = 44;
+            dgv.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(245, 247, 252),
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                SelectionBackColor = Color.FromArgb(245, 247, 252),
+                SelectionForeColor = ThemeColors.TextSecondary,
+                Padding = new Padding(6),
+                Alignment = DataGridViewContentAlignment.MiddleLeft
+            };
+            dgv.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White,
+                ForeColor = ThemeColors.TextPrimary,
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary,
+                Padding = new Padding(6)
+            };
+            dgv.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(250, 251, 254),
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary
+            };
         }
 
         private void LoadData()
@@ -108,6 +108,11 @@ namespace src.Views
             }
         }
 
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            FilterRows();
+        }
+
         private void FilterRows()
         {
             string kw = txtSearch.Text.Trim().ToLower();
@@ -122,7 +127,39 @@ namespace src.Views
             }
         }
 
-        // ═══ shared helpers ═══
+        public static void ColorStatusCell(DataGridViewCellFormattingEventArgs e, string colName)
+        {
+            var dgv = e.CellStyle; // just for accessing
+            if (e.Value == null) return;
+            string v = e.Value.ToString();
+            if (v.Contains("Hoạt") || v.Contains("Tốt") || v.Contains("Đã xếp"))
+                e.CellStyle.ForeColor = ThemeColors.AccentGreen;
+            else if (v.Contains("Bảo") || v.Contains("Chờ"))
+                e.CellStyle.ForeColor = ThemeColors.AccentOrange;
+            else if (v.Contains("Đóng") || v.Contains("Hỏng") || v.Contains("Vô hiệu"))
+                e.CellStyle.ForeColor = ThemeColors.AccentRed;
+            else if (v.Contains("Admin"))
+                e.CellStyle.ForeColor = ThemeColors.AccentPurple;
+        }
+
+        public static Button MakeButton(string text, Color bg)
+        {
+            var btn = new Button
+            {
+                Text = text, Size = new Size(140, 34),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                BackColor = bg, ForeColor = Color.White, Cursor = Cursors.Hand
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(btn.ClientRectangle, 8))
+                    btn.Region = new Region(p);
+            };
+            return btn;
+        }
 
         public static DataGridView CreateStyledGrid()
         {
@@ -171,41 +208,6 @@ namespace src.Views
                 SelectionForeColor = ThemeColors.TextPrimary
             };
             return g;
-        }
-
-        public static void ColorStatusCell(DataGridViewCellFormattingEventArgs e, string colName)
-        {
-            var dgv = e.CellStyle; // just for accessing
-            // We check column index dynamically
-            if (e.Value == null) return;
-            string v = e.Value.ToString();
-            if (v.Contains("Hoạt") || v.Contains("Tốt") || v.Contains("Đã xếp"))
-                e.CellStyle.ForeColor = ThemeColors.AccentGreen;
-            else if (v.Contains("Bảo") || v.Contains("Chờ"))
-                e.CellStyle.ForeColor = ThemeColors.AccentOrange;
-            else if (v.Contains("Đóng") || v.Contains("Hỏng") || v.Contains("Vô hiệu"))
-                e.CellStyle.ForeColor = ThemeColors.AccentRed;
-            else if (v.Contains("Admin"))
-                e.CellStyle.ForeColor = ThemeColors.AccentPurple;
-        }
-
-        public static Button MakeButton(string text, Color bg)
-        {
-            var btn = new Button
-            {
-                Text = text, Size = new Size(140, 34),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                BackColor = bg, ForeColor = Color.White, Cursor = Cursors.Hand
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            btn.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btn.ClientRectangle, 8))
-                    btn.Region = new Region(p);
-            };
-            return btn;
         }
     }
 }

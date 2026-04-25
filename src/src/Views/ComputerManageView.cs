@@ -7,100 +7,45 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class ComputerManageView : UserControl
+    public partial class ComputerManageView : UserControl
     {
-        private DataGridView dgv;
-        private TextBox txtSearch;
-        private ComboBox cboRAM;
-        private ComboBox cboRoom;
-
         public ComputerManageView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOOLBAR ═══
-            var toolbar = new Panel
-            {
-                Dock = DockStyle.Top, Height = 55, BackColor = Color.White
-            };
             toolbar.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(toolbar.ClientRectangle, 10))
                     toolbar.Region = new Region(p);
             };
-            this.Controls.Add(toolbar);
 
-            txtSearch = new TextBox
+            btnAdd.Paint += (s, e) =>
             {
-                Size = new Size(190, 28), Location = new Point(14, 14),
-                Font = new Font("Segoe UI", 9.5F),
-                BorderStyle = BorderStyle.FixedSingle,
-                BackColor = Color.FromArgb(245, 247, 252),
-                PlaceholderText = "🔍 Tìm máy tính..."
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
+                    btnAdd.Region = new Region(p);
             };
-            txtSearch.TextChanged += (s, e) => FilterRows();
-            toolbar.Controls.Add(txtSearch);
 
-            cboRAM = new ComboBox
-            {
-                Size = new Size(110, 28), Location = new Point(214, 14),
-                Font = new Font("Segoe UI", 9F),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(245, 247, 252)
-            };
-            cboRAM.Items.AddRange(new object[] { "Tất cả RAM", "4 GB", "8 GB", "16 GB", "32 GB" });
-            cboRAM.SelectedIndex = 0;
-            cboRAM.SelectedIndexChanged += (s, e) => FilterRows();
-            toolbar.Controls.Add(cboRAM);
-
-            cboRoom = new ComboBox
-            {
-                Size = new Size(130, 28), Location = new Point(334, 14),
-                Font = new Font("Segoe UI", 9F),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(245, 247, 252)
-            };
-            cboRoom.Items.Add("Tất cả phòng");
-            // Try load rooms from DB
-            try
-            {
-                var dt = DatabaseHelper.ExecuteQuery("SELECT TenPhong FROM PHONG_MAY ORDER BY TenPhong");
-                foreach (DataRow r in dt.Rows)
-                    cboRoom.Items.Add(r["TenPhong"].ToString());
-            }
-            catch { cboRoom.Items.AddRange(new object[] { "Phòng A01", "Phòng A02", "Phòng B01" }); }
-            cboRoom.SelectedIndex = 0;
-            cboRoom.SelectedIndexChanged += (s, e) => FilterRows();
-            toolbar.Controls.Add(cboRoom);
-
-            var btnAdd = RoomManageView.MakeButton("➕  Thêm Máy", ThemeColors.AccentGreen);
-            btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            toolbar.Controls.Add(btnAdd);
-            toolbar.Resize += (s, e) => btnAdd.Location = new Point(toolbar.Width - 155, 10);
-            btnAdd.Location = new Point(toolbar.Width - 155, 10);
-
-            // ═══ GRID ═══
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill, BackColor = Color.White,
-                Padding = new Padding(12), Margin = new Padding(0, 8, 0, 0)
-            };
             pnlGrid.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(pnlGrid.ClientRectangle, 10))
                     pnlGrid.Region = new Region(p);
             };
-            this.Controls.Add(pnlGrid);
-            pnlGrid.BringToFront();
 
-            dgv = RoomManageView.CreateStyledGrid();
+            SetupGridStyles();
+            LoadRooms();
+            LoadData();
+
+            cboRAM.SelectedIndex = 0;
+            cboRoom.SelectedIndex = 0;
+        }
+
+        private void SetupGridStyles()
+        {
             dgv.Columns.Add("TenMay", "Tên Máy");
             dgv.Columns.Add("Phong", "Phòng");
             dgv.Columns.Add("CPU", "CPU");
@@ -113,9 +58,46 @@ namespace src.Views
                 if (dgv.Columns[e.ColumnIndex].Name == "TrangThai")
                     RoomManageView.ColorStatusCell(e, "TrangThai");
             };
-            pnlGrid.Controls.Add(dgv);
 
-            LoadData();
+            dgv.Font = new Font("Segoe UI", 9.5F);
+            dgv.ColumnHeadersHeight = 44;
+            dgv.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(245, 247, 252),
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                SelectionBackColor = Color.FromArgb(245, 247, 252),
+                SelectionForeColor = ThemeColors.TextSecondary,
+                Padding = new Padding(6),
+                Alignment = DataGridViewContentAlignment.MiddleLeft
+            };
+            dgv.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White,
+                ForeColor = ThemeColors.TextPrimary,
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary,
+                Padding = new Padding(6)
+            };
+            dgv.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(250, 251, 254),
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary
+            };
+        }
+
+        private void LoadRooms()
+        {
+            cboRoom.Items.Clear();
+            cboRoom.Items.Add("Tất cả phòng");
+            try
+            {
+                var dt = DatabaseHelper.ExecuteQuery("SELECT TenPhong FROM PHONG_MAY ORDER BY TenPhong");
+                foreach (DataRow r in dt.Rows)
+                    cboRoom.Items.Add(r["TenPhong"].ToString());
+            }
+            catch { cboRoom.Items.AddRange(new object[] { "Phòng A01", "Phòng A02", "Phòng B01" }); }
         }
 
         private void LoadData()
@@ -149,9 +131,14 @@ namespace src.Views
             }
         }
 
+        private void Filter_Changed(object sender, EventArgs e)
+        {
+            FilterRows();
+        }
+
         private void FilterRows()
         {
-            string kw = txtSearch.Text.Trim().ToLower();
+            string kw = txtSearch.Text?.Trim().ToLower() ?? "";
             string ramF = cboRAM.SelectedItem?.ToString() ?? "";
             string roomF = cboRoom.SelectedItem?.ToString() ?? "";
 

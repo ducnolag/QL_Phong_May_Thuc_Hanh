@@ -7,68 +7,43 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public class ScheduleManageView : UserControl
+    public partial class ScheduleManageView : UserControl
     {
-        private DataGridView dgv;
-
         public ScheduleManageView()
         {
-            this.BackColor = ThemeColors.BackgroundMain;
-            this.DoubleBuffered = true;
-            BuildUI();
+            InitializeComponent();
+            ApplyCustomStyles();
         }
 
-        private void BuildUI()
+        private void ApplyCustomStyles()
         {
-            // ═══ TOOLBAR ═══
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 55, BackColor = Color.White };
             toolbar.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(toolbar.ClientRectangle, 10))
                     toolbar.Region = new Region(p);
             };
-            this.Controls.Add(toolbar);
 
-            var dtpDate = new DateTimePicker
+            btnAdd.Paint += (s, e) =>
             {
-                Location = new Point(14, 14), Size = new Size(180, 28),
-                Font = new Font("Segoe UI", 9.5F), Format = DateTimePickerFormat.Short
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
+                    btnAdd.Region = new Region(p);
             };
-            toolbar.Controls.Add(dtpDate);
 
-            var cboCa = new ComboBox
-            {
-                Location = new Point(204, 14), Size = new Size(140, 28),
-                Font = new Font("Segoe UI", 9F),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(245, 247, 252)
-            };
-            cboCa.Items.AddRange(new object[] { "Tất cả ca", "Ca 1 (7:00)", "Ca 2 (9:30)", "Ca 3 (13:00)", "Ca 4 (15:30)" });
-            cboCa.SelectedIndex = 0;
-            toolbar.Controls.Add(cboCa);
-
-            var btnAdd = RoomManageView.MakeButton("➕  Tạo Lịch", ThemeColors.AccentPurple);
-            btnAdd.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            toolbar.Controls.Add(btnAdd);
-            toolbar.Resize += (s, e) => btnAdd.Location = new Point(toolbar.Width - 155, 10);
-            btnAdd.Location = new Point(toolbar.Width - 155, 10);
-
-            // ═══ GRID ═══
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill, BackColor = Color.White,
-                Padding = new Padding(12), Margin = new Padding(0, 8, 0, 0)
-            };
             pnlGrid.Paint += (s, e) =>
             {
                 using (var p = UIHelper.GetRoundedRectPath(pnlGrid.ClientRectangle, 10))
                     pnlGrid.Region = new Region(p);
             };
-            this.Controls.Add(pnlGrid);
-            pnlGrid.BringToFront();
 
-            dgv = RoomManageView.CreateStyledGrid();
+            cboCa.SelectedIndex = 0;
+
+            SetupGridStyles();
+            LoadData();
+        }
+
+        private void SetupGridStyles()
+        {
             dgv.Columns.Add("NgayTH", "Ngày TH");
             dgv.Columns.Add("Ca", "Ca Học");
             dgv.Columns.Add("Lop", "Lớp");
@@ -82,9 +57,33 @@ namespace src.Views
                 if (dgv.Columns[e.ColumnIndex].Name == "TrangThai")
                     RoomManageView.ColorStatusCell(e, "TrangThai");
             };
-            pnlGrid.Controls.Add(dgv);
 
-            LoadData();
+            dgv.Font = new Font("Segoe UI", 9.5F);
+            dgv.ColumnHeadersHeight = 44;
+            dgv.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(245, 247, 252),
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                SelectionBackColor = Color.FromArgb(245, 247, 252),
+                SelectionForeColor = ThemeColors.TextSecondary,
+                Padding = new Padding(6),
+                Alignment = DataGridViewContentAlignment.MiddleLeft
+            };
+            dgv.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White,
+                ForeColor = ThemeColors.TextPrimary,
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary,
+                Padding = new Padding(6)
+            };
+            dgv.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(250, 251, 254),
+                SelectionBackColor = Color.FromArgb(228, 237, 255),
+                SelectionForeColor = ThemeColors.TextPrimary
+            };
         }
 
         private void LoadData()
