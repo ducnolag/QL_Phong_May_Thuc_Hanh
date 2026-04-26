@@ -1,0 +1,121 @@
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+using src.Helpers;
+
+namespace src.Views
+{
+    public partial class DashboardView : UserControl
+    {
+        public DashboardView()
+        {
+            InitializeComponent();
+            ApplyCustomStyles();
+        }
+
+        private void ApplyCustomStyles()
+        {
+            // Removed GDI+ Paint events to ensure full Designer compatibility
+            // The user will build the charts and cards using standard WinForms controls in the Designer
+        }
+
+        private Panel MakeCard(string title, string value, string icon, Color accent)
+        {
+            var card = new Panel
+            {
+                Size = new Size(235, 112),
+                Margin = new Padding(6),
+                BackColor = Color.White,
+                Cursor = Cursors.Hand
+            };
+            card.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
+                    card.Region = new Region(p);
+
+                // icon bg
+                using (var br = new SolidBrush(Color.FromArgb(22, accent)))
+                    g.FillEllipse(br, 18, 22, 46, 46);
+                TextRenderer.DrawText(g, icon, new Font("Segoe UI", 17F),
+                    new Rectangle(18, 22, 46, 46), accent,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+
+                // value
+                TextRenderer.DrawText(g, value, new Font("Segoe UI", 24F, FontStyle.Bold),
+                    new Point(76, 16), ThemeColors.TextPrimary);
+                // title
+                TextRenderer.DrawText(g, title, new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                    new Point(76, 52), ThemeColors.TextSecondary);
+
+                // bottom accent line
+                using (var br = new LinearGradientBrush(
+                    new Rectangle(0, card.Height - 3, card.Width, 3),
+                    accent, Color.FromArgb(60, accent), 0F))
+                    g.FillRectangle(br, 0, card.Height - 3, card.Width, 3);
+            };
+            card.MouseEnter += (s, e) => { card.BackColor = Color.FromArgb(248, 250, 255); card.Invalidate(); };
+            card.MouseLeave += (s, e) => { card.BackColor = Color.White; card.Invalidate(); };
+            return card;
+        }
+
+        private void DrawBars(Graphics g, Rectangle b)
+        {
+            string[] labels = { "P.A01", "P.A02", "P.A03", "P.B01", "P.B02", "P.C01" };
+            int[] vals = { 85, 60, 95, 45, 72, 88 };
+            Color[] colors = { ThemeColors.PrimaryBlue, ThemeColors.AccentGreen, ThemeColors.AccentPurple,
+                               ThemeColors.AccentOrange, ThemeColors.PrimaryLight, ThemeColors.AccentTeal };
+
+            if (b.Width < 50 || b.Height < 50) return;
+            int barW = Math.Max(10, (b.Width - 20) / labels.Length - 12);
+            int maxH = b.Height - 40;
+
+            for (int i = 0; i < labels.Length; i++)
+            {
+                int bh = (int)(maxH * vals[i] / 100.0);
+                int x = b.X + 15 + i * (barW + 12);
+                int y = b.Y + maxH - bh + 5;
+
+                using (var br = new LinearGradientBrush(new Rectangle(x, y, barW, Math.Max(1, bh)),
+                    colors[i], Color.FromArgb(160, colors[i]), 90F))
+                using (var p = UIHelper.GetRoundedRectPath(new Rectangle(x, y, barW, Math.Max(1, bh)), 5))
+                    g.FillPath(br, p);
+
+                TextRenderer.DrawText(g, vals[i] + "%", new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                    new Rectangle(x, y - 18, barW, 16), colors[i], TextFormatFlags.HorizontalCenter);
+                TextRenderer.DrawText(g, labels[i], new Font("Segoe UI", 7.5F),
+                    new Rectangle(x - 4, b.Bottom - 16, barW + 8, 16), ThemeColors.TextSecondary, TextFormatFlags.HorizontalCenter);
+            }
+        }
+
+        private void DrawActivityItems(Graphics g, Rectangle b)
+        {
+            var items = new[]
+            {
+                ("Phòng A01 đã được xếp lịch", "2 phút trước", ThemeColors.AccentGreen),
+                ("Máy B03-15 cập nhật cấu hình", "15 phút trước", ThemeColors.PrimaryBlue),
+                ("Phòng C01 bảo trì hoàn tất", "1 giờ trước", ThemeColors.AccentOrange),
+                ("Máy A02-08 báo lỗi phần cứng", "2 giờ trước", ThemeColors.AccentRed),
+                ("Lịch TH Mạng MT đã tạo", "3 giờ trước", ThemeColors.AccentGreen),
+                ("Người dùng mới được thêm", "5 giờ trước", ThemeColors.PrimaryBlue),
+                ("Phòng B02 sẵn sàng", "6 giờ trước", ThemeColors.AccentTeal),
+            };
+            int y = 0;
+            foreach (var (text, time, color) in items)
+            {
+                if (y + 42 > b.Height) break;
+                using (var br = new SolidBrush(color))
+                    g.FillEllipse(br, b.X + 4, b.Y + y + 14, 8, 8);
+                TextRenderer.DrawText(g, text, new Font("Segoe UI", 9F),
+                    new Rectangle(b.X + 20, b.Y + y + 3, b.Width - 25, 18), ThemeColors.TextPrimary);
+                TextRenderer.DrawText(g, time, new Font("Segoe UI", 7.5F),
+                    new Rectangle(b.X + 20, b.Y + y + 22, b.Width - 25, 14), ThemeColors.TextMuted);
+                using (var pen = new Pen(Color.FromArgb(18, 0, 0, 0)))
+                    g.DrawLine(pen, b.X + 20, b.Y + y + 40, b.Right, b.Y + y + 40);
+                y += 42;
+            }
+        }
+    }
+}
