@@ -101,7 +101,7 @@ namespace src.Helpers
         }
 
         /// <summary>
-        /// Apply rounded corners to a control.
+        /// Áp dụng góc bo tròn cho một control (dùng Region).
         /// </summary>
         public static void ApplyRoundedCorners(Control control, int radius)
         {
@@ -110,6 +110,70 @@ namespace src.Helpers
                 using (var path = GetRoundedRectPath(control.ClientRectangle, radius))
                     control.Region = new Region(path);
             };
+        }
+
+        /// <summary>
+        /// Thiết lập kiểu card trắng hiện đại: nền trắng, bo tròn, viền nhạt.
+        /// Dùng trong sự kiện Paint của Panel.
+        /// </summary>
+        public static void PaintCard(object sender, PaintEventArgs e, int radius = 14)
+        {
+            if (sender is not Panel panel) return;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var rect = panel.ClientRectangle;
+
+            // Bóng nhẹ (shadow)
+            var shadowRect = new Rectangle(rect.X + 1, rect.Y + 2, rect.Width - 2, rect.Height - 2);
+            using (var path = GetRoundedRectPath(shadowRect, radius))
+            using (var pen = new Pen(Color.FromArgb(12, 0, 0, 0), 3))
+                g.DrawPath(pen, path);
+
+            // Nền trắng bo tròn
+            using (var path = GetRoundedRectPath(rect, radius))
+            {
+                panel.Region = new Region(path);
+                using (var br = new SolidBrush(Color.White))
+                    g.FillPath(br, path);
+                // Viền xám nhạt
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                    g.DrawPath(pen, path);
+            }
+        }
+
+        /// <summary>
+        /// Gắn kiểu card trắng bo tròn vào một Panel qua sự kiện Paint.
+        /// </summary>
+        public static void ApplyCardStyle(Panel panel, int radius = 14)
+        {
+            panel.BackColor = Color.White;
+            panel.Paint += (s, e) => PaintCard(s, e, radius);
+        }
+
+        /// <summary>
+        /// Tạo nút bo tròn kiểu Figma: nền màu, chữ trắng, không viền.
+        /// </summary>
+        public static Button MakeRoundedButton(string text, Color bgColor, int radius = 8)
+        {
+            var btn = new Button
+            {
+                Text = text,
+                BackColor = bgColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                UseVisualStyleBackColor = false
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            btn.FlatAppearance.MouseOverBackColor = ControlPaint.Light(bgColor, 0.1f);
+            btn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = GetRoundedRectPath(btn.ClientRectangle, radius))
+                    btn.Region = new Region(path);
+            };
+            return btn;
         }
 
         /// <summary>

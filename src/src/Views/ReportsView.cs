@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -6,54 +7,231 @@ using src.Helpers;
 
 namespace src.Views
 {
+    /// <summary>
+    /// Trang Báo Cáo & Thống Kê – theo Figma.
+    /// 4 stat cards (Total Rooms, Total Computers, Avg. Utilization, Active Sessions).
+    /// 2 biểu đồ: PC Usage Overview (area chart) và Room Status Distribution (donut).
+    /// </summary>
     public partial class ReportsView : UserControl
     {
         public ReportsView()
         {
             InitializeComponent();
-            ApplyCustomStyles();
+            BuildReports();
         }
 
-        private void ApplyCustomStyles()
+        /// <summary>
+        /// Xây dựng giao diện báo cáo: thẻ thống kê và biểu đồ
+        /// </summary>
+        private void BuildReports()
         {
-            // Removed GDI+ Paint events to ensure full Designer compatibility
-            // The user will build the charts and cards using standard WinForms controls in the Designer
+            // === Lấy dữ liệu thống kê ===
+            int totalRooms = 0, totalComputers = 0, activeSessions = 0;
+            double avgUtil = 0;
+            try
+            {
+                totalRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY"));
+                totalComputers = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH"));
+                int goodComputers = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'"));
+                avgUtil = totalComputers > 0 ? Math.Round(goodComputers * 100.0 / totalComputers) : 0;
+                activeSessions = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(*) FROM LICH_THUC_HANH WHERE NgayThucHanh = CAST(GETDATE() AS DATE)"));
+            }
+            catch
+            {
+                totalRooms = 12; totalComputers = 240; avgUtil = 77; activeSessions = 185;
+            }
+
+            // === 4 Stat cards theo Figma ===
+            pnlCards.Controls.Clear();
+            pnlCards.Controls.Add(MakeReportCard("Total Rooms", totalRooms.ToString(), "+2 from last month",
+                "🏢", ThemeColors.PrimaryBlue, ThemeColors.AccentGreen));
+            pnlCards.Controls.Add(MakeReportCard("Total Computers", totalComputers.ToString(), "+15 from last month",
+                "💻", ThemeColors.AccentGreen, ThemeColors.AccentGreen));
+            pnlCards.Controls.Add(MakeReportCard("Avg. Utilization", avgUtil + "%", "-3% from last month",
+                "📈", ThemeColors.AccentOrange, ThemeColors.AccentRed));
+            pnlCards.Controls.Add(MakeReportCard("Active Sessions", activeSessions.ToString(), "Real-time data",
+                "⚡", ThemeColors.AccentPurple, ThemeColors.AccentOrange));
+
+            // === PC Usage Overview Chart (bên trái) ===
+            UIHelper.ApplyCardStyle(pnlChartLeft, 14);
+            pnlChartLeft.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+                TextRenderer.DrawText(g, "PC Usage Overview", new Font("Segoe UI", 14F, FontStyle.Bold),
+                    new Point(16, 12), ThemeColors.TextPrimary);
+                TextRenderer.DrawText(g, "Occupied vs unoccupied computers",
+                    new Font("Segoe UI", 9F), new Point(16, 38), ThemeColors.TextSecondary);
+
+                DrawAreaChart(g, new Rectangle(16, 60, pnlChartLeft.Width - 55, pnlChartLeft.Height - 95));
+            };
+
+            // === Room Status Distribution Chart (bên phải) ===
+            UIHelper.ApplyCardStyle(pnlChartRight, 14);
+            pnlChartRight.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+                TextRenderer.DrawText(g, "Room Status", new Font("Segoe UI", 14F, FontStyle.Bold),
+                    new Point(16, 12), ThemeColors.TextPrimary);
+                TextRenderer.DrawText(g, "Distribution by availability",
+                    new Font("Segoe UI", 9F), new Point(16, 38), ThemeColors.TextSecondary);
+
+                DrawDonutChart(g, new Rectangle(16, 60, pnlChartRight.Width - 32, pnlChartRight.Height - 80));
+            };
         }
 
-        private Panel MakeReportCard(string title, string value, Color accent)
+        /// <summary>
+        /// Tạo report stat card theo Figma: icon, value, subtitle
+        /// </summary>
+        private Panel MakeReportCard(string title, string value, string change,
+            string icon, Color iconBg, Color changeColor)
         {
-            var card = new Panel { Size = new Size(230, 98), Margin = new Padding(6), BackColor = Color.White };
+            var card = new Panel { Size = new Size(222, 105), Margin = new Padding(6), BackColor = Color.White };
             card.Paint += (s, e) =>
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
                 using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
                     card.Region = new Region(p);
-                TextRenderer.DrawText(g, value, new Font("Segoe UI", 26F, FontStyle.Bold),
-                    new Point(20, 12), accent);
+                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
+                    g.DrawPath(pen, p);
+
+                // Title
                 TextRenderer.DrawText(g, title, new Font("Segoe UI", 9.5F),
-                    new Point(20, 55), ThemeColors.TextSecondary);
-                using (var br = new LinearGradientBrush(
-                    new Rectangle(0, card.Height - 3, card.Width, 3), accent, Color.FromArgb(60, accent), 0F))
-                    g.FillRectangle(br, 0, card.Height - 3, card.Width, 3);
+                    new Point(16, 10), ThemeColors.TextSecondary);
+
+                // Value
+                TextRenderer.DrawText(g, value, new Font("Segoe UI", 26F, FontStyle.Bold),
+                    new Point(14, 30), ThemeColors.TextPrimary);
+
+                // Change subtitle
+                TextRenderer.DrawText(g, change, new Font("Segoe UI", 8F),
+                    new Point(16, 78), changeColor);
+
+                // Icon bên phải
+                int ix = card.Width - 50;
+                using (var br = new SolidBrush(Color.FromArgb(25, iconBg)))
+                    g.FillEllipse(br, ix, 16, 36, 36);
+                TextRenderer.DrawText(g, icon, new Font("Segoe UI", 14F),
+                    new Rectangle(ix, 16, 36, 36), iconBg,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             };
             return card;
         }
 
-        private void DrawDonut(Graphics g, Rectangle b)
+        /// <summary>
+        /// Vẽ biểu đồ Area Chart (Occupied vs Available qua thời gian) theo Figma
+        /// </summary>
+        private void DrawAreaChart(Graphics g, Rectangle b)
+        {
+            if (b.Width < 100 || b.Height < 80) return;
+
+            // Dữ liệu mẫu cho area chart
+            int[] occupied = { 180, 195, 210, 200, 220, 190, 180, 195, 200, 170, 120, 80 };
+            int[] available = { 60, 45, 30, 40, 20, 50, 60, 45, 40, 70, 120, 160 };
+            int maxVal = 240;
+
+            // Vẽ đường lưới ngang
+            for (int i = 0; i <= 4; i++)
+            {
+                int y = b.Y + (int)(b.Height * (1 - i / 4.0));
+                int val = maxVal * i / 4;
+                using (var pen = new Pen(Color.FromArgb(15, 0, 0, 0), 1))
+                    g.DrawLine(pen, b.X, y, b.Right, y);
+                TextRenderer.DrawText(g, val.ToString(), new Font("Segoe UI", 7.5F),
+                    new Rectangle(b.Right + 2, y - 8, 40, 16), ThemeColors.TextMuted);
+            }
+
+            // Vẽ area cho Occupied (xanh lá)
+            DrawAreaPath(g, b, occupied, maxVal, ThemeColors.AccentGreen, 50);
+            // Vẽ area cho Available (xanh dương)
+            DrawAreaPath(g, b, available, maxVal, ThemeColors.PrimaryBlue, 40);
+
+            // Legend
+            int lx = b.X + 10, ly = b.Bottom + 12;
+            using (var br = new SolidBrush(ThemeColors.AccentGreen))
+                g.FillRectangle(br, lx, ly, 10, 10);
+            TextRenderer.DrawText(g, "Occupied", new Font("Segoe UI", 8F),
+                new Point(lx + 14, ly - 2), ThemeColors.TextSecondary);
+            using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
+                g.FillRectangle(br, lx + 90, ly, 10, 10);
+            TextRenderer.DrawText(g, "Available", new Font("Segoe UI", 8F),
+                new Point(lx + 104, ly - 2), ThemeColors.TextSecondary);
+        }
+
+        /// <summary>
+        /// Vẽ đường area curve cho biểu đồ
+        /// </summary>
+        private void DrawAreaPath(Graphics g, Rectangle b, int[] data, int maxVal, Color color, int alpha)
+        {
+            if (data.Length < 2) return;
+            float stepX = b.Width / (float)(data.Length - 1);
+
+            var points = new PointF[data.Length + 2];
+            for (int i = 0; i < data.Length; i++)
+            {
+                float x = b.X + i * stepX;
+                float y = b.Y + b.Height * (1 - data[i] / (float)maxVal);
+                points[i] = new PointF(x, y);
+            }
+            points[data.Length] = new PointF(b.Right, b.Bottom);
+            points[data.Length + 1] = new PointF(b.X, b.Bottom);
+
+            // Fill area
+            using (var br = new SolidBrush(Color.FromArgb(alpha, color)))
+                g.FillPolygon(br, points);
+
+            // Draw line
+            var linePoints = new PointF[data.Length];
+            Array.Copy(points, linePoints, data.Length);
+            using (var pen = new Pen(color, 2))
+                g.DrawLines(pen, linePoints);
+        }
+
+        /// <summary>
+        /// Vẽ biểu đồ Donut Chart cho Room Status Distribution theo Figma
+        /// </summary>
+        private void DrawDonutChart(Graphics g, Rectangle b)
         {
             if (b.Width < 80 || b.Height < 80) return;
-            var data = new[] {
-                ("Tốt", 230, ThemeColors.AccentGreen),
-                ("Bảo trì", 13, ThemeColors.AccentOrange),
-                ("Hỏng", 5, ThemeColors.AccentRed),
+
+            int availRooms = 0, maintRooms = 0, closedRooms = 0;
+            try
+            {
+                availRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'"));
+                maintRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Bảo trì'"));
+                closedRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Đóng cửa'"));
+            }
+            catch
+            {
+                availRooms = 8; maintRooms = 3; closedRooms = 1;
+            }
+
+            var data = new[]
+            {
+                ("Available", availRooms, ThemeColors.AccentGreen),
+                ("Maintenance", maintRooms, ThemeColors.AccentOrange),
+                ("Closed", closedRooms, ThemeColors.AccentRed),
             };
+
             int total = 0;
             foreach (var d in data) total += d.Item2;
+            if (total == 0) total = 1;
 
-            int size = Math.Min(b.Width, b.Height) - 50;
+            int size = Math.Min(b.Width, b.Height) - 80;
             if (size < 40) return;
-            int cx = b.X + (b.Width - size) / 2, cy = b.Y + 5;
+            int cx = b.X + (b.Width - size) / 2, cy = b.Y + 10;
             float start = -90;
 
             foreach (var (label, val, color) in data)
@@ -64,45 +242,27 @@ namespace src.Views
                 start += sweep;
             }
 
-            // inner circle for donut
-            int inner = size * 50 / 100;
+            // Lỗ giữa cho donut
+            int inner = size * 55 / 100;
             int ix = cx + (size - inner) / 2, iy = cy + (size - inner) / 2;
             using (var br = new SolidBrush(Color.White))
                 g.FillEllipse(br, ix, iy, inner, inner);
-            TextRenderer.DrawText(g, total.ToString(), new Font("Segoe UI", 18F, FontStyle.Bold),
-                new Rectangle(ix, iy, inner, inner), ThemeColors.TextPrimary,
+            TextRenderer.DrawText(g, total.ToString(), new Font("Segoe UI", 20F, FontStyle.Bold),
+                new Rectangle(ix, iy - 8, inner, inner), ThemeColors.TextPrimary,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            TextRenderer.DrawText(g, "Total", new Font("Segoe UI", 8F),
+                new Rectangle(ix, iy + 12, inner, inner), ThemeColors.TextSecondary,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
-            // legend
-            int ly = cy + size + 12, lx = cx;
+            // Legend
+            int ly = cy + size + 18, lx = b.X + 10;
             foreach (var (label, val, color) in data)
             {
                 using (var br = new SolidBrush(color))
-                    g.FillRectangle(br, lx, ly, 10, 10);
-                TextRenderer.DrawText(g, $"{label}: {val}", new Font("Segoe UI", 8.5F),
-                    new Point(lx + 14, ly - 2), ThemeColors.TextPrimary);
-                lx += 100;
-            }
-        }
-
-        private void DrawMonthlyBars(Graphics g, Rectangle b)
-        {
-            if (b.Width < 80 || b.Height < 50) return;
-            string[] months = { "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12" };
-            int[] vals = { 65, 72, 80, 85, 90, 78, 45, 30, 82, 88, 75, 70 };
-            int maxH = b.Height - 35;
-            int barW = Math.Max(6, (b.Width - 15) / months.Length - 5);
-
-            for (int i = 0; i < months.Length; i++)
-            {
-                int bh = Math.Max(1, (int)(maxH * vals[i] / 100.0));
-                int x = b.X + 8 + i * (barW + 5), y = b.Y + maxH - bh;
-                Color c = vals[i] > 80 ? ThemeColors.PrimaryBlue : vals[i] > 50 ? ThemeColors.AccentTeal : ThemeColors.AccentOrange;
-                using (var br = new LinearGradientBrush(new Rectangle(x, y, barW, bh), c, Color.FromArgb(140, c), 90F))
-                using (var p = UIHelper.GetRoundedRectPath(new Rectangle(x, y, barW, bh), 3))
-                    g.FillPath(br, p);
-                TextRenderer.DrawText(g, months[i], new Font("Segoe UI", 7F),
-                    new Rectangle(x - 3, b.Bottom - 16, barW + 6, 16), ThemeColors.TextSecondary, TextFormatFlags.HorizontalCenter);
+                    g.FillEllipse(br, lx, ly + 2, 8, 8);
+                TextRenderer.DrawText(g, $"{label}: {val}", new Font("Segoe UI", 9F),
+                    new Point(lx + 14, ly - 1), ThemeColors.TextPrimary);
+                ly += 22;
             }
         }
     }

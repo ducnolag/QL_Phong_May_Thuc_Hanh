@@ -90,12 +90,19 @@ namespace src.Forms
                     return;
                 }
 
-                // Success
+                // Đăng nhập thành công – ẩn LoginForm rồi mở MainForm
                 lblError.Visible = false;
                 bool isAdmin = vaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase);
                 this.Hide();
                 var mainForm = new MainForm(hoTen, isAdmin);
-                mainForm.FormClosed += (s, args) => Application.Exit();
+                // Khi MainForm đóng: nếu thoát bình thường (không phải logout) thì Exit
+                // Logout sẽ gọi Application.Restart() trong MainForm nên không cần Exit ở đây
+                mainForm.FormClosed += (s, args) =>
+                {
+                    // Chỉ exit nếu không có form nào khác đang mở (tức là không phải logout)
+                    if (Application.OpenForms.Count == 0)
+                        Application.Exit();
+                };
                 mainForm.Show();
             }
             catch (Exception ex)
