@@ -234,72 +234,139 @@ namespace src.Views
         {
             using (var dlg = CreateScheduleDialog("Tạo Lịch Thực Hành Mới"))
             {
+                // ── Validation trong FormClosing để giữ form mở khi lỗi ──
+                dlg.FormClosing += (s, e) =>
+                {
+                    if (dlg.DialogResult != DialogResult.OK) return;
+
+                    var dtpDate    = FindControl<DateTimePicker>(dlg, "dtpDate");
+                    var cboLop     = FindControl<ComboBox>(dlg, "cboLop");
+                    var cboMon     = FindControl<ComboBox>(dlg, "cboMon");
+                    var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
+                    var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
+                    var numSV      = FindControl<NumericUpDown>(dlg, "numSV");
+                    var numRam     = FindControl<NumericUpDown>(dlg, "numRam");
+                    var numStorage = FindControl<NumericUpDown>(dlg, "numStorage");
+
+                    DateTime date  = dtpDate.Value;
+                    int soSV       = (int)numSV.Value;
+                    int reqRam     = (int)numRam.Value;
+                    int reqStorage = (int)numStorage.Value;
+
+                    // 1. Ngày quá khứ
+                    if (date.Date < DateTime.Today)
+                    {
+                        MessageBox.Show("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.",
+                            "Ngày không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true; return;
+                    }
+
+                    // 2. Bắt buộc nhập đủ thông tin
+                    if (string.IsNullOrWhiteSpace(cboLop.Text) || string.IsNullOrWhiteSpace(cboMon.Text) || cboCa.SelectedValue == null)
+                    {
+                        MessageBox.Show("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!", "Lỗi",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true; return;
+                    }
+
+                    try
+                    {
+                        // 3. Lớp đặt trùng ca/ngày – tìm MaLop kể cả khi SelectedValue null
+                        object lopVal = cboLop.SelectedValue;
+                        if (lopVal == null && !string.IsNullOrWhiteSpace(cboLop.Text))
+                            lopVal = DatabaseHelper.ExecuteScalar(
+                                "SELECT MaLop FROM LOP_HOC WHERE TenLop = @ten",
+                                new SqlParameter("@ten", cboLop.Text.Trim()));
+
+                        if (lopVal != null && cboCa.SelectedValue != null)
+                        {
+                            int dupClass = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                @"SELECT COUNT(*) FROM LICH_THUC_HANH l
+                                  WHERE l.MaLop = @lop AND l.NgayThucHanh = @date AND l.MaCa = @ca
+                                    AND l.TrangThaiLich != N'Đã hủy'",
+                                new SqlParameter("@lop",  lopVal),
+                                new SqlParameter("@date", date.Date),
+                                new SqlParameter("@ca",   cboCa.SelectedValue)));
+                            if (dupClass > 0)
+                            {
+                                MessageBox.Show("Lớp này đã có lịch thực hành vào cùng ngày và ca học đó rồi! Vui lòng chọn ngày hoặc ca khác.",
+                                    "Trùng lịch lớp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                e.Cancel = true; return;
+                            }
+                        }
+
+                        // 4. Kiểm tra cấu hình phòng được chọn
+                        if (cboRoom != null && cboRoom.SelectedIndex > 0)
+                        {
+                            int? roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
+                            if (roomId.HasValue)
+                            {
+                                int mayDatYeuCau = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                    @"SELECT COUNT(*) FROM MAY_TINH m
+                                      JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
+                                      WHERE m.MaPhong = @phong AND tm.TenTrangThaiMay = N'Tốt'
+                                        AND m.RAM >= @ram AND m.DungLuongLuuTru >= @storage",
+                                    new SqlParameter("@phong",   roomId.Value),
+                                    new SqlParameter("@ram",     reqRam),
+                                    new SqlParameter("@storage", reqStorage)));
+                                if (mayDatYeuCau < soSV)
+                                {
+                                    MessageBox.Show(
+                                        $"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB), " +
+                                        $"không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.",
+                                        "Cấu hình phòng không đủ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    e.Cancel = true; return;
+                                }
+
+                                int conflictCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
+                                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
+                                      WHERE l.NgayThucHanh = @date AND l.MaCa = @ca
+                                        AND pc.MaPhong = @phong AND l.TrangThaiLich != N'Đã hủy'",
+                                    new SqlParameter("@date",  date.Date),
+                                    new SqlParameter("@ca",    cboCa.SelectedValue),
+                                    new SqlParameter("@phong", roomId.Value)));
+                                if (conflictCount > 0)
+                                {
+                                    MessageBox.Show("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!",
+                                        "Xung đột lịch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    e.Cancel = true;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Lỗi kiểm tra: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        e.Cancel = true;
+                    }
+                };
+
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
                     try
                     {
-                        DateTime date = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
-                        var cboLop = FindControl<ComboBox>(dlg, "cboLop");
-                        var cboMon = FindControl<ComboBox>(dlg, "cboMon");
-                        var cboCa  = FindControl<ComboBox>(dlg, "cboCa");
-                        var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
-                        int soSV = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                        // Validation đã qua → lưu dữ liệu
+                        DateTime date      = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
+                        var cboLop         = FindControl<ComboBox>(dlg, "cboLop");
+                        var cboMon         = FindControl<ComboBox>(dlg, "cboMon");
+                        var cboCa          = FindControl<ComboBox>(dlg, "cboCa");
+                        var cboRoom        = FindControl<ComboBox>(dlg, "cboRoom");
+                        int soSV           = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                        int reqRam         = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
+                        int reqStorage     = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
 
-                        if (string.IsNullOrWhiteSpace(cboLop.Text) || string.IsNullOrWhiteSpace(cboMon.Text) || cboCa.SelectedValue == null)
-                        {
-                            MessageBox.Show("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!", "Lỗi",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
+                        object lopId = cboLop.SelectedValue
+                            ?? DatabaseHelper.ExecuteScalar("INSERT INTO LOP_HOC (TenLop) OUTPUT INSERTED.MaLop VALUES (@name)", new SqlParameter("@name", cboLop.Text.Trim()));
+                        object monId = cboMon.SelectedValue
+                            ?? DatabaseHelper.ExecuteScalar("INSERT INTO MON_HOC (TenMon) OUTPUT INSERTED.MaMon VALUES (@name)", new SqlParameter("@name", cboMon.Text.Trim()));
 
-                        // Lấy hoặc tạo Lớp
-                        object lopId = cboLop.SelectedValue;
-                        if (lopId == null)
-                        {
-                            lopId = DatabaseHelper.ExecuteScalar("INSERT INTO LOP_HOC (TenLop) OUTPUT INSERTED.MaLop VALUES (@name)", new SqlParameter("@name", cboLop.Text.Trim()));
-                        }
+                        var creatorId = AppSession.MaNguoiDung;
+                        int? roomId = (cboRoom != null && cboRoom.SelectedIndex > 0) ? ParseRoomId(cboRoom.SelectedItem?.ToString()) : null;
 
-                        // Lấy hoặc tạo Môn
-                        object monId = cboMon.SelectedValue;
-                        if (monId == null)
-                        {
-                            monId = DatabaseHelper.ExecuteScalar("INSERT INTO MON_HOC (TenMon) OUTPUT INSERTED.MaMon VALUES (@name)", new SqlParameter("@name", cboMon.Text.Trim()));
-                        }
-
-                        var creatorId = DatabaseHelper.ExecuteScalar(
-                            "SELECT TOP 1 MaNguoiDung FROM NGUOI_DUNG WHERE TenDangNhap='admin'") ?? 1;
-
-                        int reqRam = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
-                        int reqStorage = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
-
-                        // Final Check: Kiểm tra xung đột phút chót nếu có chọn phòng
-                        int? roomId = null;
-                        if (cboRoom != null && cboRoom.SelectedIndex > 0)
-                        {
-                            roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
-                            if (roomId.HasValue)
-                            {
-                                int conflictCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                                      WHERE l.NgayThucHanh = @date AND l.MaCa = @ca AND pc.MaPhong = @phong AND l.TrangThaiLich != N'Đã hủy'",
-                                    new SqlParameter("@date", date.Date),
-                                    new SqlParameter("@ca", cboCa.SelectedValue),
-                                    new SqlParameter("@phong", roomId.Value)));
-
-                                if (conflictCount > 0)
-                                {
-                                    MessageBox.Show("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!", "Xung đột lịch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                    return;
-                                }
-                            }
-                        }
-
-                        // Insert lịch – lấy ID vừa tạo
                         var newId = DatabaseHelper.ExecuteScalar(
                             @"INSERT INTO LICH_THUC_HANH (NgayThucHanh, SoLuongSinhVien, MaLop, MaMon, MaCa, NguoiTao)
-                              OUTPUT INSERTED.MaLich
-                              VALUES (@date, @sv, @lop, @mon, @ca, @creator)",
+                              OUTPUT INSERTED.MaLich VALUES (@date, @sv, @lop, @mon, @ca, @creator)",
                             new SqlParameter("@date",    date.Date),
                             new SqlParameter("@sv",      soSV),
                             new SqlParameter("@lop",     lopId),
@@ -310,26 +377,20 @@ namespace src.Views
                         if (newId != null)
                         {
                             int lichId = Convert.ToInt32(newId);
-
-                            // Lưu Yêu cầu cấu hình
                             DatabaseHelper.ExecuteNonQuery(
                                 "INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu) VALUES (@lich, @ram, @storage)",
-                                new SqlParameter("@lich", lichId),
-                                new SqlParameter("@ram", reqRam),
+                                new SqlParameter("@lich",    lichId),
+                                new SqlParameter("@ram",     reqRam),
                                 new SqlParameter("@storage", reqStorage));
-
-                            // Phân công phòng nếu đã chọn
                             if (roomId.HasValue)
-                            {
                                 DatabaseHelper.ExecuteNonQuery(
-                                    "INSERT INTO PHAN_CONG_PHONG (MaLich, MaPhong) VALUES (@lich, @phong)",
+                                    "INSERT INTO PHAN_CONG_PHONG (MaLich, MaPhong, MaNguoiDung) VALUES (@lich, @phong, @nd)",
                                     new SqlParameter("@lich",  lichId),
-                                    new SqlParameter("@phong", roomId.Value));
-                            }
+                                    new SqlParameter("@phong", roomId.Value),
+                                    new SqlParameter("@nd",    AppSession.MaNguoiDung));
                         }
 
-                        MessageBox.Show("Đã tạo lịch thành công!", "Thành công",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Đã tạo lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
                     catch (Exception ex)
@@ -347,149 +408,230 @@ namespace src.Views
         {
             try
             {
+                var dt = DatabaseHelper.ExecuteQuery(
+                    @"SELECT l.NgayThucHanh, l.SoLuongSinhVien, l.MaLop, l.MaMon, l.MaCa,
+                      lh.TenLop, mh.TenMon, c.TenCa
+                      FROM LICH_THUC_HANH l
+                      JOIN LOP_HOC lh ON l.MaLop = lh.MaLop
+                      JOIN MON_HOC mh ON l.MaMon = mh.MaMon
+                      JOIN CA_HOC c   ON l.MaCa  = c.MaCa
+                      WHERE l.MaLich = @id",
+                    new SqlParameter("@id", scheduleId));
+
+                if (dt.Rows.Count == 0) return;
+                var r = dt.Rows[0];
+
+                string tenLop = r["TenLop"].ToString();
+                string tenMon = r["TenMon"].ToString();
+                int    maLop  = Convert.ToInt32(r["MaLop"]);
+                int    maMon  = Convert.ToInt32(r["MaMon"]);
+                int    maCa   = Convert.ToInt32(r["MaCa"]);
+
+                var dtYeuCau = DatabaseHelper.ExecuteQuery(
+                    "SELECT * FROM YEU_CAU_CAU_HINH WHERE MaLich=@id",
+                    new SqlParameter("@id", scheduleId));
+
+                // Load phòng đang được phân công (nếu có)
+                int currentRoomId = 0;
+                string currentRoomLabel = "";
+                var dtRoom = DatabaseHelper.ExecuteQuery(
+                    @"SELECT pc.MaPhong, p.TenPhong, p.SucChua FROM PHAN_CONG_PHONG pc
+                      JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
+                      WHERE pc.MaLich = @id",
+                    new SqlParameter("@id", scheduleId));
+                if (dtRoom.Rows.Count > 0)
+                {
+                    currentRoomId    = Convert.ToInt32(dtRoom.Rows[0]["MaPhong"]);
+                    currentRoomLabel = $"{dtRoom.Rows[0]["TenPhong"]}  (sức chứa: {dtRoom.Rows[0]["SucChua"]} | đang dùng)  [ID:{currentRoomId}]";
+                }
+
                 using (var dlg = CreateScheduleDialog("Sửa Lịch Thực Hành"))
                 {
-                    // Tải dữ liệu hiện tại (join để lấy TênLop, TênMon)
-                    var dt = DatabaseHelper.ExecuteQuery(
-                        @"SELECT l.NgayThucHanh, l.SoLuongSinhVien, l.MaLop, l.MaMon, l.MaCa,
-                          lh.TenLop, mh.TenMon, c.TenCa
-                          FROM LICH_THUC_HANH l
-                          JOIN LOP_HOC lh ON l.MaLop = lh.MaLop
-                          JOIN MON_HOC mh ON l.MaMon = mh.MaMon
-                          JOIN CA_HOC c   ON l.MaCa  = c.MaCa
-                          WHERE l.MaLich = @id",
-                        new SqlParameter("@id", scheduleId));
-
-                    if (dt.Rows.Count > 0)
+                    // ── Load dữ liệu cũ vào form ─────────────────────────────
+                    dlg.Shown += (s, ev) =>
                     {
-                        var r = dt.Rows[0];
-                        FindControl<DateTimePicker>(dlg, "dtpDate").Value = Convert.ToDateTime(r["NgayThucHanh"]);
-                        FindControl<NumericUpDown>(dlg, "numSV").Value = Convert.ToInt32(r["SoLuongSinhVien"]);
+                        FindControl<DateTimePicker>(dlg, "dtpDate").Value  = Convert.ToDateTime(r["NgayThucHanh"]);
+                        FindControl<NumericUpDown>(dlg, "numSV").Value     = Convert.ToInt32(r["SoLuongSinhVien"]);
 
-                        // Set cà combo box Lop – nếu có trong danh sách thì chọn, không thì đặt text
+                        // Chọn Lớp – dùng vòng lặp để đảm bảo chọn đúng
                         var cboLopCtrl = FindControl<ComboBox>(dlg, "cboLop");
-                        string tenLop = r["TenLop"].ToString();
-                        int maLop = Convert.ToInt32(r["MaLop"]);
-                        cboLopCtrl.SelectedValue = maLop;
-                        if (cboLopCtrl.SelectedValue == null) cboLopCtrl.Text = tenLop;
+                        bool foundLop  = false;
+                        foreach (DataRowView item in cboLopCtrl.Items)
+                        {
+                            if (Convert.ToInt32(item["MaLop"]) == maLop)
+                            { cboLopCtrl.SelectedItem = item; foundLop = true; break; }
+                        }
+                        if (!foundLop) cboLopCtrl.Text = tenLop;
 
-                        // Set combo Mon
+                        // Chọn Môn – dùng vòng lặp để đảm bảo chọn đúng
                         var cboMonCtrl = FindControl<ComboBox>(dlg, "cboMon");
-                        string tenMon = r["TenMon"].ToString();
-                        int maMon = Convert.ToInt32(r["MaMon"]);
-                        cboMonCtrl.SelectedValue = maMon;
-                        if (cboMonCtrl.SelectedValue == null) cboMonCtrl.Text = tenMon;
+                        bool foundMon  = false;
+                        foreach (DataRowView item in cboMonCtrl.Items)
+                        {
+                            if (Convert.ToInt32(item["MaMon"]) == maMon)
+                            { cboMonCtrl.SelectedItem = item; foundMon = true; break; }
+                        }
+                        if (!foundMon) cboMonCtrl.Text = tenMon;
 
-                        // Set combo Ca
+                        // Chọn Ca học
                         var cboCaCtrl = FindControl<ComboBox>(dlg, "cboCa");
-                        cboCaCtrl.SelectedValue = Convert.ToInt32(r["MaCa"]);
-                    }
+                        foreach (DataRowView item in cboCaCtrl.Items)
+                        {
+                            if (Convert.ToInt32(item["MaCa"]) == maCa)
+                            { cboCaCtrl.SelectedItem = item; break; }
+                        }
 
-                    // Load cấu hình yêu cầu cũ (nếu có)
-                    var dtYeuCau = DatabaseHelper.ExecuteQuery("SELECT * FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new SqlParameter("@id", scheduleId));
-                    if (dtYeuCau.Rows.Count > 0)
+                        // Load cấu hình yêu cầu cũ
+                        if (dtYeuCau.Rows.Count > 0)
+                        {
+                            var yc = dtYeuCau.Rows[0];
+                            if (yc["RAMToiThieu"]   != DBNull.Value) FindControl<NumericUpDown>(dlg, "numRam").Value     = Convert.ToInt32(yc["RAMToiThieu"]);
+                            if (yc["LuuTruToiThieu"] != DBNull.Value) FindControl<NumericUpDown>(dlg, "numStorage").Value = Convert.ToInt32(yc["LuuTruToiThieu"]);
+                        }
+
+                        // Chọn lại phòng đang được phân công
+                        if (currentRoomId > 0)
+                        {
+                            var cboRoomCtrl = FindControl<ComboBox>(dlg, "cboRoom");
+                            // Tìm trong danh sách gợi ý đã load
+                            bool roomFound = false;
+                            for (int i = 1; i < cboRoomCtrl.Items.Count; i++)
+                            {
+                                int? rid = ParseRoomId(cboRoomCtrl.Items[i]?.ToString());
+                                if (rid.HasValue && rid.Value == currentRoomId)
+                                { cboRoomCtrl.SelectedIndex = i; roomFound = true; break; }
+                            }
+                            // Nếu phòng không có trong gợi ý (bị lọc ra), thêm thủ công và chọn
+                            if (!roomFound)
+                            {
+                                cboRoomCtrl.Items.Add(currentRoomLabel);
+                                cboRoomCtrl.SelectedIndex = cboRoomCtrl.Items.Count - 1;
+                            }
+                        }
+                    };
+
+                    // ── Validation trong FormClosing ──────────────────────────
+                    dlg.FormClosing += (s, e) =>
                     {
-                        var yc = dtYeuCau.Rows[0];
-                        if (yc["RAMToiThieu"] != DBNull.Value)
-                            FindControl<NumericUpDown>(dlg, "numRam").Value = Convert.ToInt32(yc["RAMToiThieu"]);
-                        if (yc["LuuTruToiThieu"] != DBNull.Value)
-                            FindControl<NumericUpDown>(dlg, "numStorage").Value = Convert.ToInt32(yc["LuuTruToiThieu"]);
-                    }
+                        if (dlg.DialogResult != DialogResult.OK) return;
+                        var cboLop  = FindControl<ComboBox>(dlg, "cboLop");
+                        var cboMon  = FindControl<ComboBox>(dlg, "cboMon");
+                        var cboCa   = FindControl<ComboBox>(dlg, "cboCa");
+                        var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
+                        DateTime date  = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
+                        int soSV       = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                        int reqRam     = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
+                        int reqStorage = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
 
-                    if (dlg.ShowDialog() == DialogResult.OK)
-                    {
-                        DateTime date = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
-                        var cboLop = FindControl<ComboBox>(dlg, "cboLop");
-                        var cboMon = FindControl<ComboBox>(dlg, "cboMon");
-                        var cboCa = FindControl<ComboBox>(dlg, "cboCa");
-                        int soSV = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
-
+                        if (date.Date < DateTime.Today)
+                        {
+                            MessageBox.Show("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.",
+                                "Ngày không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            e.Cancel = true; return;
+                        }
                         if (string.IsNullOrWhiteSpace(cboLop.Text) || string.IsNullOrWhiteSpace(cboMon.Text) || cboCa.SelectedValue == null)
                         {
                             MessageBox.Show("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!", "Lỗi",
                                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
+                            e.Cancel = true; return;
                         }
-
-                        // Lấy hoặc tạo Lớp
-                        object lopId = cboLop.SelectedValue;
-                        if (lopId == null)
+                        try
                         {
-                            lopId = DatabaseHelper.ExecuteScalar("INSERT INTO LOP_HOC (TenLop) OUTPUT INSERTED.MaLop VALUES (@name)", new SqlParameter("@name", cboLop.Text.Trim()));
-                        }
-
-                        // Lấy hoặc tạo Môn
-                        object monId = cboMon.SelectedValue;
-                        if (monId == null)
-                        {
-                            monId = DatabaseHelper.ExecuteScalar("INSERT INTO MON_HOC (TenMon) OUTPUT INSERTED.MaMon VALUES (@name)", new SqlParameter("@name", cboMon.Text.Trim()));
-                        }
-
-                        var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
-                        int reqRam = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
-                        int reqStorage = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
-
-                        // Final Check nếu người dùng chọn phòng mới
-                        int? roomId = null;
-                        if (cboRoom != null && cboRoom.SelectedIndex > 0)
-                        {
-                            roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
-                            if (roomId.HasValue)
+                            if (cboRoom != null && cboRoom.SelectedIndex > 0)
                             {
-                                int conflictCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                                      WHERE l.NgayThucHanh = @date AND l.MaCa = @ca AND pc.MaPhong = @phong 
-                                      AND l.TrangThaiLich != N'Đã hủy' AND l.MaLich != @currentId",
-                                    new SqlParameter("@date", date.Date),
-                                    new SqlParameter("@ca", cboCa.SelectedValue),
-                                    new SqlParameter("@phong", roomId.Value),
-                                    new SqlParameter("@currentId", scheduleId)));
-
-                                if (conflictCount > 0)
+                                int? roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
+                                if (roomId.HasValue)
                                 {
-                                    MessageBox.Show("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!", "Xung đột lịch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                    return;
+                                    int mayDatYeuCau = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                        @"SELECT COUNT(*) FROM MAY_TINH m
+                                          JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
+                                          WHERE m.MaPhong = @phong AND tm.TenTrangThaiMay = N'Tốt'
+                                            AND m.RAM >= @ram AND m.DungLuongLuuTru >= @storage",
+                                        new SqlParameter("@phong",   roomId.Value),
+                                        new SqlParameter("@ram",     reqRam),
+                                        new SqlParameter("@storage", reqStorage)));
+                                    if (mayDatYeuCau < soSV)
+                                    {
+                                        MessageBox.Show(
+                                            $"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB), " +
+                                            $"không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.",
+                                            "Cấu hình phòng không đủ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        e.Cancel = true; return;
+                                    }
+                                    int conflictCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                        @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
+                                          JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
+                                          WHERE l.NgayThucHanh = @date AND l.MaCa = @ca AND pc.MaPhong = @phong
+                                          AND l.TrangThaiLich != N'Đã hủy' AND l.MaLich != @currentId",
+                                        new SqlParameter("@date",      date.Date),
+                                        new SqlParameter("@ca",        cboCa.SelectedValue),
+                                        new SqlParameter("@phong",     roomId.Value),
+                                        new SqlParameter("@currentId", scheduleId)));
+                                    if (conflictCount > 0)
+                                    {
+                                        MessageBox.Show("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!",
+                                            "Xung đột lịch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        e.Cancel = true;
+                                    }
                                 }
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Lỗi kiểm tra: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            e.Cancel = true;
+                        }
+                    };
+
+                    if (dlg.ShowDialog() == DialogResult.OK)
+                    {
+                        DateTime date  = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
+                        var cboLop     = FindControl<ComboBox>(dlg, "cboLop");
+                        var cboMon     = FindControl<ComboBox>(dlg, "cboMon");
+                        var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
+                        var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
+                        int soSV       = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                        int reqRam     = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
+                        int reqStorage = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
+
+                        object lopId = cboLop.SelectedValue
+                            ?? DatabaseHelper.ExecuteScalar("INSERT INTO LOP_HOC (TenLop) OUTPUT INSERTED.MaLop VALUES (@name)", new SqlParameter("@name", cboLop.Text.Trim()));
+                        object monId = cboMon.SelectedValue
+                            ?? DatabaseHelper.ExecuteScalar("INSERT INTO MON_HOC (TenMon) OUTPUT INSERTED.MaMon VALUES (@name)", new SqlParameter("@name", cboMon.Text.Trim()));
 
                         DatabaseHelper.ExecuteNonQuery(
                             @"UPDATE LICH_THUC_HANH SET NgayThucHanh=@date, SoLuongSinhVien=@sv,
                               MaLop=@lop, MaMon=@mon, MaCa=@ca WHERE MaLich=@id",
                             new SqlParameter("@date", date.Date),
-                            new SqlParameter("@sv", soSV),
-                            new SqlParameter("@lop", lopId),
-                            new SqlParameter("@mon", monId),
-                            new SqlParameter("@ca", cboCa.SelectedValue),
-                            new SqlParameter("@id", scheduleId));
+                            new SqlParameter("@sv",   soSV),
+                            new SqlParameter("@lop",  lopId),
+                            new SqlParameter("@mon",  monId),
+                            new SqlParameter("@ca",   cboCa.SelectedValue),
+                            new SqlParameter("@id",   scheduleId));
 
-                        // Cập nhật yêu cầu cấu hình
                         var countYC = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new SqlParameter("@id", scheduleId)));
                         if (countYC > 0)
-                        {
-                            DatabaseHelper.ExecuteNonQuery(
-                                "UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@ram, LuuTruToiThieu=@storage WHERE MaLich=@id",
+                            DatabaseHelper.ExecuteNonQuery("UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@ram, LuuTruToiThieu=@storage WHERE MaLich=@id",
                                 new SqlParameter("@ram", reqRam), new SqlParameter("@storage", reqStorage), new SqlParameter("@id", scheduleId));
-                        }
                         else
-                        {
-                            DatabaseHelper.ExecuteNonQuery(
-                                "INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu) VALUES (@id, @ram, @storage)",
+                            DatabaseHelper.ExecuteNonQuery("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu) VALUES (@id, @ram, @storage)",
                                 new SqlParameter("@ram", reqRam), new SqlParameter("@storage", reqStorage), new SqlParameter("@id", scheduleId));
-                        }
 
-                        // Cập nhật phân công phòng nếu có chọn phòng mới
-                        if (roomId.HasValue)
+                        if (cboRoom != null && cboRoom.SelectedIndex > 0)
                         {
-                            DatabaseHelper.ExecuteNonQuery("DELETE FROM PHAN_CONG_PHONG WHERE MaLich=@id", new SqlParameter("@id", scheduleId));
-                            DatabaseHelper.ExecuteNonQuery(
-                                "INSERT INTO PHAN_CONG_PHONG (MaLich, MaPhong) VALUES (@id, @phong)",
-                                new SqlParameter("@id", scheduleId), new SqlParameter("@phong", roomId.Value));
+                            int? roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
+                            if (roomId.HasValue)
+                            {
+                                DatabaseHelper.ExecuteNonQuery("DELETE FROM PHAN_CONG_PHONG WHERE MaLich=@id", new SqlParameter("@id", scheduleId));
+                                DatabaseHelper.ExecuteNonQuery(
+                                    "INSERT INTO PHAN_CONG_PHONG (MaLich, MaPhong, MaNguoiDung) VALUES (@id, @phong, @nd)",
+                                    new SqlParameter("@id",    scheduleId),
+                                    new SqlParameter("@phong", roomId.Value),
+                                    new SqlParameter("@nd",    AppSession.MaNguoiDung));
+                            }
                         }
 
-                        MessageBox.Show("Đã cập nhật lịch thành công!", "Thành công",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Đã cập nhật lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
                 }
@@ -499,6 +641,7 @@ namespace src.Views
                 MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         /// <summary>
         /// Hủy lịch (đổi trạng thái thành "Đã hủy")
@@ -704,6 +847,9 @@ namespace src.Views
                 Text = "Nhấn 'Gợi ý' để tìm phòng trống theo ngày và ca đã chọn."
             };
             pnlRoom.Controls.Add(lblSuggestNote);
+
+            // Auto-load room list khi form mở
+            dlg.Shown += (s, ev) => btnSuggest.PerformClick();
 
             btnSuggest.Click += (s, ev) =>
             {

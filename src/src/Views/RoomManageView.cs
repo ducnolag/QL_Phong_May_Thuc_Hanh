@@ -333,6 +333,21 @@ namespace src.Views
         /// </summary>
         private void DeleteRoom(int roomId, string roomName)
         {
+            try
+            {
+                var count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
+                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
+                      WHERE pc.MaPhong=@id AND l.TrangThaiLich != N'Đã hủy'",
+                    new SqlParameter("@id", roomId)));
+                if (count > 0)
+                {
+                    MessageBox.Show("Phòng đang có lịch thực hành không thể xóa!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            catch { }
+
             if (MessageBox.Show($"Bạn có chắc muốn xóa phòng '{roomName}'?\nTất cả máy tính trong phòng cũng sẽ bị xóa!",
                 "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {

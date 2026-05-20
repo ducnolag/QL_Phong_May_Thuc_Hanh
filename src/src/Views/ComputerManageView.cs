@@ -243,11 +243,8 @@ namespace src.Views
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
                 int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
                 int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
-                int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
-
-                if (string.IsNullOrEmpty(tenMay) || string.IsNullOrEmpty(cpu))
-                { MessageBox.Show("Vui lòng nhập Tên máy và CPU!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
                 var ttId = DatabaseHelper.ExecuteScalar(
                     "SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=@t",
@@ -290,7 +287,8 @@ namespace src.Views
                     Convert.ToInt32(r["RAM"]),
                     r["KichThuocManHinh"] == DBNull.Value ? 24 : Convert.ToInt32(r["KichThuocManHinh"]),
                     Convert.ToInt32(r["MaPhong"]),
-                    r["TenTrangThaiMay"].ToString());
+                    r["TenTrangThaiMay"].ToString(),
+                    maMay);
 
                 if (dlg.ShowDialog() != DialogResult.OK) return;
 
@@ -347,7 +345,7 @@ namespace src.Views
 
         // ── Xây dựng dialog thêm/sửa máy ─────────────────────────────
         private Form BuildComputerDialog(string title, string tenMay, string cpu,
-            string tt, int ram, int monitor, int maPhong, string status)
+            string tt, int ram, int monitor, int maPhong, string status, int originalMaMay = 0)
         {
             var dlg = new Form
             {
@@ -369,7 +367,7 @@ namespace src.Views
             }
 
             var txtTen = new TextBox { Name = "txtTenMay", Text = tenMay };
-            AddRow("Tên máy *:", txtTen);
+            AddRow("Mã máy *:", txtTen);
 
             var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
             AddRow("CPU *:", txtCpu);
@@ -398,7 +396,7 @@ namespace src.Views
 
             // Trạng thái
             var cboTT = new ComboBox { Name = "cboTT", DropDownStyle = ComboBoxStyle.DropDownList };
-            cboTT.Items.AddRange(new object[] { "Tốt", "Bảo trì", "Hỏng" });
+            cboTT.Items.AddRange(new object[] { "Tốt", "Hỏng" });
             cboTT.SelectedItem = status;
             if (cboTT.SelectedIndex < 0) cboTT.SelectedIndex = 0;
             AddRow("Tình trạng:", cboTT);
@@ -425,6 +423,41 @@ namespace src.Views
 
             dlg.AcceptButton = btnSave;
             dlg.CancelButton = btnCan;
+
+            dlg.FormClosing += (s, e) =>
+            {
+                if (dlg.DialogResult == DialogResult.OK)
+                {
+                    string mMay = txtTen.Text.Trim();
+                    string mCpu = txtCpu.Text.Trim();
+
+                    if (string.IsNullOrEmpty(mMay) || string.IsNullOrEmpty(mCpu))
+                    {
+                        MessageBox.Show("Vui lòng nhập Mã máy và CPU!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        return;
+                    }
+
+                    int count = 0;
+                    if (originalMaMay == 0)
+                    {
+                        count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten", new SqlParameter("@ten", mMay)));
+                    }
+                    else
+                    {
+                        count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten AND MaMay!=@id", new SqlParameter("@ten", mMay), new SqlParameter("@id", originalMaMay)));
+                    }
+
+                    if (count > 0)
+                    {
+                        MessageBox.Show("Mã máy đã tồn tại! Vui lòng nhập lại.", "Trùng mã máy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtTen.SelectAll();
+                        txtTen.Focus();
+                    }
+                }
+            };
+
             return dlg;
         }
 
