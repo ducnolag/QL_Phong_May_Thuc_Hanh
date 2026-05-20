@@ -648,7 +648,7 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "RAM tối thiểu (GB):", Location = new Point(20, y + 3), AutoSize = true });
             var numRam = new NumericUpDown
             {
-                Name = "numRam", Value = 8, Minimum = 0, Maximum = 512,
+                Name = "numRam", Maximum = 512, Minimum = 0, Value = 8,
                 Location = new Point(160, y), Size = new Size(100, 26)
             };
             dlg.Controls.Add(numRam);
@@ -658,7 +658,7 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Lưu trữ tối thiểu (GB):", Location = new Point(20, y + 3), AutoSize = true });
             var numStorage = new NumericUpDown
             {
-                Name = "numStorage", Value = 128, Minimum = 1, Maximum = 4000,
+                Name = "numStorage", Maximum = 4000, Minimum = 1, Value = 128,
                 Location = new Point(160, y), Size = new Size(100, 26)
             };
             dlg.Controls.Add(numStorage);

@@ -33,12 +33,6 @@ namespace src.Views
             this.pnlToolbarMon = new System.Windows.Forms.Panel();
             this.btnAddMon = new System.Windows.Forms.Button();
             this.txtSearchMon = new System.Windows.Forms.TextBox();
-            this.tabCaHoc = new System.Windows.Forms.TabPage();
-            this.pnlGridCa = new System.Windows.Forms.Panel();
-            this.dgvCaHoc = new System.Windows.Forms.DataGridView();
-            this.pnlToolbarCa = new System.Windows.Forms.Panel();
-            this.btnAddCa = new System.Windows.Forms.Button();
-            this.txtSearchCa = new System.Windows.Forms.TextBox();
             
             this.pnlHeader.SuspendLayout();
             this.tabControlMain.SuspendLayout();
@@ -50,10 +44,6 @@ namespace src.Views
             this.pnlGridMon.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMonHoc)).BeginInit();
             this.pnlToolbarMon.SuspendLayout();
-            this.tabCaHoc.SuspendLayout();
-            this.pnlGridCa.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvCaHoc)).BeginInit();
-            this.pnlToolbarCa.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlHeader
@@ -93,7 +83,6 @@ namespace src.Views
             // 
             this.tabControlMain.Controls.Add(this.tabLopHoc);
             this.tabControlMain.Controls.Add(this.tabMonHoc);
-            this.tabControlMain.Controls.Add(this.tabCaHoc);
             this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControlMain.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.tabControlMain.Location = new System.Drawing.Point(20, 76);
@@ -260,86 +249,6 @@ namespace src.Views
             this.txtSearchMon.PlaceholderText = "🔍  Tìm môn học...";
             this.txtSearchMon.Size = new System.Drawing.Size(260, 24);
             this.txtSearchMon.TabIndex = 0;
-            // 
-            // tabCaHoc
-            // 
-            this.tabCaHoc.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(247)))), ((int)(((byte)(250)))));
-            this.tabCaHoc.Controls.Add(this.pnlGridCa);
-            this.tabCaHoc.Controls.Add(this.pnlToolbarCa);
-            this.tabCaHoc.Location = new System.Drawing.Point(4, 34);
-            this.tabCaHoc.Name = "tabCaHoc";
-            this.tabCaHoc.Size = new System.Drawing.Size(952, 462);
-            this.tabCaHoc.TabIndex = 2;
-            this.tabCaHoc.Text = "Ca học";
-            // 
-            // pnlGridCa
-            // 
-            this.pnlGridCa.BackColor = System.Drawing.Color.White;
-            this.pnlGridCa.Controls.Add(this.dgvCaHoc);
-            this.pnlGridCa.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlGridCa.Location = new System.Drawing.Point(0, 58);
-            this.pnlGridCa.Name = "pnlGridCa";
-            this.pnlGridCa.Padding = new System.Windows.Forms.Padding(12, 8, 12, 12);
-            this.pnlGridCa.Size = new System.Drawing.Size(952, 404);
-            this.pnlGridCa.TabIndex = 1;
-            // 
-            // dgvCaHoc
-            // 
-            this.dgvCaHoc.AllowUserToAddRows = false;
-            this.dgvCaHoc.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dgvCaHoc.BackgroundColor = System.Drawing.Color.White;
-            this.dgvCaHoc.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.dgvCaHoc.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
-            this.dgvCaHoc.ColumnHeadersHeight = 44;
-            this.dgvCaHoc.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvCaHoc.EnableHeadersVisualStyles = false;
-            this.dgvCaHoc.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(232)))), ((int)(((byte)(240)))));
-            this.dgvCaHoc.Location = new System.Drawing.Point(12, 8);
-            this.dgvCaHoc.Name = "dgvCaHoc";
-            this.dgvCaHoc.ReadOnly = true;
-            this.dgvCaHoc.RowHeadersVisible = false;
-            this.dgvCaHoc.RowTemplate.Height = 42;
-            this.dgvCaHoc.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvCaHoc.Size = new System.Drawing.Size(928, 384);
-            this.dgvCaHoc.TabIndex = 0;
-            // 
-            // pnlToolbarCa
-            // 
-            this.pnlToolbarCa.BackColor = System.Drawing.Color.White;
-            this.pnlToolbarCa.Controls.Add(this.btnAddCa);
-            this.pnlToolbarCa.Controls.Add(this.txtSearchCa);
-            this.pnlToolbarCa.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlToolbarCa.Location = new System.Drawing.Point(0, 0);
-            this.pnlToolbarCa.Name = "pnlToolbarCa";
-            this.pnlToolbarCa.Size = new System.Drawing.Size(952, 58);
-            this.pnlToolbarCa.TabIndex = 0;
-            // 
-            // btnAddCa
-            // 
-            this.btnAddCa.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(99)))), ((int)(((byte)(235)))));
-            this.btnAddCa.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnAddCa.FlatAppearance.BorderSize = 0;
-            this.btnAddCa.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddCa.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnAddCa.ForeColor = System.Drawing.Color.White;
-            this.btnAddCa.Location = new System.Drawing.Point(284, 13);
-            this.btnAddCa.Name = "btnAddCa";
-            this.btnAddCa.Size = new System.Drawing.Size(148, 32);
-            this.btnAddCa.TabIndex = 1;
-            this.btnAddCa.Text = "＋  Thêm ca học";
-            this.btnAddCa.UseVisualStyleBackColor = false;
-            // 
-            // txtSearchCa
-            // 
-            this.txtSearchCa.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(247)))), ((int)(((byte)(250)))));
-            this.txtSearchCa.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtSearchCa.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.txtSearchCa.Location = new System.Drawing.Point(12, 15);
-            this.txtSearchCa.Name = "txtSearchCa";
-            this.txtSearchCa.PlaceholderText = "🔍  Tìm ca học...";
-            this.txtSearchCa.Size = new System.Drawing.Size(260, 24);
-            this.txtSearchCa.TabIndex = 0;
-            // 
             // CatalogManageView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -365,11 +274,6 @@ namespace src.Views
             ((System.ComponentModel.ISupportInitialize)(this.dgvMonHoc)).EndInit();
             this.pnlToolbarMon.ResumeLayout(false);
             this.pnlToolbarMon.PerformLayout();
-            this.tabCaHoc.ResumeLayout(false);
-            this.pnlGridCa.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvCaHoc)).EndInit();
-            this.pnlToolbarCa.ResumeLayout(false);
-            this.pnlToolbarCa.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -392,11 +296,5 @@ namespace src.Views
         public System.Windows.Forms.Button btnAddMon;
         public System.Windows.Forms.Panel pnlGridMon;
         public System.Windows.Forms.DataGridView dgvMonHoc;
-        public System.Windows.Forms.TabPage tabCaHoc;
-        public System.Windows.Forms.Panel pnlToolbarCa;
-        public System.Windows.Forms.TextBox txtSearchCa;
-        public System.Windows.Forms.Button btnAddCa;
-        public System.Windows.Forms.Panel pnlGridCa;
-        public System.Windows.Forms.DataGridView dgvCaHoc;
     }
 }
