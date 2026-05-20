@@ -132,6 +132,12 @@ namespace src.Forms
                 // Đăng nhập thành công – ẩn LoginForm rồi mở MainForm
                 lblError.Visible = false;
                 bool isAdmin = vaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+
+                // Lưu thông tin user vào session
+                AppSession.MaNguoiDung = Convert.ToInt32(row["MaNguoiDung"]);
+                AppSession.HoTen       = hoTen;
+                AppSession.IsAdmin     = isAdmin;
+
                 this.Hide();
                 var mainForm = new MainForm(hoTen, isAdmin);
                 // Khi MainForm đóng: nếu thoát bình thường (không phải logout) thì Exit
