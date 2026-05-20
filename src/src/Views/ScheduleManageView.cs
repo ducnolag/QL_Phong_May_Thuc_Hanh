@@ -537,6 +537,31 @@ namespace src.Views
                         }
                         try
                         {
+                            // Lớp đặt trùng ca/ngày – kiểm tra lúc Sửa
+                            object lopVal = cboLop.SelectedValue;
+                            if (lopVal == null && !string.IsNullOrWhiteSpace(cboLop.Text))
+                                lopVal = DatabaseHelper.ExecuteScalar(
+                                    "SELECT MaLop FROM LOP_HOC WHERE TenLop = @ten",
+                                    new SqlParameter("@ten", cboLop.Text.Trim()));
+
+                            if (lopVal != null && cboCa.SelectedValue != null)
+                            {
+                                int dupClass = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                    @"SELECT COUNT(*) FROM LICH_THUC_HANH l
+                                      WHERE l.MaLop = @lop AND l.NgayThucHanh = @date AND l.MaCa = @ca
+                                        AND l.TrangThaiLich != N'Đã hủy' AND l.MaLich != @currentId",
+                                    new SqlParameter("@lop",       lopVal),
+                                    new SqlParameter("@date",      date.Date),
+                                    new SqlParameter("@ca",        cboCa.SelectedValue),
+                                    new SqlParameter("@currentId", scheduleId)));
+                                if (dupClass > 0)
+                                {
+                                    MessageBox.Show("Lớp này đã có lịch thực hành vào cùng ngày và ca học đó rồi! Vui lòng chọn ngày hoặc ca khác.",
+                                        "Trùng lịch lớp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    e.Cancel = true; return;
+                                }
+                            }
+
                             if (cboRoom != null && cboRoom.SelectedIndex > 0)
                             {
                                 int? roomId = ParseRoomId(cboRoom.SelectedItem?.ToString());
