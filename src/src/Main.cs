@@ -9,9 +9,9 @@ namespace src
 {
     public partial class MainForm : Form
     {
-        private Button btnActiveMenu;
-        private string _currentUser;
-        private bool _isAdmin;
+        private Button _activeBtn;
+        internal string _currentUser;
+        internal bool _isAdmin;
         private UserControl _currentView;
 
         public MainForm(string username = "admin", bool isAdmin = true)
@@ -19,160 +19,218 @@ namespace src
             InitializeComponent();
             _currentUser = username;
             _isAdmin = isAdmin;
-            
             SetupUI();
         }
 
+        // ── Thiết lập giao diện ban đầu ──────────────────────────────
         private void SetupUI()
         {
-            // Setup Profile Info
+            // Thông tin user
             lblUsername.Text = _currentUser;
-            lblAvatar.Text = _currentUser.Length > 0 ? _currentUser.Substring(0, 1).ToUpper() : "?";
+            lblAvatar.Text = _currentUser.Length > 0 ? _currentUser[0].ToString().ToUpper() : "?";
             lblRole.Text = _isAdmin ? "Quản trị viên" : "Nhân viên";
 
-            // Hide admin menus if not admin
+            // Avatar tròn – dùng Paint để bo tròn nền
+            lblAvatar.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                // Vẽ nền tròn xanh
+                using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
+                    e.Graphics.FillEllipse(br, 1, 1, lblAvatar.Width - 3, lblAvatar.Height - 3);
+                // Vẽ chữ cái
+                TextRenderer.DrawText(e.Graphics, lblAvatar.Text,
+                    new Font("Segoe UI", 13F, FontStyle.Bold),
+                    lblAvatar.ClientRectangle, Color.White,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                // Cắt region hình tròn
+                using (var path = new GraphicsPath())
+                {
+                    path.AddEllipse(0, 0, lblAvatar.Width - 1, lblAvatar.Height - 1);
+                    lblAvatar.Region = new Region(path);
+                }
+            };
+
+            // Logo icon bo tròn
+            lblLogoIcon.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = UIHelper.GetRoundedRectPath(lblLogoIcon.ClientRectangle, 8))
+                {
+                    lblLogoIcon.Region = new Region(path);
+                    using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
+                        e.Graphics.FillPath(br, path);
+                }
+                TextRenderer.DrawText(e.Graphics, "🖥", new Font("Segoe UI", 14F),
+                    lblLogoIcon.ClientRectangle, Color.White,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            };
+            lblLogoIcon.Text = ""; // Tránh render đôi
+
+            // Sidebar – vẽ đường viền phải
+            pnlSidebar.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                    e.Graphics.DrawLine(pen, pnlSidebar.Width - 1, 0,
+                        pnlSidebar.Width - 1, pnlSidebar.Height);
+            };
+
+            // Ẩn menu nếu không phải admin
             if (!_isAdmin)
             {
-                btnUserManage.Visible = false;
-                btnReports.Visible = false;
+                btnUserManage.Visible  = false;
+                btnRoomManage.Visible  = false;
+                btnCatalog.Visible     = false;
+                btnReports.Visible     = false;
             }
 
-            // Topbar Date
-            lblDate.Text = DateTime.Now.ToString("dddd, dd/MM/yyyy");
-
-            // Logout events
-            btnLogout.MouseEnter += (s, e) => btnLogout.ForeColor = ThemeColors.AccentRed;
-            btnLogout.MouseLeave += (s, e) => btnLogout.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
+            // Sự kiện nút logout
             btnLogout.Click += (s, e) =>
             {
                 if (MessageBox.Show("Bạn có chắc muốn đăng xuất?", "Xác nhận",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    this.Hide();
-                    new Forms.LoginForm().Show();
-                    this.Close();
+                    Application.Restart();
                 }
             };
 
-            // Topbar border line
-            pnlTopbar.Paint += (s, e) =>
+            // Gắn Click cho tất cả nút menu
+            btnUserManage.Click    += MenuBtn_Click;
+            btnRoomManage.Click    += MenuBtn_Click;
+            btnComputerManage.Click+= MenuBtn_Click;
+            btnCatalog.Click       += MenuBtn_Click;
+            btnScheduleManage.Click+= MenuBtn_Click;
+            btnReports.Click       += MenuBtn_Click;
+
+            // Dồn layout sau khi form đã load xong (tránh WinForms reset vị trí)
+            this.Load += (s, e) =>
             {
-                using (var pen = new Pen(Color.FromArgb(25, 0, 0, 0)))
-                    e.Graphics.DrawLine(pen, 0, pnlTopbar.Height - 1, pnlTopbar.Width, pnlTopbar.Height - 1);
+                // Ẩn Dashboard khỏi sidebar
+                btnDashboard.Visible = false;
+                RelayoutMenuButtons();
+                // Admin mở báo cáo, NhanViên mở lịch thực hành
+                NavigateTo(_isAdmin ? "Reports" : "ScheduleManage");
             };
-
-            // Attach events to menu buttons
-            foreach (Control c in pnlSidebarMenu.Controls)
-            {
-                if (c is Button btn)
-                {
-                    btn.Click += MenuButton_Click;
-                    btn.Paint += MenuButton_Paint;
-                }
-            }
-
-            // Navigate to default
-            NavigateTo("Dashboard");
         }
 
-        private void MenuButton_Click(object sender, EventArgs e)
+        // ── Dồn các nút menu visible lên trên (sau khi ẩn theo role) ──
+        /// <summary>
+        /// Tái bố cục các nút sidebar: nút nào visible thì xếp từ trên xuống,
+        /// cách nhau 52px. Đảm bảo role Nhân viên không có khoảng trống.
+        /// </summary>
+        private void RelayoutMenuButtons()
         {
-            if (sender is Button btn)
+            Button[] menuBtns = { btnUserManage, btnRoomManage,
+                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
+            int y = 12; // vị trí Y bắt đầu, cách top 12px
+            foreach (var b in menuBtns)
             {
-                SetActiveMenu(btn);
-                if (btn.Tag != null)
+                if (b.Visible)
                 {
-                    NavigateTo(btn.Tag.ToString());
+                    b.Location = new Point(12, y);
+                    y += 52; // khoảng cách giữa các nút
                 }
             }
         }
 
-        private void MenuButton_Paint(object sender, PaintEventArgs e)
+        // ── Click menu sidebar ────────────────────────────────────────
+        private void MenuBtn_Click(object sender, EventArgs e)
         {
-            if (sender is Button btn && btn == btnActiveMenu)
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                
-                // Draw highlighted rounded rect
-                using (var p = UIHelper.GetRoundedRectPath(btn.ClientRectangle, 8))
-                using (var br = new SolidBrush(Color.FromArgb(25, 56, 103, 214)))
-                    e.Graphics.FillPath(br, p);
-
-                // Draw left blue indicator line
-                using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
-                    e.Graphics.FillRectangle(br, 0, 6, 3, btn.Height - 12);
-            }
+            if (sender is Button btn && btn.Tag != null)
+                NavigateTo(btn.Tag.ToString());
         }
 
+        // ── Đặt trạng thái active cho nút menu ───────────────────────
+        /// <summary>
+        /// Highlight nút menu đang active: nền xanh nhạt + chữ xanh đậm.
+        /// Dùng BackColor thay vì override Paint để text vẫn hiển thị đúng.
+        /// </summary>
         private void SetActiveMenu(Button btn)
         {
-            foreach (Control c in pnlSidebarMenu.Controls)
+            Button[] menuBtns = { btnUserManage, btnRoomManage,
+                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
+
+            // Bước 1: Reset tất cả nút và gỡ handler cũ (tránh chồng chuyện event)
+            foreach (var b in menuBtns)
             {
-                if (c is Button mb)
-                {
-                    mb.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-                    mb.Font = new Font("Segoe UI", 10F);
-                    mb.Invalidate();
-                }
+                b.Paint -= ActiveBtn_Paint;   // gỡ indicator khỏi mọi nút trước
+                b.BackColor = Color.Transparent;
+                b.ForeColor = ThemeColors.SidebarText;
+                b.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+                b.FlatAppearance.MouseOverBackColor = Color.FromArgb(248, 250, 252);
+                b.Invalidate();
             }
-            btnActiveMenu = btn;
-            btn.ForeColor = Color.White;
-            btn.Font = ThemeColors.SidebarActiveFont;
+
+            // Bước 2: Gắn active style và handler cho nút mới
+            _activeBtn = btn;
+            btn.BackColor = ThemeColors.SidebarActiveBg;   // nền xanh nhạt
+            btn.ForeColor = ThemeColors.PrimaryBlue;        // chữ xanh đậm
+            btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btn.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarActiveBg;
+            btn.Paint += ActiveBtn_Paint;  // gắn handler – giữ mãi đến khi đổi view
             btn.Invalidate();
         }
 
+        // ── Vẽ thanh indicator trái cho active button ─────────────────
+        private void ActiveBtn_Paint(object sender, PaintEventArgs e)
+        {
+            // Chỉ vẽ khi đây là nút đang active
+            if (sender is Button btn && btn == _activeBtn)
+            {
+                using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
+                    e.Graphics.FillRectangle(br, 0, 6, 3, btn.Height - 12);
+            }
+            // QUAN TRỌNG: không tự hủy event – indicator phải còn sau khi hover/leave
+        }
+
+        // ── Điều hướng đến view ────────────────────────────────────────
+        /// <summary>
+        /// Load UserControl tương ứng vào vùng nội dung chính (pnlContent).
+        /// </summary>
         private void NavigateTo(string viewName)
         {
+            // Gỡ view cũ
             if (_currentView != null)
             {
                 pnlContent.Controls.Remove(_currentView);
                 _currentView.Dispose();
+                _currentView = null;
             }
 
-            switch (viewName)
+            // Tạo view mới
+            _currentView = viewName switch
             {
-                case "Dashboard":
-                    _currentView = new DashboardView();
-                    lblPageTitle.Text = "📊  Dashboard";
-                    break;
-                case "RoomManage":
-                    _currentView = new RoomManageView();
-                    lblPageTitle.Text = "🏢  Quản Lý Phòng Máy";
-                    break;
-                case "ComputerManage":
-                    _currentView = new ComputerManageView();
-                    lblPageTitle.Text = "💻  Quản Lý Máy Tính";
-                    break;
-                case "ScheduleManage":
-                    _currentView = new ScheduleManageView();
-                    lblPageTitle.Text = "📅  Lịch Thực Hành";
-                    break;
-                case "UserManage":
-                    _currentView = new UserManageView();
-                    lblPageTitle.Text = "👥  Quản Lý Người Dùng";
-                    break;
-                case "Reports":
-                    _currentView = new ReportsView();
-                    lblPageTitle.Text = "📈  Báo Cáo & Thống Kê";
-                    break;
-                default:
-                    _currentView = new DashboardView();
-                    lblPageTitle.Text = "📊  Dashboard";
-                    break;
-            }
+                "Dashboard"       => (UserControl)new DashboardView(),
+                "RoomManage"      => new RoomManageView(),
+                "ComputerManage"  => new ComputerManageView(),
+                "CatalogManage"   => new CatalogManageView(),
+                "ScheduleManage"  => new ScheduleManageView(),
+                "UserManage"      => new UserManageView(),
+                "Reports"         => new ReportsView(),
+                _                 => new RoomManageView()
+            };
 
             _currentView.Dock = DockStyle.Fill;
             pnlContent.Controls.Add(_currentView);
+            _currentView.BringToFront();
 
-            // Sync active menu button
-            foreach (Control c in pnlSidebarMenu.Controls)
+            // Đồng bộ active menu
+            Button[] menuBtns = { btnUserManage, btnRoomManage,
+                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
+            foreach (var b in menuBtns)
             {
-                if (c is Button mb && mb.Tag?.ToString() == viewName)
+                if (b.Tag?.ToString() == viewName)
                 {
-                    SetActiveMenu(mb);
+                    SetActiveMenu(b);
                     break;
                 }
             }
+        }
+        /// <summary>Cập nhật tên hiển thị trên sidebar khi admin sửa hồ sơ của mình.</summary>
+        public void UpdateSidebarName(string newHoTen)
+        {
+            lblUsername.Text  = newHoTen;
+            lblAvatar.Text    = newHoTen.Length > 0 ? newHoTen[0].ToString().ToUpper() : "?";
+            lblAvatar.Invalidate();
         }
     }
 }

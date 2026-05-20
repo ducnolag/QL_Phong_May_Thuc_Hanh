@@ -20,342 +20,339 @@ namespace src
             this.pnlSidebar = new System.Windows.Forms.Panel();
             this.pnlSidebarMenu = new System.Windows.Forms.Panel();
             this.btnReports = new System.Windows.Forms.Button();
-            this.btnUserManage = new System.Windows.Forms.Button();
             this.btnScheduleManage = new System.Windows.Forms.Button();
             this.btnComputerManage = new System.Windows.Forms.Button();
             this.btnRoomManage = new System.Windows.Forms.Button();
+            this.btnUserManage = new System.Windows.Forms.Button();
+            this.btnCatalog = new System.Windows.Forms.Button();
             this.btnDashboard = new System.Windows.Forms.Button();
-            this.lblSection = new System.Windows.Forms.Label();
             this.pnlProfile = new System.Windows.Forms.Panel();
             this.lblRole = new System.Windows.Forms.Label();
             this.lblUsername = new System.Windows.Forms.Label();
             this.lblAvatar = new System.Windows.Forms.Label();
-            this.btnLogout = new System.Windows.Forms.Label();
+            this.pnlLogout = new System.Windows.Forms.Panel();
+            this.btnLogout = new System.Windows.Forms.Button();
             this.pnlLogo = new System.Windows.Forms.Panel();
             this.lblLogo = new System.Windows.Forms.Label();
-            this.pnlTopbar = new System.Windows.Forms.Panel();
-            this.lblDate = new System.Windows.Forms.Label();
-            this.lblPageTitle = new System.Windows.Forms.Label();
+            this.lblLogoIcon = new System.Windows.Forms.Label();
             this.pnlContent = new System.Windows.Forms.Panel();
+            this.pnlSeparator = new System.Windows.Forms.Panel();
             this.pnlSidebar.SuspendLayout();
             this.pnlSidebarMenu.SuspendLayout();
             this.pnlProfile.SuspendLayout();
+            this.pnlLogout.SuspendLayout();
             this.pnlLogo.SuspendLayout();
-            this.pnlTopbar.SuspendLayout();
             this.SuspendLayout();
-            
-            // pnlSidebar
-            this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(18, 25, 50);
+
+            // ─── pnlSidebar ── Sidebar trắng, độ rộng cố định 240px ──
+            this.pnlSidebar.BackColor = System.Drawing.Color.White;
             this.pnlSidebar.Controls.Add(this.pnlSidebarMenu);
+            this.pnlSidebar.Controls.Add(this.pnlSeparator);
             this.pnlSidebar.Controls.Add(this.pnlProfile);
+            this.pnlSidebar.Controls.Add(this.pnlLogout);
             this.pnlSidebar.Controls.Add(this.pnlLogo);
             this.pnlSidebar.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlSidebar.Location = new System.Drawing.Point(0, 0);
             this.pnlSidebar.Name = "pnlSidebar";
-            this.pnlSidebar.Size = new System.Drawing.Size(250, 720);
-            
-            // pnlSidebarMenu
-            this.pnlSidebarMenu.BackColor = System.Drawing.Color.Transparent;
-            this.pnlSidebarMenu.Controls.Add(this.btnReports);
-            this.pnlSidebarMenu.Controls.Add(this.btnUserManage);
-            this.pnlSidebarMenu.Controls.Add(this.btnScheduleManage);
-            this.pnlSidebarMenu.Controls.Add(this.btnComputerManage);
-            this.pnlSidebarMenu.Controls.Add(this.btnRoomManage);
-            this.pnlSidebarMenu.Controls.Add(this.btnDashboard);
-            this.pnlSidebarMenu.Controls.Add(this.lblSection);
-            this.pnlSidebarMenu.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlSidebarMenu.Location = new System.Drawing.Point(0, 70);
-            this.pnlSidebarMenu.Name = "pnlSidebarMenu";
-            this.pnlSidebarMenu.Padding = new System.Windows.Forms.Padding(10, 8, 10, 8);
-            this.pnlSidebarMenu.Size = new System.Drawing.Size(250, 585);
-            
-            // btnReports
-            this.btnReports.BackColor = System.Drawing.Color.Transparent;
-            this.btnReports.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnReports.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnReports.FlatAppearance.BorderSize = 0;
-            this.btnReports.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnReports.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnReports.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnReports.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnReports.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnReports.Location = new System.Drawing.Point(10, 240);
-            this.btnReports.Name = "btnReports";
-            this.btnReports.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnReports.Size = new System.Drawing.Size(230, 40);
-            this.btnReports.TabIndex = 6;
-            this.btnReports.Tag = "Reports";
-            this.btnReports.Text = "  📈   Báo Cáo";
-            this.btnReports.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnReports.UseVisualStyleBackColor = false;
-            
-            // btnUserManage
-            this.btnUserManage.BackColor = System.Drawing.Color.Transparent;
-            this.btnUserManage.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnUserManage.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnUserManage.FlatAppearance.BorderSize = 0;
-            this.btnUserManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnUserManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnUserManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnUserManage.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnUserManage.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnUserManage.Location = new System.Drawing.Point(10, 200);
-            this.btnUserManage.Name = "btnUserManage";
-            this.btnUserManage.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnUserManage.Size = new System.Drawing.Size(230, 40);
-            this.btnUserManage.TabIndex = 5;
-            this.btnUserManage.Tag = "UserManage";
-            this.btnUserManage.Text = "  👥   Người Dùng";
-            this.btnUserManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnUserManage.UseVisualStyleBackColor = false;
-            
-            // btnScheduleManage
-            this.btnScheduleManage.BackColor = System.Drawing.Color.Transparent;
-            this.btnScheduleManage.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnScheduleManage.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnScheduleManage.FlatAppearance.BorderSize = 0;
-            this.btnScheduleManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnScheduleManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnScheduleManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnScheduleManage.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnScheduleManage.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnScheduleManage.Location = new System.Drawing.Point(10, 160);
-            this.btnScheduleManage.Name = "btnScheduleManage";
-            this.btnScheduleManage.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnScheduleManage.Size = new System.Drawing.Size(230, 40);
-            this.btnScheduleManage.TabIndex = 4;
-            this.btnScheduleManage.Tag = "ScheduleManage";
-            this.btnScheduleManage.Text = "  📅   Lịch Thực Hành";
-            this.btnScheduleManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnScheduleManage.UseVisualStyleBackColor = false;
-            
-            // btnComputerManage
-            this.btnComputerManage.BackColor = System.Drawing.Color.Transparent;
-            this.btnComputerManage.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnComputerManage.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnComputerManage.FlatAppearance.BorderSize = 0;
-            this.btnComputerManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnComputerManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnComputerManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnComputerManage.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnComputerManage.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnComputerManage.Location = new System.Drawing.Point(10, 120);
-            this.btnComputerManage.Name = "btnComputerManage";
-            this.btnComputerManage.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnComputerManage.Size = new System.Drawing.Size(230, 40);
-            this.btnComputerManage.TabIndex = 3;
-            this.btnComputerManage.Tag = "ComputerManage";
-            this.btnComputerManage.Text = "  💻   Máy Tính";
-            this.btnComputerManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnComputerManage.UseVisualStyleBackColor = false;
-            
-            // btnRoomManage
-            this.btnRoomManage.BackColor = System.Drawing.Color.Transparent;
-            this.btnRoomManage.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnRoomManage.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnRoomManage.FlatAppearance.BorderSize = 0;
-            this.btnRoomManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnRoomManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnRoomManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRoomManage.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnRoomManage.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnRoomManage.Location = new System.Drawing.Point(10, 80);
-            this.btnRoomManage.Name = "btnRoomManage";
-            this.btnRoomManage.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnRoomManage.Size = new System.Drawing.Size(230, 40);
-            this.btnRoomManage.TabIndex = 2;
-            this.btnRoomManage.Tag = "RoomManage";
-            this.btnRoomManage.Text = "  🏢   Phòng Máy";
-            this.btnRoomManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnRoomManage.UseVisualStyleBackColor = false;
-            
-            // btnDashboard
-            this.btnDashboard.BackColor = System.Drawing.Color.Transparent;
-            this.btnDashboard.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnDashboard.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnDashboard.FlatAppearance.BorderSize = 0;
-            this.btnDashboard.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(30, 45, 80);
-            this.btnDashboard.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(25, 35, 65);
-            this.btnDashboard.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDashboard.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnDashboard.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnDashboard.Location = new System.Drawing.Point(10, 40);
-            this.btnDashboard.Name = "btnDashboard";
-            this.btnDashboard.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.btnDashboard.Size = new System.Drawing.Size(230, 40);
-            this.btnDashboard.TabIndex = 1;
-            this.btnDashboard.Tag = "Dashboard";
-            this.btnDashboard.Text = "  📊   Dashboard";
-            this.btnDashboard.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDashboard.UseVisualStyleBackColor = false;
-            
-            // lblSection
-            this.lblSection.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblSection.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
-            this.lblSection.ForeColor = System.Drawing.Color.FromArgb(90, 255, 255, 255);
-            this.lblSection.Location = new System.Drawing.Point(10, 8);
-            this.lblSection.Name = "lblSection";
-            this.lblSection.Size = new System.Drawing.Size(230, 32);
-            this.lblSection.TabIndex = 0;
-            this.lblSection.Text = "  MENU CHÍNH";
-            this.lblSection.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-            
-            // pnlProfile
-            this.pnlProfile.BackColor = System.Drawing.Color.FromArgb(22, 30, 60);
-            this.pnlProfile.Controls.Add(this.lblRole);
-            this.pnlProfile.Controls.Add(this.lblUsername);
-            this.pnlProfile.Controls.Add(this.lblAvatar);
-            this.pnlProfile.Controls.Add(this.btnLogout);
-            this.pnlProfile.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlProfile.Location = new System.Drawing.Point(0, 655);
-            this.pnlProfile.Name = "pnlProfile";
-            this.pnlProfile.Size = new System.Drawing.Size(250, 65);
-            
-            // lblRole
-            this.lblRole.AutoSize = true;
-            this.lblRole.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.lblRole.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.lblRole.Location = new System.Drawing.Point(58, 32);
-            this.lblRole.Name = "lblRole";
-            this.lblRole.Size = new System.Drawing.Size(78, 15);
-            this.lblRole.TabIndex = 3;
-            this.lblRole.Text = "Quản trị viên";
-            
-            // lblUsername
-            this.lblUsername.AutoSize = true;
-            this.lblUsername.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            this.lblUsername.ForeColor = System.Drawing.Color.White;
-            this.lblUsername.Location = new System.Drawing.Point(58, 12);
-            this.lblUsername.Name = "lblUsername";
-            this.lblUsername.Size = new System.Drawing.Size(95, 17);
-            this.lblUsername.TabIndex = 2;
-            this.lblUsername.Text = "Administrator";
-            
-            // lblAvatar
-            this.lblAvatar.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
-            this.lblAvatar.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
-            this.lblAvatar.ForeColor = System.Drawing.Color.White;
-            this.lblAvatar.Location = new System.Drawing.Point(12, 13);
-            this.lblAvatar.Name = "lblAvatar";
-            this.lblAvatar.Size = new System.Drawing.Size(38, 38);
-            this.lblAvatar.TabIndex = 1;
-            this.lblAvatar.Text = "A";
-            this.lblAvatar.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            
-            // btnLogout
-            this.btnLogout.BackColor = System.Drawing.Color.Transparent;
-            this.btnLogout.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 13F);
-            this.btnLogout.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            this.btnLogout.Location = new System.Drawing.Point(210, 18);
-            this.btnLogout.Name = "btnLogout";
-            this.btnLogout.Size = new System.Drawing.Size(30, 30);
-            this.btnLogout.TabIndex = 0;
-            this.btnLogout.Text = "🚪";
-            this.btnLogout.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            
-            // pnlLogo
-            this.pnlLogo.BackColor = System.Drawing.Color.Transparent;
+            this.pnlSidebar.Size = new System.Drawing.Size(240, 720);
+            this.pnlSidebar.TabIndex = 0;
+
+            // ─── pnlLogo ── Logo phía trên (65px) ──
+            this.pnlLogo.BackColor = System.Drawing.Color.White;
             this.pnlLogo.Controls.Add(this.lblLogo);
+            this.pnlLogo.Controls.Add(this.lblLogoIcon);
             this.pnlLogo.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlLogo.Location = new System.Drawing.Point(0, 0);
             this.pnlLogo.Name = "pnlLogo";
-            this.pnlLogo.Size = new System.Drawing.Size(250, 70);
-            
-            // lblLogo
-            this.lblLogo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblLogo.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
-            this.lblLogo.ForeColor = System.Drawing.Color.White;
-            this.lblLogo.Location = new System.Drawing.Point(0, 0);
+            this.pnlLogo.Size = new System.Drawing.Size(240, 65);
+            this.pnlLogo.TabIndex = 3;
+
+            // ─── lblLogoIcon ── Icon vuông bo tròn ──
+            this.lblLogoIcon.BackColor = System.Drawing.Color.FromArgb(0, 102, 255);
+            this.lblLogoIcon.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblLogoIcon.ForeColor = System.Drawing.Color.White;
+            this.lblLogoIcon.Location = new System.Drawing.Point(16, 14);
+            this.lblLogoIcon.Name = "lblLogoIcon";
+            this.lblLogoIcon.Size = new System.Drawing.Size(36, 36);
+            this.lblLogoIcon.TabIndex = 0;
+            this.lblLogoIcon.Text = "🖥";
+            this.lblLogoIcon.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            // ─── lblLogo ── Tên ứng dụng ──
+            this.lblLogo.AutoSize = false;
+            this.lblLogo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.lblLogo.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            this.lblLogo.Location = new System.Drawing.Point(60, 18);
             this.lblLogo.Name = "lblLogo";
-            this.lblLogo.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
-            this.lblLogo.Size = new System.Drawing.Size(250, 70);
-            this.lblLogo.TabIndex = 0;
-            this.lblLogo.Text = "🎓  LabManager";
-            this.lblLogo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            
-            // pnlTopbar
-            this.pnlTopbar.BackColor = System.Drawing.Color.White;
-            this.pnlTopbar.Controls.Add(this.lblDate);
-            this.pnlTopbar.Controls.Add(this.lblPageTitle);
-            this.pnlTopbar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlTopbar.Location = new System.Drawing.Point(250, 0);
-            this.pnlTopbar.Name = "pnlTopbar";
-            this.pnlTopbar.Size = new System.Drawing.Size(1030, 60);
-            
-            // lblDate
-            this.lblDate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.lblDate.AutoSize = true;
-            this.lblDate.BackColor = System.Drawing.Color.Transparent;
-            this.lblDate.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblDate.ForeColor = System.Drawing.Color.FromArgb(100, 110, 125);
-            this.lblDate.Location = new System.Drawing.Point(850, 22);
-            this.lblDate.Name = "lblDate";
-            this.lblDate.Size = new System.Drawing.Size(100, 15);
-            this.lblDate.TabIndex = 1;
-            this.lblDate.Text = "Monday, 01/01/2026";
-            
-            // lblPageTitle
-            this.lblPageTitle.AutoSize = true;
-            this.lblPageTitle.BackColor = System.Drawing.Color.Transparent;
-            this.lblPageTitle.Font = new System.Drawing.Font("Segoe UI", 17F, System.Drawing.FontStyle.Bold);
-            this.lblPageTitle.ForeColor = System.Drawing.Color.FromArgb(40, 45, 60);
-            this.lblPageTitle.Location = new System.Drawing.Point(22, 14);
-            this.lblPageTitle.Name = "lblPageTitle";
-            this.lblPageTitle.Size = new System.Drawing.Size(131, 31);
-            this.lblPageTitle.TabIndex = 0;
-            this.lblPageTitle.Text = "Dashboard";
-            
-            // pnlContent
-            this.pnlContent.BackColor = System.Drawing.Color.FromArgb(245, 247, 252);
+            this.lblLogo.Size = new System.Drawing.Size(170, 28);
+            this.lblLogo.TabIndex = 1;
+            this.lblLogo.Text = "PC Room System";
+
+            // ─── pnlProfile ── Thông tin user (75px) ──
+            this.pnlProfile.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.pnlProfile.Controls.Add(this.lblRole);
+            this.pnlProfile.Controls.Add(this.lblUsername);
+            this.pnlProfile.Controls.Add(this.lblAvatar);
+            this.pnlProfile.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlProfile.Location = new System.Drawing.Point(0, 65);
+            this.pnlProfile.Name = "pnlProfile";
+            this.pnlProfile.Size = new System.Drawing.Size(240, 72);
+            this.pnlProfile.TabIndex = 2;
+
+            // ─── lblAvatar ── Chữ cái đầu tên user ──
+            this.lblAvatar.BackColor = System.Drawing.Color.FromArgb(0, 102, 255);
+            this.lblAvatar.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+            this.lblAvatar.ForeColor = System.Drawing.Color.White;
+            this.lblAvatar.Location = new System.Drawing.Point(16, 16);
+            this.lblAvatar.Name = "lblAvatar";
+            this.lblAvatar.Size = new System.Drawing.Size(40, 40);
+            this.lblAvatar.TabIndex = 0;
+            this.lblAvatar.Text = "A";
+            this.lblAvatar.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            // ─── lblUsername ──
+            this.lblUsername.AutoSize = false;
+            this.lblUsername.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblUsername.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            this.lblUsername.Location = new System.Drawing.Point(64, 14);
+            this.lblUsername.Name = "lblUsername";
+            this.lblUsername.Size = new System.Drawing.Size(164, 22);
+            this.lblUsername.TabIndex = 1;
+            this.lblUsername.Text = "admin";
+
+            // ─── lblRole ──
+            this.lblRole.AutoSize = false;
+            this.lblRole.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.lblRole.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            this.lblRole.Location = new System.Drawing.Point(64, 37);
+            this.lblRole.Name = "lblRole";
+            this.lblRole.Size = new System.Drawing.Size(164, 18);
+            this.lblRole.TabIndex = 2;
+            this.lblRole.Text = "Admin";
+
+            // ─── pnlSeparator ── Đường kẻ ngăn cách mỏng ──
+            this.pnlSeparator.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.pnlSeparator.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlSeparator.Location = new System.Drawing.Point(0, 137);
+            this.pnlSeparator.Name = "pnlSeparator";
+            this.pnlSeparator.Size = new System.Drawing.Size(240, 1);
+            this.pnlSeparator.TabIndex = 4;
+
+            // ─── pnlSidebarMenu ── Khu vực menu (vị trí cố định để Designer hoạt động) ──
+            this.pnlSidebarMenu.BackColor = System.Drawing.Color.Transparent;
+            this.pnlSidebarMenu.Controls.Add(this.btnDashboard);
+            this.pnlSidebarMenu.Controls.Add(this.btnUserManage);
+            this.pnlSidebarMenu.Controls.Add(this.btnRoomManage);
+            this.pnlSidebarMenu.Controls.Add(this.btnComputerManage);
+            this.pnlSidebarMenu.Controls.Add(this.btnCatalog);
+            this.pnlSidebarMenu.Controls.Add(this.btnScheduleManage);
+            this.pnlSidebarMenu.Controls.Add(this.btnReports);
+            this.pnlSidebarMenu.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlSidebarMenu.Location = new System.Drawing.Point(0, 138);
+            this.pnlSidebarMenu.Name = "pnlSidebarMenu";
+            this.pnlSidebarMenu.Size = new System.Drawing.Size(240, 527);
+            this.pnlSidebarMenu.TabIndex = 1;
+
+            // ─── btnDashboard ── Vị trí tuyệt đối để Designer kéo thả được ──
+            this.btnDashboard.BackColor = System.Drawing.Color.Transparent;
+            this.btnDashboard.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnDashboard.FlatAppearance.BorderSize = 0;
+            this.btnDashboard.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnDashboard.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnDashboard.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnDashboard.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnDashboard.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnDashboard.Location = new System.Drawing.Point(12, 12);
+            this.btnDashboard.Name = "btnDashboard";
+            this.btnDashboard.Size = new System.Drawing.Size(216, 44);
+            this.btnDashboard.TabIndex = 0;
+            this.btnDashboard.Tag = "Dashboard";
+            this.btnDashboard.Text = "⊞   Dashboard";
+            this.btnDashboard.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnDashboard.UseVisualStyleBackColor = false;
+
+            // ─── btnUserManage ──
+            this.btnUserManage.BackColor = System.Drawing.Color.Transparent;
+            this.btnUserManage.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnUserManage.FlatAppearance.BorderSize = 0;
+            this.btnUserManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnUserManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnUserManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUserManage.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnUserManage.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnUserManage.Location = new System.Drawing.Point(12, 64);
+            this.btnUserManage.Name = "btnUserManage";
+            this.btnUserManage.Size = new System.Drawing.Size(216, 44);
+            this.btnUserManage.TabIndex = 1;
+            this.btnUserManage.Tag = "UserManage";
+            this.btnUserManage.Text = "👤   User Management";
+            this.btnUserManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnUserManage.UseVisualStyleBackColor = false;
+
+            // ─── btnRoomManage ──
+            this.btnRoomManage.BackColor = System.Drawing.Color.Transparent;
+            this.btnRoomManage.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnRoomManage.FlatAppearance.BorderSize = 0;
+            this.btnRoomManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnRoomManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnRoomManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRoomManage.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnRoomManage.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnRoomManage.Location = new System.Drawing.Point(12, 116);
+            this.btnRoomManage.Name = "btnRoomManage";
+            this.btnRoomManage.Size = new System.Drawing.Size(216, 44);
+            this.btnRoomManage.TabIndex = 2;
+            this.btnRoomManage.Tag = "RoomManage";
+            this.btnRoomManage.Text = "🏢   Room Management";
+            this.btnRoomManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnRoomManage.UseVisualStyleBackColor = false;
+
+            // ─── btnComputerManage ──
+            this.btnComputerManage.BackColor = System.Drawing.Color.Transparent;
+            this.btnComputerManage.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnComputerManage.FlatAppearance.BorderSize = 0;
+            this.btnComputerManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnComputerManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnComputerManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnComputerManage.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnComputerManage.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnComputerManage.Location = new System.Drawing.Point(12, 168);
+            this.btnComputerManage.Name = "btnComputerManage";
+            this.btnComputerManage.Size = new System.Drawing.Size(216, 44);
+            this.btnComputerManage.TabIndex = 3;
+            this.btnComputerManage.Tag = "ComputerManage";
+            this.btnComputerManage.Text = "💻   Computers";
+            this.btnComputerManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnComputerManage.UseVisualStyleBackColor = false;
+
+            // ─── btnScheduleManage ──
+            this.btnScheduleManage.BackColor = System.Drawing.Color.Transparent;
+            this.btnScheduleManage.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnScheduleManage.FlatAppearance.BorderSize = 0;
+            this.btnScheduleManage.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnScheduleManage.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnScheduleManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnScheduleManage.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnScheduleManage.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnScheduleManage.Location = new System.Drawing.Point(12, 220);
+            this.btnScheduleManage.Name = "btnScheduleManage";
+            this.btnScheduleManage.Size = new System.Drawing.Size(216, 44);
+            this.btnScheduleManage.TabIndex = 4;
+            this.btnScheduleManage.Tag = "ScheduleManage";
+            this.btnScheduleManage.Text = "📅   Practice Calendar";
+            this.btnScheduleManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnScheduleManage.UseVisualStyleBackColor = false;
+
+            // ─── btnCatalog ──
+            this.btnCatalog.BackColor = System.Drawing.Color.Transparent;
+            this.btnCatalog.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCatalog.FlatAppearance.BorderSize = 0;
+            this.btnCatalog.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnCatalog.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnCatalog.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCatalog.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnCatalog.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnCatalog.Location = new System.Drawing.Point(12, 272);
+            this.btnCatalog.Name = "btnCatalog";
+            this.btnCatalog.Size = new System.Drawing.Size(216, 44);
+            this.btnCatalog.TabIndex = 6;
+            this.btnCatalog.Tag = "CatalogManage";
+            this.btnCatalog.Text = "📚   Lớp & Môn Học";
+            this.btnCatalog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCatalog.UseVisualStyleBackColor = false;
+
+            // ─── btnReports ──
+            this.btnReports.BackColor = System.Drawing.Color.Transparent;
+            this.btnReports.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnReports.FlatAppearance.BorderSize = 0;
+            this.btnReports.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnReports.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnReports.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnReports.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnReports.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnReports.Location = new System.Drawing.Point(12, 324);
+            this.btnReports.Name = "btnReports";
+            this.btnReports.Size = new System.Drawing.Size(216, 44);
+            this.btnReports.TabIndex = 5;
+            this.btnReports.Tag = "Reports";
+            this.btnReports.Text = "📊   Reports && Stats";
+            this.btnReports.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnReports.UseVisualStyleBackColor = false;
+
+            // ─── pnlLogout ── Nút logout ở đáy sidebar ──
+            this.pnlLogout.BackColor = System.Drawing.Color.White;
+            this.pnlLogout.Controls.Add(this.btnLogout);
+            this.pnlLogout.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlLogout.Location = new System.Drawing.Point(0, 662);
+            this.pnlLogout.Name = "pnlLogout";
+            this.pnlLogout.Padding = new System.Windows.Forms.Padding(10, 8, 10, 10);
+            this.pnlLogout.Size = new System.Drawing.Size(240, 58);
+            this.pnlLogout.TabIndex = 0;
+
+            // ─── btnLogout ──
+            this.btnLogout.BackColor = System.Drawing.Color.Transparent;
+            this.btnLogout.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnLogout.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.btnLogout.FlatAppearance.BorderSize = 0;
+            this.btnLogout.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(254, 226, 226);
+            this.btnLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnLogout.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            this.btnLogout.Name = "btnLogout";
+            this.btnLogout.Size = new System.Drawing.Size(220, 40);
+            this.btnLogout.TabIndex = 0;
+            this.btnLogout.Text = "↪   Logout";
+            this.btnLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnLogout.UseVisualStyleBackColor = false;
+
+            // ─── pnlContent ── Vùng nội dung chính bên phải ──
+            this.pnlContent.BackColor = System.Drawing.Color.FromArgb(243, 244, 246);
             this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlContent.Location = new System.Drawing.Point(250, 60);
+            this.pnlContent.Location = new System.Drawing.Point(240, 0);
             this.pnlContent.Name = "pnlContent";
-            this.pnlContent.Padding = new System.Windows.Forms.Padding(15);
-            this.pnlContent.Size = new System.Drawing.Size(1030, 660);
-            
-            // MainForm
+            this.pnlContent.Padding = new System.Windows.Forms.Padding(0);
+            this.pnlContent.Size = new System.Drawing.Size(1040, 720);
+            this.pnlContent.TabIndex = 1;
+
+            // ─── MainForm ──
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(245, 247, 252);
+            this.BackColor = System.Drawing.Color.FromArgb(243, 244, 246);
             this.ClientSize = new System.Drawing.Size(1280, 720);
             this.Controls.Add(this.pnlContent);
-            this.Controls.Add(this.pnlTopbar);
             this.Controls.Add(this.pnlSidebar);
             this.DoubleBuffered = true;
             this.MinimumSize = new System.Drawing.Size(1100, 650);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Quản Lý Phòng Máy Thực Hành";
+            this.Text = "PC Room Management System";
             this.pnlSidebar.ResumeLayout(false);
             this.pnlSidebarMenu.ResumeLayout(false);
             this.pnlProfile.ResumeLayout(false);
-            this.pnlProfile.PerformLayout();
+            this.pnlLogout.ResumeLayout(false);
             this.pnlLogo.ResumeLayout(false);
-            this.pnlTopbar.ResumeLayout(false);
-            this.pnlTopbar.PerformLayout();
             this.ResumeLayout(false);
         }
 
         #endregion
 
         private System.Windows.Forms.Panel pnlSidebar;
-        private System.Windows.Forms.Panel pnlTopbar;
         public System.Windows.Forms.Panel pnlContent;
         private System.Windows.Forms.Panel pnlSidebarMenu;
-        public System.Windows.Forms.Label lblPageTitle;
         private System.Windows.Forms.Panel pnlLogo;
         private System.Windows.Forms.Panel pnlProfile;
-        private System.Windows.Forms.Label btnLogout;
-        private System.Windows.Forms.Label lblSection;
-        private System.Windows.Forms.Label lblDate;
+        private System.Windows.Forms.Panel pnlLogout;
+        private System.Windows.Forms.Panel pnlSeparator;
+        private System.Windows.Forms.Button btnLogout;
         private System.Windows.Forms.Button btnDashboard;
         private System.Windows.Forms.Button btnReports;
         private System.Windows.Forms.Button btnUserManage;
         private System.Windows.Forms.Button btnScheduleManage;
         private System.Windows.Forms.Button btnComputerManage;
         private System.Windows.Forms.Button btnRoomManage;
+        private System.Windows.Forms.Button btnCatalog;
         private System.Windows.Forms.Label lblLogo;
+        private System.Windows.Forms.Label lblLogoIcon;
         private System.Windows.Forms.Label lblUsername;
         private System.Windows.Forms.Label lblAvatar;
         private System.Windows.Forms.Label lblRole;
