@@ -25,6 +25,7 @@ namespace src.Forms
             lblError = new System.Windows.Forms.Label();
             pnlPassWrap = new System.Windows.Forms.Panel();
             txtPassword = new System.Windows.Forms.TextBox();
+            btnShowPass = new System.Windows.Forms.Button();
             lblPass = new System.Windows.Forms.Label();
             pnlUserWrap = new System.Windows.Forms.Panel();
             txtUsername = new System.Windows.Forms.TextBox();
@@ -128,6 +129,7 @@ namespace src.Forms
             // 
             pnlPassWrap.BackColor = System.Drawing.Color.FromArgb(245, 247, 252);
             pnlPassWrap.Controls.Add(txtPassword);
+            pnlPassWrap.Controls.Add(btnShowPass);
             pnlPassWrap.Location = new System.Drawing.Point(57, 353);
             pnlPassWrap.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             pnlPassWrap.Name = "pnlPassWrap";
@@ -143,9 +145,27 @@ namespace src.Forms
             txtPassword.Location = new System.Drawing.Point(16, 15);
             txtPassword.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
-            txtPassword.Size = new System.Drawing.Size(389, 24);
+            txtPassword.Size = new System.Drawing.Size(352, 24);
             txtPassword.TabIndex = 0;
             txtPassword.UseSystemPasswordChar = true;
+            // 
+            // btnShowPass
+            // 
+            btnShowPass.BackColor = System.Drawing.Color.Transparent;
+            btnShowPass.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnShowPass.FlatAppearance.BorderSize = 0;
+            btnShowPass.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+            btnShowPass.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnShowPass.Font = new System.Drawing.Font("Segoe UI", 13F);
+            btnShowPass.ForeColor = System.Drawing.Color.FromArgb(140, 150, 170);
+            btnShowPass.Location = new System.Drawing.Point(380, 12);
+            btnShowPass.Name = "btnShowPass";
+            btnShowPass.Size = new System.Drawing.Size(40, 32);
+            btnShowPass.TabIndex = 1;
+            btnShowPass.TabStop = false;
+            btnShowPass.Text = "👁";
+            btnShowPass.UseVisualStyleBackColor = false;
+            btnShowPass.Click += BtnShowPass_Click;
             // 
             // lblPass
             // 
@@ -313,6 +333,7 @@ namespace src.Forms
         private System.Windows.Forms.Label lblPass;
         private System.Windows.Forms.Panel pnlPassWrap;
         public System.Windows.Forms.TextBox txtPassword;
+        private System.Windows.Forms.Button btnShowPass;
         private System.Windows.Forms.Label lblError;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Label lblHint;

@@ -24,6 +24,7 @@ namespace src
             this.btnComputerManage = new System.Windows.Forms.Button();
             this.btnRoomManage = new System.Windows.Forms.Button();
             this.btnUserManage = new System.Windows.Forms.Button();
+            this.btnCatalog = new System.Windows.Forms.Button();
             this.btnDashboard = new System.Windows.Forms.Button();
             this.pnlProfile = new System.Windows.Forms.Panel();
             this.lblRole = new System.Windows.Forms.Label();
@@ -143,6 +144,7 @@ namespace src
             this.pnlSidebarMenu.Controls.Add(this.btnUserManage);
             this.pnlSidebarMenu.Controls.Add(this.btnRoomManage);
             this.pnlSidebarMenu.Controls.Add(this.btnComputerManage);
+            this.pnlSidebarMenu.Controls.Add(this.btnCatalog);
             this.pnlSidebarMenu.Controls.Add(this.btnScheduleManage);
             this.pnlSidebarMenu.Controls.Add(this.btnReports);
             this.pnlSidebarMenu.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -241,6 +243,24 @@ namespace src
             this.btnScheduleManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnScheduleManage.UseVisualStyleBackColor = false;
 
+            // ─── btnCatalog ──
+            this.btnCatalog.BackColor = System.Drawing.Color.Transparent;
+            this.btnCatalog.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCatalog.FlatAppearance.BorderSize = 0;
+            this.btnCatalog.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            this.btnCatalog.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.btnCatalog.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCatalog.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnCatalog.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnCatalog.Location = new System.Drawing.Point(12, 272);
+            this.btnCatalog.Name = "btnCatalog";
+            this.btnCatalog.Size = new System.Drawing.Size(216, 44);
+            this.btnCatalog.TabIndex = 6;
+            this.btnCatalog.Tag = "CatalogManage";
+            this.btnCatalog.Text = "📚   Lớp & Môn Học";
+            this.btnCatalog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCatalog.UseVisualStyleBackColor = false;
+
             // ─── btnReports ──
             this.btnReports.BackColor = System.Drawing.Color.Transparent;
             this.btnReports.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -250,7 +270,7 @@ namespace src
             this.btnReports.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReports.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnReports.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.btnReports.Location = new System.Drawing.Point(12, 272);
+            this.btnReports.Location = new System.Drawing.Point(12, 324);
             this.btnReports.Name = "btnReports";
             this.btnReports.Size = new System.Drawing.Size(216, 44);
             this.btnReports.TabIndex = 5;
@@ -330,6 +350,7 @@ namespace src
         private System.Windows.Forms.Button btnScheduleManage;
         private System.Windows.Forms.Button btnComputerManage;
         private System.Windows.Forms.Button btnRoomManage;
+        private System.Windows.Forms.Button btnCatalog;
         private System.Windows.Forms.Label lblLogo;
         private System.Windows.Forms.Label lblLogoIcon;
         private System.Windows.Forms.Label lblUsername;

@@ -17,17 +17,17 @@ namespace src.Views
 
         private void InitializeComponent()
         {
-            this.pnlHeader = new System.Windows.Forms.Panel();
-            this.lblSubtitle = new System.Windows.Forms.Label();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.pnlToolbar = new System.Windows.Forms.Panel();
-            this.btnClear = new System.Windows.Forms.Button();
-            this.cboStatus = new System.Windows.Forms.ComboBox();
-            this.cboRAM = new System.Windows.Forms.ComboBox();
-            this.cboCPU = new System.Windows.Forms.ComboBox();
-            this.txtSearch = new System.Windows.Forms.TextBox();
-            this.pnlGrid = new System.Windows.Forms.Panel();
-            this.dgv = new System.Windows.Forms.DataGridView();
+            this.pnlHeader         = new System.Windows.Forms.Panel();
+            this.lblSubtitle       = new System.Windows.Forms.Label();
+            this.lblTitle          = new System.Windows.Forms.Label();
+            this.pnlToolbar        = new System.Windows.Forms.Panel();
+            this.cboStatus         = new System.Windows.Forms.ComboBox();
+            this.cboRAM            = new System.Windows.Forms.ComboBox();
+            this.cboCPU            = new System.Windows.Forms.ComboBox();
+            this.cboRoom           = new System.Windows.Forms.ComboBox();
+            this.txtSearch         = new System.Windows.Forms.TextBox();
+            this.pnlGrid           = new System.Windows.Forms.Panel();
+            this.dgv               = new System.Windows.Forms.DataGridView();
             this.pnlHeader.SuspendLayout();
             this.pnlToolbar.SuspendLayout();
             this.pnlGrid.SuspendLayout();
@@ -54,7 +54,7 @@ namespace src.Views
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(350, 41);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Computer Management";
+            this.lblTitle.Text = "Quản Lý Máy Tính";
             // 
             // lblSubtitle
             // 
@@ -65,15 +65,15 @@ namespace src.Views
             this.lblSubtitle.Name = "lblSubtitle";
             this.lblSubtitle.Size = new System.Drawing.Size(380, 19);
             this.lblSubtitle.TabIndex = 1;
-            this.lblSubtitle.Text = "Manage and monitor all computers across PC rooms";
+            this.lblSubtitle.Text = "Thêm, sửa, xóa máy tính theo từng phòng máy";
             // 
             // pnlToolbar - Thanh lọc
             // 
             this.pnlToolbar.BackColor = System.Drawing.Color.White;
-            this.pnlToolbar.Controls.Add(this.btnClear);
             this.pnlToolbar.Controls.Add(this.cboStatus);
             this.pnlToolbar.Controls.Add(this.cboRAM);
             this.pnlToolbar.Controls.Add(this.cboCPU);
+            this.pnlToolbar.Controls.Add(this.cboRoom);
             this.pnlToolbar.Controls.Add(this.txtSearch);
             this.pnlToolbar.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlToolbar.Location = new System.Drawing.Point(20, 90);
@@ -89,61 +89,66 @@ namespace src.Views
             this.txtSearch.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.txtSearch.Location = new System.Drawing.Point(16, 16);
             this.txtSearch.Name = "txtSearch";
-            this.txtSearch.PlaceholderText = "🔍  Search computers...";
+            this.txtSearch.PlaceholderText = "🔍  Tìm máy tính...";
             this.txtSearch.Size = new System.Drawing.Size(200, 24);
             this.txtSearch.TabIndex = 0;
             // 
+            // cboRoom – Lọc theo phòng
+            this.cboRoom.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
+            this.cboRoom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboRoom.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cboRoom.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.cboRoom.Items.AddRange(new object[] { "Tất cả phòng" });
+            this.cboRoom.Location = new System.Drawing.Point(230, 16);
+            this.cboRoom.Name = "cboRoom";
+            this.cboRoom.Size = new System.Drawing.Size(140, 23);
+            this.cboRoom.TabIndex = 1;
             // cboCPU
-            // 
             this.cboCPU.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
             this.cboCPU.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboCPU.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboCPU.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboCPU.Items.AddRange(new object[] { "All CPUs", "Intel i5", "Intel i7", "Intel i9", "AMD Ryzen 5", "AMD Ryzen 7" });
-            this.cboCPU.Location = new System.Drawing.Point(230, 16);
+            this.cboCPU.Items.AddRange(new object[] { "Tất cả CPU", "Intel i5", "Intel i7", "Intel i9", "AMD Ryzen 5", "AMD Ryzen 7" });
+            this.cboCPU.Location = new System.Drawing.Point(384, 16);
             this.cboCPU.Name = "cboCPU";
-            this.cboCPU.Size = new System.Drawing.Size(130, 23);
-            this.cboCPU.TabIndex = 1;
-            // 
+            this.cboCPU.Size = new System.Drawing.Size(120, 23);
+            this.cboCPU.TabIndex = 2;
             // cboRAM
-            // 
             this.cboRAM.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
             this.cboRAM.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboRAM.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboRAM.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboRAM.Items.AddRange(new object[] { "All RAM", "4 GB", "8 GB", "16 GB", "32 GB" });
-            this.cboRAM.Location = new System.Drawing.Point(374, 16);
+            this.cboRAM.Items.AddRange(new object[] { "Tất cả RAM", "4 GB", "8 GB", "16 GB", "32 GB" });
+            this.cboRAM.Location = new System.Drawing.Point(518, 16);
             this.cboRAM.Name = "cboRAM";
-            this.cboRAM.Size = new System.Drawing.Size(110, 23);
-            this.cboRAM.TabIndex = 2;
-            // 
+            this.cboRAM.Size = new System.Drawing.Size(100, 23);
+            this.cboRAM.TabIndex = 3;
             // cboStatus
-            // 
             this.cboStatus.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
             this.cboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboStatus.Items.AddRange(new object[] { "All Status", "Tốt", "Bảo trì", "Hỏng" });
-            this.cboStatus.Location = new System.Drawing.Point(498, 16);
+            this.cboStatus.Items.AddRange(new object[] { "Tất cả trạng thái", "Tốt", "Bảo trì", "Hỏng" });
+            this.cboStatus.Location = new System.Drawing.Point(632, 16);
             this.cboStatus.Name = "cboStatus";
-            this.cboStatus.Size = new System.Drawing.Size(110, 23);
-            this.cboStatus.TabIndex = 3;
-            // 
-            // btnClear
-            // 
-            this.btnClear.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.btnClear.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
-            this.btnClear.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnClear.FlatAppearance.BorderSize = 0;
-            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClear.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.btnClear.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            this.btnClear.Location = new System.Drawing.Point(870, 14);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(80, 28);
-            this.btnClear.TabIndex = 4;
-            this.btnClear.Text = "🗑 Clear";
-            this.btnClear.UseVisualStyleBackColor = false;
+            this.cboStatus.Size = new System.Drawing.Size(100, 23);
+            this.cboStatus.TabIndex = 4;
+            // btnAdd
+            this.btnAdd = new System.Windows.Forms.Button();
+            this.btnAdd.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            this.btnAdd.BackColor = System.Drawing.Color.FromArgb(0, 102, 255);
+            this.btnAdd.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnAdd.FlatAppearance.BorderSize = 0;
+            this.btnAdd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAdd.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnAdd.ForeColor = System.Drawing.Color.White;
+            this.btnAdd.Location = new System.Drawing.Point(833, 16);
+            this.btnAdd.Name = "btnAdd";
+            this.btnAdd.Size = new System.Drawing.Size(115, 28);
+            this.btnAdd.TabIndex = 5;
+            this.btnAdd.Text = "+ Thêm máy";
+            this.btnAdd.UseVisualStyleBackColor = false;
+            this.pnlToolbar.Controls.Add(this.btnAdd);
             // 
             // pnlGrid
             // 
@@ -205,10 +210,11 @@ namespace src.Views
         public System.Windows.Forms.Label lblSubtitle;
         public System.Windows.Forms.Panel pnlToolbar;
         public System.Windows.Forms.TextBox txtSearch;
+        public System.Windows.Forms.ComboBox cboRoom;
         public System.Windows.Forms.ComboBox cboCPU;
         public System.Windows.Forms.ComboBox cboRAM;
         public System.Windows.Forms.ComboBox cboStatus;
-        public System.Windows.Forms.Button btnClear;
+        public System.Windows.Forms.Button btnAdd;
         public System.Windows.Forms.Panel pnlGrid;
         public System.Windows.Forms.DataGridView dgv;
     }

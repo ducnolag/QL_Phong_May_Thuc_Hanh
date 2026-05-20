@@ -389,7 +389,7 @@ namespace src.Views
                 Name = "cboStatus", Location = new Point(130, y), Size = new Size(250, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
-            cboStatus.Items.AddRange(new object[] { "Hoạt động", "Bảo trì", "Đóng cửa" });
+            cboStatus.Items.AddRange(new object[] { "Hoạt động", "Bảo trì" });
             cboStatus.SelectedItem = status;
             if (cboStatus.SelectedIndex < 0) cboStatus.SelectedIndex = 0;
             dlg.Controls.Add(cboStatus);
