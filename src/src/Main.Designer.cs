@@ -25,7 +25,6 @@ namespace src
             this.btnRoomManage = new System.Windows.Forms.Button();
             this.btnUserManage = new System.Windows.Forms.Button();
             this.btnCatalog = new System.Windows.Forms.Button();
-            this.btnDashboard = new System.Windows.Forms.Button();
             this.pnlProfile = new System.Windows.Forms.Panel();
             this.lblRole = new System.Windows.Forms.Label();
             this.lblUsername = new System.Windows.Forms.Label();
@@ -140,7 +139,6 @@ namespace src
 
             // ─── pnlSidebarMenu ── Khu vực menu (vị trí cố định để Designer hoạt động) ──
             this.pnlSidebarMenu.BackColor = System.Drawing.Color.Transparent;
-            this.pnlSidebarMenu.Controls.Add(this.btnDashboard);
             this.pnlSidebarMenu.Controls.Add(this.btnUserManage);
             this.pnlSidebarMenu.Controls.Add(this.btnRoomManage);
             this.pnlSidebarMenu.Controls.Add(this.btnComputerManage);
@@ -153,23 +151,6 @@ namespace src
             this.pnlSidebarMenu.Size = new System.Drawing.Size(240, 527);
             this.pnlSidebarMenu.TabIndex = 1;
 
-            // ─── btnDashboard ── Vị trí tuyệt đối để Designer kéo thả được ──
-            this.btnDashboard.BackColor = System.Drawing.Color.Transparent;
-            this.btnDashboard.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnDashboard.FlatAppearance.BorderSize = 0;
-            this.btnDashboard.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(239, 246, 255);
-            this.btnDashboard.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(248, 250, 252);
-            this.btnDashboard.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDashboard.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnDashboard.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.btnDashboard.Location = new System.Drawing.Point(12, 12);
-            this.btnDashboard.Name = "btnDashboard";
-            this.btnDashboard.Size = new System.Drawing.Size(216, 44);
-            this.btnDashboard.TabIndex = 0;
-            this.btnDashboard.Tag = "Dashboard";
-            this.btnDashboard.Text = "⊞   Dashboard";
-            this.btnDashboard.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDashboard.UseVisualStyleBackColor = false;
 
             // ─── btnUserManage ──
             this.btnUserManage.BackColor = System.Drawing.Color.Transparent;
@@ -344,7 +325,6 @@ namespace src
         private System.Windows.Forms.Panel pnlLogout;
         private System.Windows.Forms.Panel pnlSeparator;
         private System.Windows.Forms.Button btnLogout;
-        private System.Windows.Forms.Button btnDashboard;
         private System.Windows.Forms.Button btnReports;
         private System.Windows.Forms.Button btnUserManage;
         private System.Windows.Forms.Button btnScheduleManage;
