@@ -104,8 +104,7 @@ namespace src
             // Dồn layout sau khi form đã load xong (tránh WinForms reset vị trí)
             this.Load += (s, e) =>
             {
-                // Ẩn Dashboard khỏi sidebar
-                btnDashboard.Visible = false;
+                // Đã xóa Dashboard khỏi sidebar
                 RelayoutMenuButtons();
                 // Admin mở báo cáo, NhanViên mở lịch thực hành
                 NavigateTo(_isAdmin ? "Reports" : "ScheduleManage");
@@ -199,7 +198,6 @@ namespace src
             // Tạo view mới
             _currentView = viewName switch
             {
-                "Dashboard"       => (UserControl)new DashboardView(),
                 "RoomManage"      => new RoomManageView(),
                 "ComputerManage"  => new ComputerManageView(),
                 "CatalogManage"   => new CatalogManageView(),
