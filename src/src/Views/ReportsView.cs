@@ -16,8 +16,8 @@ namespace src.Views
     public partial class ReportsView : UserControl
     {
         // ── Dữ liệu ─────────────────────────────────────────────────────────
-        private int _totalRooms, _activeRooms, _maintRooms, _closedRooms;
-        private int _totalMay,   _mayTot,      _mayBaoTri,  _mayHong;
+        private int _totalRooms, _activeRooms, _closedRooms;
+        private int _totalMay,   _mayTot,      _mayHong;
         private int _totalLich,  _lichDaXep,   _lichChoXep, _lichDaHuy;
         private int _totalUsers;
 
@@ -153,12 +153,10 @@ namespace src.Views
             {
                 _totalRooms  = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY"));
                 _activeRooms = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'"));
-                _maintRooms  = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Bảo trì'"));
-                _closedRooms = Math.Max(0, _totalRooms - _activeRooms - _maintRooms);
+                _closedRooms = Math.Max(0, _totalRooms - _activeRooms);
 
                 _totalMay  = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH"));
                 _mayTot    = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'"));
-                _mayBaoTri = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Bảo trì'"));
                 _mayHong   = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'"));
 
                 _totalLich = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1" + thC + nmC, p));
@@ -170,8 +168,8 @@ namespace src.Views
             }
             catch
             {
-                _totalRooms=6; _activeRooms=5; _maintRooms=1;
-                _totalMay=30;  _mayTot=25;    _mayBaoTri=3; _mayHong=2;
+                _totalRooms=6; _activeRooms=5; _closedRooms=1;
+                _totalMay=30;  _mayTot=25;    _mayHong=5;
                 _totalLich=8;  _lichDaXep=5;  _lichChoXep=2; _lichDaHuy=1;
                 _totalUsers=3;
             }
@@ -185,8 +183,8 @@ namespace src.Views
             _pnlCards.Controls.Clear();
             var defs = new (string title, string val, string sub, string icon, Color accent)[]
             {
-                ("Tổng phòng máy",   _totalRooms.ToString(), $"Hoạt động: {_activeRooms}  ·  Bảo trì: {_maintRooms}",              "🏢", ThemeColors.PrimaryBlue),
-                ("Tổng máy tính",    _totalMay.ToString(),   $"Tốt: {_mayTot}  ·  Bảo trì: {_mayBaoTri}  ·  Hỏng: {_mayHong}",    "💻", ThemeColors.AccentGreen),
+                ("Tổng phòng máy",   _totalRooms.ToString(), $"Hoạt động: {_activeRooms}  ·  Đóng cửa: {_closedRooms}",              "🏢", ThemeColors.PrimaryBlue),
+                ("Tổng máy tính",    _totalMay.ToString(),   $"Tốt: {_mayTot}  ·  Hỏng: {_mayHong}",    "💻", ThemeColors.AccentGreen),
                 ("Lịch thực hành",   _totalLich.ToString(),  $"Đã xếp: {_lichDaXep}  ·  Chờ: {_lichChoXep}  ·  Hủy: {_lichDaHuy}","📅", ThemeColors.AccentOrange),
                 ("Người dùng",       _totalUsers.ToString(), "Quản trị viên + Nhân viên",                                          "👤", ThemeColors.AccentPurple),
             };
@@ -216,7 +214,6 @@ namespace src.Views
             var segments = new List<(string label, int value, Color color)>
             {
                 ("Hoạt động", _activeRooms, Color.FromArgb(34, 197, 94)),
-                ("Bảo trì",   _maintRooms,  Color.FromArgb(249, 115, 22)),
                 ("Đóng cửa",  _closedRooms, Color.FromArgb(239, 68, 68)),
             };
             var chartPanel = new DonutChartPanel(segments) { Left = 16, Top = 54, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
@@ -246,7 +243,6 @@ namespace src.Views
             var bars = new List<(string label, int value, Color color)>
             {
                 ("Tốt",     _mayTot,    Color.FromArgb(34, 197, 94)),
-                ("Bảo trì", _mayBaoTri, Color.FromArgb(249, 115, 22)),
                 ("Hỏng",    _mayHong,   Color.FromArgb(239, 68, 68)),
             };
             var barPanel = new BarChartPanel(bars) { Left = 16, Top = 54, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
@@ -273,7 +269,6 @@ namespace src.Views
             dgv.Columns.Add("Phong",  "Phòng máy");
             dgv.Columns.Add("Tong",   "Tổng máy");
             dgv.Columns.Add("Tot",    "Tốt");
-            dgv.Columns.Add("BaoTri", "Bảo trì");
             dgv.Columns.Add("Hong",   "Hỏng");
             dgv.Columns.Add("TiLe",   "% Tốt");
 
@@ -292,7 +287,6 @@ namespace src.Views
                     @"SELECT p.TenPhong,
                         COUNT(m.MaMay) AS Tong,
                         SUM(CASE WHEN t.TenTrangThaiMay=N'Tốt'     THEN 1 ELSE 0 END) AS Tot,
-                        SUM(CASE WHEN t.TenTrangThaiMay=N'Bảo trì' THEN 1 ELSE 0 END) AS BaoTri,
                         SUM(CASE WHEN t.TenTrangThaiMay=N'Hỏng'    THEN 1 ELSE 0 END) AS Hong
                       FROM PHONG_MAY p
                       LEFT JOIN MAY_TINH m ON m.MaPhong = p.MaPhong
@@ -301,13 +295,13 @@ namespace src.Views
                 foreach (DataRow r in dt.Rows)
                 {
                     int tong = ToInt(r["Tong"]), tot = ToInt(r["Tot"]);
-                    dgv.Rows.Add(r["TenPhong"], tong, tot, r["BaoTri"], r["Hong"],
+                    dgv.Rows.Add(r["TenPhong"], tong, tot, r["Hong"],
                         tong > 0 ? $"{tot * 100 / tong}%" : "—");
                 }
             }
             catch
             {
-                dgv.Rows.Add("Lab A-301", 30, 28, 1, 1, "93%");
+                dgv.Rows.Add("Lab A-301", 30, 28, 2, "93%");
             }
             _pnlMayTable.Controls.Add(dgv);
         }

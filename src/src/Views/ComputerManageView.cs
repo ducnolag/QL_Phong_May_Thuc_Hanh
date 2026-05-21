@@ -50,6 +50,8 @@ namespace src.Views
 
             // Nút Thêm máy / Sửa / Xóa
             btnAdd.Click   += (s, e) => ShowAddDialog();
+            btnAdd.Visible = AppSession.IsAdmin;
+            
             // Sửa / Xóa theo hàng được chọn
             dgv.CellClick  += Dgv_CellClick;
 
@@ -88,6 +90,7 @@ namespace src.Views
             };
             colDel.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             colDel.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colDel.Visible = AppSession.IsAdmin;
             dgv.Columns.Add(colDel);
 
             // Badge màu Status
@@ -162,7 +165,7 @@ namespace src.Views
             {
                 // Dữ liệu mẫu
                 dgv.Rows.Add(0, 0, "PC-A301-01", "Lab A-301", "Intel i7-12700", "16 GB", "24\"", "Tốt");
-                dgv.Rows.Add(0, 0, "PC-A301-02", "Lab A-301", "Intel i7-12700", "16 GB", "24\"", "Bảo trì");
+                dgv.Rows.Add(0, 0, "PC-A301-02", "Lab A-301", "Intel i7-12700", "16 GB", "24\"", "Hỏng");
             }
 
             // Reload cboRoom nếu cần
@@ -409,6 +412,16 @@ namespace src.Views
             cboTT.SelectedItem = status;
             if (cboTT.SelectedIndex < 0) cboTT.SelectedIndex = 0;
             AddRow("Tình trạng:", cboTT);
+
+            if (!AppSession.IsAdmin)
+            {
+                txtTen.Enabled = false;
+                txtCpu.Enabled = false;
+                numRam.Enabled = false;
+                numStorage.Enabled = false;
+                numMon.Enabled = false;
+                cboPh.Enabled = false;
+            }
 
             y += 5;
             var btnSave = new Button
