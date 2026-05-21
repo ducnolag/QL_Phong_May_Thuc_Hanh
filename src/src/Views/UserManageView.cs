@@ -300,19 +300,64 @@ namespace src.Views
         // ── Xóa người dùng ────────────────────────────────────────────────
         private void DeleteUser(int rowIndex)
         {
-            string username = dgv.Rows[rowIndex].Cells["TenDN"].Value?.ToString() ?? "";
+            var row = dgv.Rows[rowIndex];
+            string username = row.Cells["TenDN"].Value?.ToString() ?? "";
+            
             if (username.Equals("admin", StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show("Không thể xóa tài khoản admin!", "Cảnh báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (MessageBox.Show($"Xóa người dùng '{username}'?", "Xác nhận xóa",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+
+            if (!(row.Tag is ValueTuple<int, bool> tagInfo)) return;
+            int userId = tagInfo.Item1;
+            bool active = tagInfo.Item2;
+
             try
             {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM NGUOI_DUNG WHERE TenDangNhap=@u",
-                    new SqlParameter("@u", username));
+                int hasDataCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(@"
+                    SELECT COUNT(*) FROM (
+                        SELECT 1 AS X FROM LICH_THUC_HANH WHERE NguoiTao = @id
+                        UNION ALL
+                        SELECT 1 FROM PHAN_CONG_PHONG WHERE MaNguoiDung = @id
+                        UNION ALL
+                        SELECT 1 FROM CAP_NHAT_PHONG WHERE MaNguoiDung = @id
+                        UNION ALL
+                        SELECT 1 FROM CAP_NHAT_MAY WHERE MaNguoiDung = @id
+                    ) T", new SqlParameter("@id", userId)));
+                
+                bool hasData = hasDataCount > 0;
+
+                if (hasData && active)
+                {
+                    MessageBox.Show("Tài khoản này đã được kích hoạt và đang sử dụng nên không thể xóa!", 
+                        "Không thể xóa", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (MessageBox.Show($"Xóa người dùng '{username}'?", "Xác nhận xóa",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+
+                string sql = @"
+                    BEGIN TRAN;
+                    BEGIN TRY
+                        DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE NguoiTao = @id);
+                        DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE NguoiTao = @id);
+                        DELETE FROM PHAN_CONG_PHONG WHERE MaNguoiDung = @id;
+                        DELETE FROM LICH_THUC_HANH WHERE NguoiTao = @id;
+                        DELETE FROM CAP_NHAT_PHONG WHERE MaNguoiDung = @id;
+                        DELETE FROM CAP_NHAT_MAY WHERE MaNguoiDung = @id;
+                        DELETE FROM NGUOI_DUNG WHERE MaNguoiDung = @id;
+                        COMMIT TRAN;
+                    END TRY
+                    BEGIN CATCH
+                        ROLLBACK TRAN;
+                        THROW;
+                    END CATCH";
+
+                DatabaseHelper.ExecuteNonQuery(sql, new SqlParameter("@id", userId));
+
                 MessageBox.Show("Đã xóa thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadData();
