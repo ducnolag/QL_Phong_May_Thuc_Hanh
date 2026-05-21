@@ -235,13 +235,14 @@ namespace src.Views
         // ── Dialog Thêm máy ────────────────────────────────────────────
         private void ShowAddDialog()
         {
-            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 24, 0, "Tốt");
+            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 256, 24, 0, "Tốt");
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
                 int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
+                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
                 int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
@@ -251,11 +252,12 @@ namespace src.Views
                     new SqlParameter("@t", ttMay));
 
                 DatabaseHelper.ExecuteNonQuery(
-                    @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, KichThuocManHinh, MaPhong, MaTTMay)
-                      VALUES (@ten, @cpu, @ram, @mon, @phong, @tt)",
+                    @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
+                      VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
                     new SqlParameter("@ten",   tenMay),
                     new SqlParameter("@cpu",   cpu),
                     new SqlParameter("@ram",   ram),
+                    new SqlParameter("@sto",   storage),
                     new SqlParameter("@mon",   monitor),
                     new SqlParameter("@phong", maPhong),
                     new SqlParameter("@tt",    ttId));
@@ -285,6 +287,7 @@ namespace src.Views
                     r["TenMay"].ToString(), r["CPU"].ToString(),
                     r["TenTrangThaiMay"].ToString(),
                     Convert.ToInt32(r["RAM"]),
+                    r["DungLuongLuuTru"] == DBNull.Value ? 256 : Convert.ToInt32(r["DungLuongLuuTru"]),
                     r["KichThuocManHinh"] == DBNull.Value ? 24 : Convert.ToInt32(r["KichThuocManHinh"]),
                     Convert.ToInt32(r["MaPhong"]),
                     r["TenTrangThaiMay"].ToString(),
@@ -295,6 +298,7 @@ namespace src.Views
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
                 int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
+                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
                 int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
@@ -304,12 +308,13 @@ namespace src.Views
                     new SqlParameter("@t", ttMay));
 
                 DatabaseHelper.ExecuteNonQuery(
-                    @"UPDATE MAY_TINH SET TenMay=@ten, CPU=@cpu, RAM=@ram,
+                    @"UPDATE MAY_TINH SET TenMay=@ten, CPU=@cpu, RAM=@ram, DungLuongLuuTru=@sto,
                       KichThuocManHinh=@mon, MaPhong=@phong, MaTTMay=@tt
                       WHERE MaMay=@id",
                     new SqlParameter("@ten",   tenMay),
                     new SqlParameter("@cpu",   cpu),
                     new SqlParameter("@ram",   ram),
+                    new SqlParameter("@sto",   storage),
                     new SqlParameter("@mon",   monitor),
                     new SqlParameter("@phong", maPhong),
                     new SqlParameter("@tt",    ttId),
@@ -345,11 +350,11 @@ namespace src.Views
 
         // ── Xây dựng dialog thêm/sửa máy ─────────────────────────────
         private Form BuildComputerDialog(string title, string tenMay, string cpu,
-            string tt, int ram, int monitor, int maPhong, string status, int originalMaMay = 0)
+            string tt, int ram, int storage, int monitor, int maPhong, string status, int originalMaMay = 0)
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(420, 400),
+                Text = title, Size = new Size(420, 440),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false, MinimizeBox = false,
@@ -372,10 +377,13 @@ namespace src.Views
             var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
             AddRow("CPU *:", txtCpu);
 
-            var numRam = new NumericUpDown { Name = "numRAM", Value = ram, Minimum = 1, Maximum = 256 };
+            var numRam = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 256, Value = ram };
             AddRow("RAM (GB):", numRam);
 
-            var numMon = new NumericUpDown { Name = "numMonitor", Value = monitor, Minimum = 10, Maximum = 50 };
+            var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = storage };
+            AddRow("Lưu trữ (GB):", numStorage);
+
+            var numMon = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = monitor };
             AddRow("Màn hình (inch):", numMon);
 
             // Phòng
@@ -385,13 +393,14 @@ namespace src.Views
                 var dtP = DatabaseHelper.ExecuteQuery("SELECT MaPhong, TenPhong FROM PHONG_MAY ORDER BY TenPhong");
                 cboPh.DisplayMember = "TenPhong"; cboPh.ValueMember = "MaPhong";
                 cboPh.DataSource = dtP;
-                // Chọn phòng hiện tại
-                if (maPhong > 0)
-                    for (int i = 0; i < cboPh.Items.Count; i++)
-                        if (Convert.ToInt32(((DataRowView)cboPh.Items[i]).Row["MaPhong"]) == maPhong)
-                        { cboPh.SelectedIndex = i; break; }
+                
+                dlg.Load += (s, e) => 
+                {
+                    if (maPhong > 0)
+                        cboPh.SelectedValue = maPhong;
+                };
             }
-            catch { cboPh.Items.Add("-- Không tải được --"); cboPh.SelectedIndex = 0; }
+            catch { cboPh.DataSource = null; cboPh.Items.Clear(); cboPh.Items.Add("-- Không tải được --"); cboPh.SelectedIndex = 0; }
             AddRow("Phòng máy:", cboPh);
 
             // Trạng thái

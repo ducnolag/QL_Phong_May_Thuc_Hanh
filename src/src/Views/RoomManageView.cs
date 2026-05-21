@@ -163,12 +163,12 @@ namespace src.Views
 
                 // Thông tin chi tiết
                 int infoY = 70;
-                TextRenderer.DrawText(g, "Capacity", new Font("Segoe UI", 9F),
+                TextRenderer.DrawText(g, "Số lượng máy", new Font("Segoe UI", 9F),
                     new Point(16, infoY), ThemeColors.TextSecondary);
-                TextRenderer.DrawText(g, $"{capacity} students", new Font("Segoe UI", 9F, FontStyle.Bold),
+                TextRenderer.DrawText(g, $"{capacity} máy", new Font("Segoe UI", 9F, FontStyle.Bold),
                     new Point(card.Width / 2, infoY), ThemeColors.TextPrimary);
 
-                TextRenderer.DrawText(g, "Computers", new Font("Segoe UI", 9F),
+                TextRenderer.DrawText(g, "Đã cài đặt", new Font("Segoe UI", 9F),
                     new Point(16, infoY + 26), ThemeColors.TextSecondary);
                 TextRenderer.DrawText(g, $"💻 {computers}", new Font("Segoe UI", 9F, FontStyle.Bold),
                     new Point(card.Width / 2, infoY + 26), ThemeColors.TextPrimary);
@@ -234,7 +234,7 @@ namespace src.Views
         /// </summary>
         private void ShowAddDialog()
         {
-            using (var dlg = CreateRoomDialog("Thêm Phòng Mới", "", "", 30, "Hoạt động"))
+            using (var dlg = CreateRoomDialog("Thêm Phòng Mới", "", "", 30, "Hoạt động", true))
             {
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
@@ -244,6 +244,11 @@ namespace src.Views
                         string location = FindControl<TextBox>(dlg, "txtLocation").Text.Trim();
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
+                        
+                        string cpu     = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
+                        int    ram     = (int)(FindControl<NumericUpDown>(dlg, "numRAM")?.Value ?? 8);
+                        int    storage = (int)(FindControl<NumericUpDown>(dlg, "numStorage")?.Value ?? 256);
+                        int    monitor = (int)(FindControl<NumericUpDown>(dlg, "numMonitor")?.Value ?? 24);
 
                         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
                         {
@@ -256,15 +261,35 @@ namespace src.Views
                             "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
                             new SqlParameter("@s", status));
 
-                        DatabaseHelper.ExecuteNonQuery(
+                        var newRoomId = DatabaseHelper.ExecuteScalar(
                             @"INSERT INTO PHONG_MAY (TenPhong, ViTri, SucChua, MaTTPhong)
-                              VALUES (@name, @loc, @cap, @status)",
+                              VALUES (@name, @loc, @cap, @status);
+                              SELECT SCOPE_IDENTITY();",
                             new SqlParameter("@name", name),
                             new SqlParameter("@loc", location),
                             new SqlParameter("@cap", capacity),
                             new SqlParameter("@status", statusId));
+                            
+                        int maPhong = Convert.ToInt32(newRoomId);
+                        var ttMayId = DatabaseHelper.ExecuteScalar("SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=N'Tốt'");
+                        if (ttMayId == null || ttMayId == DBNull.Value) ttMayId = 1;
 
-                        MessageBox.Show("Đã thêm phòng thành công!", "Thành công",
+                        for (int i = 1; i <= capacity; i++)
+                        {
+                            string tenMay = $"{name}-PC{i:D2}";
+                            DatabaseHelper.ExecuteNonQuery(
+                                @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
+                                  VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
+                                new SqlParameter("@ten",   tenMay),
+                                new SqlParameter("@cpu",   cpu),
+                                new SqlParameter("@ram",   ram),
+                                new SqlParameter("@sto",   storage),
+                                new SqlParameter("@mon",   monitor),
+                                new SqlParameter("@phong", maPhong),
+                                new SqlParameter("@tt",    ttMayId));
+                        }
+
+                        MessageBox.Show($"Đã thêm phòng và tự động tạo {capacity} máy tính thành công!", "Thành công",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
@@ -372,11 +397,11 @@ namespace src.Views
         /// <summary>
         /// Tạo dialog form cho thêm/sửa phòng
         /// </summary>
-        private Form CreateRoomDialog(string title, string name, string location, int capacity, string status)
+        private Form CreateRoomDialog(string title, string name, string location, int capacity, string status, bool isAdd = false)
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(420, 350), StartPosition = FormStartPosition.CenterParent,
+                Text = title, Size = new Size(420, isAdd ? 530 : 350), StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false,
                 BackColor = Color.White, Font = new Font("Segoe UI", 10F)
             };
@@ -393,10 +418,36 @@ namespace src.Views
             dlg.Controls.Add(txtLoc);
             y += 40;
 
-            dlg.Controls.Add(new Label { Text = "Sức chứa:", Location = new Point(20, y + 3), AutoSize = true });
-            var numCap = new NumericUpDown { Name = "numCapacity", Value = capacity, Minimum = 1, Maximum = 200, Location = new Point(130, y), Size = new Size(100, 26) };
+            dlg.Controls.Add(new Label { Text = "Số lượng máy:", Location = new Point(20, y + 3), AutoSize = true });
+            var numCap = new NumericUpDown { Name = "numCapacity", Minimum = 1, Maximum = 200, Value = capacity, Location = new Point(130, y), Size = new Size(100, 26) };
             dlg.Controls.Add(numCap);
             y += 40;
+
+            if (isAdd)
+            {
+                dlg.Controls.Add(new Label { Text = "Cấu hình chung:", Location = new Point(20, y + 3), AutoSize = true, Font = new Font("Segoe UI", 10F, FontStyle.Bold) });
+                y += 40;
+
+                dlg.Controls.Add(new Label { Text = "CPU:", Location = new Point(20, y + 3), AutoSize = true });
+                var txtCPU = new TextBox { Name = "txtCPU", Text = "Intel Core i5", Location = new Point(130, y), Size = new Size(250, 26) };
+                dlg.Controls.Add(txtCPU);
+                y += 40;
+
+                dlg.Controls.Add(new Label { Text = "RAM (GB):", Location = new Point(20, y + 3), AutoSize = true });
+                var numRAM = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 128, Value = 8, Location = new Point(130, y), Size = new Size(100, 26) };
+                dlg.Controls.Add(numRAM);
+                y += 40;
+
+                dlg.Controls.Add(new Label { Text = "Lưu trữ (GB):", Location = new Point(20, y + 3), AutoSize = true });
+                var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = 256, Location = new Point(130, y), Size = new Size(100, 26) };
+                dlg.Controls.Add(numStorage);
+                y += 40;
+
+                dlg.Controls.Add(new Label { Text = "Màn hình (in):", Location = new Point(20, y + 3), AutoSize = true });
+                var numMonitor = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = 24, Location = new Point(130, y), Size = new Size(100, 26) };
+                dlg.Controls.Add(numMonitor);
+                y += 40;
+            }
 
             dlg.Controls.Add(new Label { Text = "Trạng thái:", Location = new Point(20, y + 3), AutoSize = true });
             var cboStatus = new ComboBox
