@@ -20,13 +20,13 @@ namespace src.Views
             this.pnlHeader         = new System.Windows.Forms.Panel();
             this.lblSubtitle       = new System.Windows.Forms.Label();
             this.lblTitle          = new System.Windows.Forms.Label();
-            this.pnlToolbar        = new System.Windows.Forms.Panel();
+            this.pnlToolbar        = new Guna.UI2.WinForms.Guna2Panel();
             this.cboStatus         = new System.Windows.Forms.ComboBox();
             this.cboRAM            = new System.Windows.Forms.ComboBox();
             this.cboCPU            = new System.Windows.Forms.ComboBox();
             this.cboRoom           = new System.Windows.Forms.ComboBox();
             this.txtSearch         = new System.Windows.Forms.TextBox();
-            this.pnlGrid           = new System.Windows.Forms.Panel();
+            this.pnlGrid           = new Guna.UI2.WinForms.Guna2Panel();
             this.dgv               = new System.Windows.Forms.DataGridView();
             this.pnlHeader.SuspendLayout();
             this.pnlToolbar.SuspendLayout();
@@ -69,7 +69,9 @@ namespace src.Views
             // 
             // pnlToolbar - Thanh lọc
             // 
-            this.pnlToolbar.BackColor = System.Drawing.Color.White;
+            this.pnlToolbar.BackColor = System.Drawing.Color.Transparent;
+            this.pnlToolbar.FillColor = System.Drawing.Color.White;
+            this.pnlToolbar.BorderRadius = 14;
             this.pnlToolbar.Controls.Add(this.cboStatus);
             this.pnlToolbar.Controls.Add(this.cboRAM);
             this.pnlToolbar.Controls.Add(this.cboCPU);
@@ -152,12 +154,14 @@ namespace src.Views
             // 
             // pnlGrid
             // 
-            this.pnlGrid.BackColor = System.Drawing.Color.White;
+            this.pnlGrid.BackColor = System.Drawing.Color.Transparent;
+            this.pnlGrid.FillColor = System.Drawing.Color.White;
+            this.pnlGrid.BorderRadius = 14;
             this.pnlGrid.Controls.Add(this.dgv);
             this.pnlGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlGrid.Location = new System.Drawing.Point(20, 150);
             this.pnlGrid.Name = "pnlGrid";
-            this.pnlGrid.Padding = new System.Windows.Forms.Padding(12, 4, 12, 12);
+            this.pnlGrid.Padding = new System.Windows.Forms.Padding(12, 14, 12, 12);
             this.pnlGrid.Size = new System.Drawing.Size(960, 490);
             this.pnlGrid.TabIndex = 2;
             // 
@@ -208,14 +212,14 @@ namespace src.Views
         public System.Windows.Forms.Panel pnlHeader;
         public System.Windows.Forms.Label lblTitle;
         public System.Windows.Forms.Label lblSubtitle;
-        public System.Windows.Forms.Panel pnlToolbar;
+        public Guna.UI2.WinForms.Guna2Panel pnlToolbar;
         public System.Windows.Forms.TextBox txtSearch;
         public System.Windows.Forms.ComboBox cboRoom;
         public System.Windows.Forms.ComboBox cboCPU;
         public System.Windows.Forms.ComboBox cboRAM;
         public System.Windows.Forms.ComboBox cboStatus;
         public System.Windows.Forms.Button btnAdd;
-        public System.Windows.Forms.Panel pnlGrid;
+        public Guna.UI2.WinForms.Guna2Panel pnlGrid;
         public System.Windows.Forms.DataGridView dgv;
     }
 }

@@ -21,8 +21,7 @@ namespace src.Views
 
         private void SetupView()
         {
-            UIHelper.ApplyCardStyle(pnlToolbar, 14);
-            UIHelper.ApplyCardStyle(pnlGrid, 14);
+            // Toolbar và Grid đã được style bằng Guna2Panel trong Designer
 
             // Load danh sách phòng vào cboRoom
             cboRoom.Items.Clear();
@@ -144,21 +143,15 @@ namespace src.Views
             dgv.Rows.Clear();
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT m.MaMay, m.MaPhong, m.TenMay, p.TenPhong, m.CPU, m.RAM,
-                      m.KichThuocManHinh, t.TenTrangThaiMay
-                      FROM MAY_TINH m
-                      JOIN PHONG_MAY p   ON m.MaPhong  = p.MaPhong
-                      JOIN TRANG_THAI_MAY t ON m.MaTTMay = t.MaTTMay
-                      ORDER BY p.TenPhong, m.TenMay");
-                foreach (DataRow r in dt.Rows)
+                var compService = new src.BLL.ComputerService();
+                var dt = compService.GetAllComputers();
+                foreach (var m in dt)
                 {
-                    string status = r["TenTrangThaiMay"].ToString();
                     int idx = dgv.Rows.Add(
-                        r["MaMay"], r["MaPhong"],
-                        r["TenMay"], r["TenPhong"], r["CPU"],
-                        r["RAM"] + " GB", r["KichThuocManHinh"] + "\"",
-                        status);
+                        m.MaMay, m.MaPhong,
+                        m.TenMay, m.TenPhong, m.CPU,
+                        m.RAM + " GB", m.KichThuocManHinh + "\"",
+                        m.TenTrangThaiMay);
                 }
             }
             catch
@@ -250,23 +243,27 @@ namespace src.Views
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
-                var ttId = DatabaseHelper.ExecuteScalar(
-                    "SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=@t",
-                    new SqlParameter("@t", ttMay));
+                var compService = new src.BLL.ComputerService();
+                var result = compService.AddComputer(new src.DTO.MayTinhDTO 
+                {
+                    TenMay = tenMay,
+                    CPU = cpu,
+                    RAM = ram,
+                    DungLuongLuuTru = storage,
+                    KichThuocManHinh = monitor,
+                    MaPhong = maPhong,
+                    TenTrangThaiMay = ttMay
+                });
 
-                DatabaseHelper.ExecuteNonQuery(
-                    @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
-                      VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
-                    new SqlParameter("@ten",   tenMay),
-                    new SqlParameter("@cpu",   cpu),
-                    new SqlParameter("@ram",   ram),
-                    new SqlParameter("@sto",   storage),
-                    new SqlParameter("@mon",   monitor),
-                    new SqlParameter("@phong", maPhong),
-                    new SqlParameter("@tt",    ttId));
-
-                MessageBox.Show("Đã thêm máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã thêm máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -306,25 +303,28 @@ namespace src.Views
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
-                var ttId = DatabaseHelper.ExecuteScalar(
-                    "SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=@t",
-                    new SqlParameter("@t", ttMay));
+                var compService = new src.BLL.ComputerService();
+                var result = compService.UpdateComputer(new src.DTO.MayTinhDTO 
+                {
+                    MaMay = maMay,
+                    TenMay = tenMay,
+                    CPU = cpu,
+                    RAM = ram,
+                    DungLuongLuuTru = storage,
+                    KichThuocManHinh = monitor,
+                    MaPhong = maPhong,
+                    TenTrangThaiMay = ttMay
+                });
 
-                DatabaseHelper.ExecuteNonQuery(
-                    @"UPDATE MAY_TINH SET TenMay=@ten, CPU=@cpu, RAM=@ram, DungLuongLuuTru=@sto,
-                      KichThuocManHinh=@mon, MaPhong=@phong, MaTTMay=@tt
-                      WHERE MaMay=@id",
-                    new SqlParameter("@ten",   tenMay),
-                    new SqlParameter("@cpu",   cpu),
-                    new SqlParameter("@ram",   ram),
-                    new SqlParameter("@sto",   storage),
-                    new SqlParameter("@mon",   monitor),
-                    new SqlParameter("@phong", maPhong),
-                    new SqlParameter("@tt",    ttId),
-                    new SqlParameter("@id",    maMay));
-
-                MessageBox.Show("Đã cập nhật máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã cập nhật máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -342,10 +342,17 @@ namespace src.Views
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             try
             {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM MAY_TINH WHERE MaMay=@id",
-                    new SqlParameter("@id", maMay));
-                MessageBox.Show("Đã xóa máy!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                var compService = new src.BLL.ComputerService();
+                var result = compService.DeleteComputer(maMay);
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã xóa máy!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }

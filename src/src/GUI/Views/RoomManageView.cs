@@ -29,8 +29,6 @@ namespace src.Views
             btnAdd.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
-                    btnAdd.Region = new Region(p);
             };
             btnAdd.Click += (s, e) => ShowAddDialog();
 
@@ -50,26 +48,17 @@ namespace src.Views
 
             try
             {
-                // Thống kê
-                totalRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY"));
-                available = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'"));
-                occupied = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong!=N'Hoạt động'"));
+                var roomService = new src.BLL.RoomService();
+                var stats = roomService.GetRoomStats();
+                totalRooms = stats.TotalRooms;
+                available = stats.Available;
+                occupied = stats.Occupied;
 
-                // Lấy danh sách phòng
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT p.MaPhong, p.TenPhong, p.ViTri, p.SucChua, t.TenTrangThaiPhong,
-                      (SELECT COUNT(*) FROM MAY_TINH m WHERE m.MaPhong=p.MaPhong) AS SoMay
-                      FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong
-                      ORDER BY p.TenPhong");
-                foreach (DataRow r in dt.Rows)
+                // Lấy danh sách phòng qua BLL -> DAL (Dapper)
+                var dtRooms = roomService.GetAllRooms();
+                foreach (var r in dtRooms)
                 {
-                    string status = r["TenTrangThaiPhong"].ToString();
-                    string engStatus = status.Contains("Hoạt") ? "available" : status.Contains("Bảo") ? "maintenance" : "occupied";
-                    rooms.Add((Convert.ToInt32(r["MaPhong"]), r["TenPhong"].ToString(),
-                        r["ViTri"].ToString(), Convert.ToInt32(r["SucChua"]),
-                        Convert.ToInt32(r["SoMay"]), engStatus));
+                    rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.StatusEng));
                 }
             }
             catch
@@ -98,35 +87,47 @@ namespace src.Views
         }
 
         /// <summary>
-        /// Tạo thẻ tổng kết nhỏ (Total Rooms, Available, Occupied)
+        /// Tạo thẻ tổng kết nhỏ (Total Rooms, Available, Occupied) bằng Guna2Panel
         /// </summary>
-        private Panel MakeSummaryCard(string title, string value, Color valueColor)
+        private Guna.UI2.WinForms.Guna2Panel MakeSummaryCard(string title, string value, Color valueColor)
         {
-            var card = new Panel { Size = new Size(160, 75), Margin = new Padding(6), BackColor = Color.White };
-            card.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 10))
-                    card.Region = new Region(p);
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 10))
-                using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
-                    g.DrawPath(pen, p);
-
-                TextRenderer.DrawText(g, title, new Font("Segoe UI", 9F),
-                    new Point(14, 10), ThemeColors.TextSecondary);
-                TextRenderer.DrawText(g, value, new Font("Segoe UI", 22F, FontStyle.Bold),
-                    new Point(12, 30), valueColor);
+            var card = new Guna.UI2.WinForms.Guna2Panel 
+            { 
+                Size = new Size(160, 75), 
+                Margin = new Padding(6), 
+                BackColor = Color.Transparent,
+                FillColor = Color.White,
+                BorderRadius = 10,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                BorderThickness = 1
             };
+
+            var lblTitle = new Label { Text = title, Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(14, 10), AutoSize = true };
+            var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 22F, FontStyle.Bold), ForeColor = valueColor, Location = new Point(12, 30), AutoSize = true };
+            
+            card.Controls.Add(lblTitle);
+            card.Controls.Add(lblValue);
+
             return card;
         }
 
         /// <summary>
-        /// Tạo card phòng theo Figma: icon, tên, vị trí, capacity, computers, status, Edit/Delete
+        /// Tạo card phòng theo Figma: icon, tên, vị trí, capacity, computers, status, Edit/Delete bằng Guna2Panel
         /// </summary>
-        private Panel MakeRoomCard(int id, string name, string location, int capacity, int computers, string status)
+        private Guna.UI2.WinForms.Guna2Panel MakeRoomCard(int id, string name, string location, int capacity, int computers, string status)
         {
-            var card = new Panel { Size = new Size(300, 230), Margin = new Padding(6), BackColor = Color.White, Tag = id };
+            var card = new Guna.UI2.WinForms.Guna2Panel 
+            { 
+                Size = new Size(300, 230), 
+                Margin = new Padding(6), 
+                BackColor = Color.Transparent,
+                FillColor = Color.White,
+                BorderRadius = 12,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                BorderThickness = 1,
+                Tag = id 
+            };
+            
             Color statusColor = status == "available" ? ThemeColors.AccentGreen :
                                 status == "maintenance" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
             Color badgeBg = status == "available" ? ThemeColors.BadgeGreenBg :
@@ -138,11 +139,6 @@ namespace src.Views
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
-                    card.Region = new Region(p);
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
-                using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
-                    g.DrawPath(pen, p);
 
                 // Chấm trạng thái góc phải trên
                 using (var br = new SolidBrush(statusColor))
@@ -180,8 +176,7 @@ namespace src.Views
                 var sz = TextRenderer.MeasureText(status, new Font("Segoe UI", 8F));
                 int bx = card.Width / 2;
                 using (var br = new SolidBrush(badgeBg))
-                using (var p = UIHelper.GetRoundedRectPath(new Rectangle(bx, infoY + 50, sz.Width + 12, sz.Height + 2), 6))
-                    g.FillPath(br, p);
+                    g.FillRectangle(br, bx + 4, infoY + 50, sz.Width + 4, 18);
                 TextRenderer.DrawText(g, status, new Font("Segoe UI", 8F, FontStyle.Bold),
                     new Point(bx + 6, infoY + 52), badgeFg);
 
@@ -190,42 +185,30 @@ namespace src.Views
                     g.DrawLine(pen, 16, infoY + 80, card.Width - 16, infoY + 80);
             };
 
-            // Nút Edit
-            var btnEdit = new Button
+            // Nút Edit bằng Guna2Button
+            var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "✏  Edit", Size = new Size(120, 32), Location = new Point(16, 190),
-                FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = ThemeColors.TextPrimary,
-                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand
-            };
-            btnEdit.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
-            btnEdit.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnEdit.ClientRectangle, 6))
-                    btnEdit.Region = new Region(p);
+                FillColor = Color.White, ForeColor = ThemeColors.TextPrimary,
+                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
+                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)
             };
             btnEdit.Click += (s, e) => ShowEditDialog(id, name);
             card.Controls.Add(btnEdit);
 
-            // Nút Delete
-            var btnDel = new Button
+            // Nút Delete bằng Guna2Button
+            var btnDel = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "🗑", Size = new Size(38, 32), Location = new Point(144, 190),
-                FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = ThemeColors.AccentRed,
-                Font = new Font("Segoe UI", 12F), Cursor = Cursors.Hand
-            };
-            btnDel.FlatAppearance.BorderColor = Color.FromArgb(254, 226, 226);
-            btnDel.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnDel.ClientRectangle, 6))
-                    btnDel.Region = new Region(p);
+                FillColor = Color.White, ForeColor = ThemeColors.AccentRed,
+                Font = new Font("Segoe UI", 12F), Cursor = Cursors.Hand,
+                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(254, 226, 226)
             };
             btnDel.Click += (s, e) => DeleteRoom(id, name);
             card.Controls.Add(btnDel);
 
-            card.MouseEnter += (s, e) => { card.BackColor = Color.FromArgb(249, 250, 251); card.Invalidate(); };
-            card.MouseLeave += (s, e) => { card.BackColor = Color.White; card.Invalidate(); };
+            card.MouseEnter += (s, e) => { card.FillColor = Color.FromArgb(249, 250, 251); card.Invalidate(); };
+            card.MouseLeave += (s, e) => { card.FillColor = Color.White; card.Invalidate(); };
             return card;
         }
 
@@ -358,38 +341,20 @@ namespace src.Views
         /// </summary>
         private void DeleteRoom(int roomId, string roomName)
         {
-            try
-            {
-                var count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                      WHERE pc.MaPhong=@id AND l.TrangThaiLich != N'Đã hủy'",
-                    new SqlParameter("@id", roomId)));
-                if (count > 0)
-                {
-                    MessageBox.Show("Phòng đang có lịch thực hành không thể xóa!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-            }
-            catch { }
-
             if (MessageBox.Show($"Bạn có chắc muốn xóa phòng '{roomName}'?\nTất cả máy tính trong phòng cũng sẽ bị xóa!",
                 "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                try
+                var roomService = new src.BLL.RoomService();
+                var result = roomService.DeleteRoom(roomId);
+                
+                if (result.IsSuccess)
                 {
-                    // Xóa máy tính trước (FK constraint)
-                    DatabaseHelper.ExecuteNonQuery("DELETE FROM MAY_TINH WHERE MaPhong=@id",
-                        new SqlParameter("@id", roomId));
-                    DatabaseHelper.ExecuteNonQuery("DELETE FROM PHONG_MAY WHERE MaPhong=@id",
-                        new SqlParameter("@id", roomId));
-                    MessageBox.Show("Đã xóa phòng thành công!", "Thành công",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadData();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(result.Message, "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }

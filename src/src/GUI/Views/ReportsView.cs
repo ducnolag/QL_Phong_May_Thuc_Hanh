@@ -3,9 +3,15 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using src.Helpers;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.WinForms;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 
 namespace src.Views
 {
@@ -196,7 +202,7 @@ namespace src.Views
         // ── Chart: Phòng theo trạng thái (Donut GDI+) ────────────────────────
         private void RenderChartRooms()
         {
-            UIHelper.ApplyCardStyle(_pnlChartRooms, 12);
+
             _pnlChartRooms.Controls.Clear();
             _pnlChartRooms.Controls.Add(new Label
             {
@@ -225,7 +231,7 @@ namespace src.Views
         // ── Chart: Máy theo trạng thái (Bar GDI+) ────────────────────────────
         private void RenderChartMay()
         {
-            UIHelper.ApplyCardStyle(_pnlChartMay, 12);
+
             _pnlChartMay.Controls.Clear();
             _pnlChartMay.Controls.Add(new Label
             {
@@ -254,7 +260,7 @@ namespace src.Views
         // ── Bảng máy theo phòng ──────────────────────────────────────────────
         private void RenderMayTable()
         {
-            UIHelper.ApplyCardStyle(_pnlMayTable, 12);
+
             _pnlMayTable.Controls.Clear();
             _pnlMayTable.Controls.Add(new Label
             {
@@ -309,7 +315,7 @@ namespace src.Views
         // ── Bảng lịch thực hành ──────────────────────────────────────────────
         private void RenderLichTable()
         {
-            UIHelper.ApplyCardStyle(_pnlLichTable, 12);
+
             _pnlLichTable.Controls.Clear();
 
             string period = cboThang?.SelectedIndex > 0 || (cboNam?.SelectedItem?.ToString() != "Tất cả năm")
@@ -405,7 +411,6 @@ namespace src.Views
         private Panel MakeStatCard(string title, string value, string sub, string icon, Color accent)
         {
             var card = new Panel { BackColor = Color.White };
-            UIHelper.ApplyCardStyle(card, 12);
             card.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -467,129 +472,69 @@ namespace src.Views
         }
     }
 
-    // ── Custom Panel: Donut Chart ─────────────────────────────────────────────
+    // ── LiveCharts2: Donut Chart ─────────────────────────────────────────────
     internal class DonutChartPanel : Panel
     {
-        private readonly List<(string label, int value, Color color)> _segments;
-        public DonutChartPanel(List<(string, int, Color)> segments)
+        public DonutChartPanel(List<(string label, int value, Color color)> segments)
         {
-            _segments    = segments;
-            DoubleBuffered = true;
-            BackColor    = Color.White;
-        }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            int total = 0;
-            foreach (var s in _segments) total += s.value;
-            if (total == 0) { DrawEmpty(g); return; }
-
-            int chartSize = Math.Min(Width - 160, Height - 10);
-            if (chartSize < 30) return;
-            int cx = chartSize / 2, cy = Height / 2;
-            int inner = chartSize / 3;
-            var rect  = new Rectangle(cx - chartSize / 2, cy - chartSize / 2, chartSize, chartSize);
-
-            float startAngle = -90f;
-            foreach (var seg in _segments)
+            BackColor = Color.White;
+            var chart = new PieChart
             {
-                if (seg.value == 0) continue;
-                float sweep = 360f * seg.value / total;
-                using (var br = new SolidBrush(seg.color))
-                    g.FillPie(br, rect, startAngle, sweep);
-                startAngle += sweep;
-            }
-            // Inner white circle (donut hole)
-            using (var br = new SolidBrush(Color.White))
-                g.FillEllipse(br, cx - inner, cy - inner, inner * 2, inner * 2);
-            // Center text
-            TextRenderer.DrawText(g, total.ToString(), new Font("Segoe UI", 14F, FontStyle.Bold),
-                new Rectangle(cx - 30, cy - 22, 60, 30), ThemeColors.TextPrimary,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-            TextRenderer.DrawText(g, "Tổng", new Font("Segoe UI", 8F),
-                new Rectangle(cx - 30, cy + 6, 60, 18), ThemeColors.TextSecondary,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-            // Legend
-            int lx = cx + chartSize / 2 + 16, ly = cy - _segments.Count * 20;
-            foreach (var seg in _segments)
-            {
-                using (var br = new SolidBrush(seg.color))
-                    g.FillRectangle(br, lx, ly, 12, 12);
-                TextRenderer.DrawText(g, $"{seg.label}  ({seg.value})", new Font("Segoe UI", 9F),
-                    new Point(lx + 16, ly - 1), ThemeColors.TextSecondary);
-                ly += 26;
-            }
+                Dock = DockStyle.Fill,
+                LegendPosition = LiveChartsCore.Measure.LegendPosition.Right,
+                Series = segments.Select(s => new PieSeries<int>
+                {
+                    Values = new[] { s.value },
+                    Name = s.label,
+                    InnerRadius = 40,
+                    Fill = new SolidColorPaint(new SKColor(s.color.R, s.color.G, s.color.B))
+                }).ToArray()
+            };
+            Controls.Add(chart);
         }
-        private void DrawEmpty(Graphics g) =>
-            TextRenderer.DrawText(g, "Không có dữ liệu", new Font("Segoe UI", 10F),
-                ClientRectangle, ThemeColors.TextSecondary,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
     }
 
-    // ── Custom Panel: Bar Chart ───────────────────────────────────────────────
+    // ── LiveCharts2: Bar Chart ───────────────────────────────────────────────
     internal class BarChartPanel : Panel
     {
-        private readonly List<(string label, int value, Color color)> _bars;
-        public BarChartPanel(List<(string, int, Color)> bars)
+        public BarChartPanel(List<(string label, int value, Color color)> bars)
         {
-            _bars = bars;
-            DoubleBuffered = true;
             BackColor = Color.White;
-        }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            int maxVal = 0;
-            foreach (var b in _bars) if (b.value > maxVal) maxVal = b.value;
-            if (maxVal == 0) maxVal = 1;
-
-            int n    = _bars.Count;
-            int padL = 40, padB = 36, padR = 16, padT = 8;
-            int chartW = Width  - padL - padR;
-            int chartH = Height - padB - padT;
-            int barW   = Math.Max(10, chartW / (n * 2 + 1));
-            int gap    = barW;
-
-            // Y axis
-            using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
+            var chart = new CartesianChart
             {
-                for (int i = 0; i <= 4; i++)
+                Dock = DockStyle.Fill,
+                LegendPosition = LiveChartsCore.Measure.LegendPosition.Right,
+                Series = bars.Select((b, i) =>
                 {
-                    int yy = padT + chartH - (int)(chartH * i / 4.0);
-                    g.DrawLine(pen, padL, yy, padL + chartW, yy);
-                    TextRenderer.DrawText(g, (maxVal * i / 4).ToString(), new Font("Segoe UI", 7.5F),
-                        new Rectangle(0, yy - 10, padL - 4, 20), ThemeColors.TextSecondary,
-                        TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
-                }
-            }
-
-            // Bars
-            for (int i = 0; i < n; i++)
-            {
-                int barH   = (int)(chartH * _bars[i].value / (double)maxVal);
-                int bx     = padL + gap + i * (barW + gap);
-                int by     = padT + chartH - barH;
-                using (var br = new SolidBrush(_bars[i].color))
+                    var vals = new int?[bars.Count];
+                    vals[i] = b.value;
+                    return new ColumnSeries<int?>
+                    {
+                        Name = b.label,
+                        Values = vals,
+                        Fill = new SolidColorPaint(new SKColor(b.color.R, b.color.G, b.color.B)),
+                        MaxBarWidth = 40,
+                        IgnoresBarPosition = true // Center the bar on the tick
+                    };
+                }).ToArray(),
+                XAxes = new[]
                 {
-                    var path = UIHelper.GetRoundedRectPath(new Rectangle(bx, by, barW, barH), 6);
-                    g.FillPath(br, path);
+                    new Axis
+                    {
+                        Labels = bars.Select(b => b.label).ToArray(),
+                        LabelsPaint = new SolidColorPaint(new SKColor(100, 116, 139))
+                    }
+                },
+                YAxes = new[]
+                {
+                    new Axis
+                    {
+                        MinLimit = 0,
+                        LabelsPaint = new SolidColorPaint(new SKColor(100, 116, 139))
+                    }
                 }
-                // Value label on top
-                TextRenderer.DrawText(g, _bars[i].value.ToString(), new Font("Segoe UI", 8.5F, FontStyle.Bold),
-                    new Rectangle(bx - 10, by - 20, barW + 20, 18), _bars[i].color,
-                    TextFormatFlags.HorizontalCenter);
-                // Label below
-                TextRenderer.DrawText(g, _bars[i].label, new Font("Segoe UI", 8.5F),
-                    new Rectangle(bx - 10, padT + chartH + 6, barW + 20, 24), ThemeColors.TextSecondary,
-                    TextFormatFlags.HorizontalCenter);
-            }
+            };
+            Controls.Add(chart);
         }
     }
 }
