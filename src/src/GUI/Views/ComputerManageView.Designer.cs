@@ -23,7 +23,8 @@ namespace src.Views
             this.pnlToolbar        = new Guna.UI2.WinForms.Guna2Panel();
             this.cboStatus         = new System.Windows.Forms.ComboBox();
             this.cboRAM            = new System.Windows.Forms.ComboBox();
-            this.cboCPU            = new System.Windows.Forms.ComboBox();
+            this.cboMonitor        = new System.Windows.Forms.ComboBox();
+            this.cboStorage        = new System.Windows.Forms.ComboBox();
             this.cboRoom           = new System.Windows.Forms.ComboBox();
             this.txtSearch         = new System.Windows.Forms.TextBox();
             this.pnlGrid           = new Guna.UI2.WinForms.Guna2Panel();
@@ -74,7 +75,8 @@ namespace src.Views
             this.pnlToolbar.BorderRadius = 14;
             this.pnlToolbar.Controls.Add(this.cboStatus);
             this.pnlToolbar.Controls.Add(this.cboRAM);
-            this.pnlToolbar.Controls.Add(this.cboCPU);
+            this.pnlToolbar.Controls.Add(this.cboStorage);
+            this.pnlToolbar.Controls.Add(this.cboMonitor);
             this.pnlToolbar.Controls.Add(this.cboRoom);
             this.pnlToolbar.Controls.Add(this.txtSearch);
             this.pnlToolbar.Dock = System.Windows.Forms.DockStyle.Top;
@@ -105,35 +107,53 @@ namespace src.Views
             this.cboRoom.Name = "cboRoom";
             this.cboRoom.Size = new System.Drawing.Size(140, 23);
             this.cboRoom.TabIndex = 1;
-            // cboCPU
-            this.cboCPU.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
-            this.cboCPU.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboCPU.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cboCPU.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboCPU.Items.AddRange(new object[] { "Tất cả CPU", "Intel i5", "Intel i7", "Intel i9", "AMD Ryzen 5", "AMD Ryzen 7" });
-            this.cboCPU.Location = new System.Drawing.Point(384, 16);
-            this.cboCPU.Name = "cboCPU";
-            this.cboCPU.Size = new System.Drawing.Size(120, 23);
-            this.cboCPU.TabIndex = 2;
+            // cboMonitor
+            this.cboMonitor.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
+            this.cboMonitor.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboMonitor.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cboMonitor.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.cboMonitor.IntegralHeight = false;
+            this.cboMonitor.MaxDropDownItems = 5;
+            this.cboMonitor.Items.AddRange(new object[] { "Tất cả màn hình", "19\"", "21\"", "24\"", "27\"" });
+            this.cboMonitor.Location = new System.Drawing.Point(384, 16);
+            this.cboMonitor.Name = "cboMonitor";
+            this.cboMonitor.Size = new System.Drawing.Size(120, 23);
+            this.cboMonitor.TabIndex = 2;
             // cboRAM
             this.cboRAM.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
             this.cboRAM.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboRAM.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboRAM.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboRAM.Items.AddRange(new object[] { "Tất cả RAM", "4 GB", "8 GB", "16 GB", "32 GB" });
+            this.cboRAM.IntegralHeight = false;
+            this.cboRAM.MaxDropDownItems = 5;
+            this.cboRAM.Items.AddRange(new object[] { "Tất cả RAM", "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
             this.cboRAM.Location = new System.Drawing.Point(518, 16);
             this.cboRAM.Name = "cboRAM";
-            this.cboRAM.Size = new System.Drawing.Size(100, 23);
+            this.cboRAM.Size = new System.Drawing.Size(90, 23);
             this.cboRAM.TabIndex = 3;
+            // cboStorage
+            this.cboStorage.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
+            this.cboStorage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboStorage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cboStorage.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.cboStorage.IntegralHeight = false;
+            this.cboStorage.MaxDropDownItems = 5;
+            this.cboStorage.Items.AddRange(new object[] { "Tất cả lưu trữ", "128 GB", "256 GB", "512 GB", "1024 GB" });
+            this.cboStorage.Location = new System.Drawing.Point(618, 16);
+            this.cboStorage.Name = "cboStorage";
+            this.cboStorage.Size = new System.Drawing.Size(100, 23);
+            this.cboStorage.TabIndex = 6;
             // cboStatus
             this.cboStatus.BackColor = System.Drawing.Color.FromArgb(245, 247, 250);
             this.cboStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.cboStatus.Items.AddRange(new object[] { "Tất cả trạng thái", "Tốt", "Bảo trì", "Hỏng" });
-            this.cboStatus.Location = new System.Drawing.Point(632, 16);
+            this.cboStatus.IntegralHeight = false;
+            this.cboStatus.MaxDropDownItems = 5;
+            this.cboStatus.Items.AddRange(new object[] { "Tất cả trạng thái", "Tốt", "Hỏng" });
+            this.cboStatus.Location = new System.Drawing.Point(728, 16);
             this.cboStatus.Name = "cboStatus";
-            this.cboStatus.Size = new System.Drawing.Size(100, 23);
+            this.cboStatus.Size = new System.Drawing.Size(110, 23);
             this.cboStatus.TabIndex = 4;
             // btnAdd
             this.btnAdd = new System.Windows.Forms.Button();
@@ -144,7 +164,7 @@ namespace src.Views
             this.btnAdd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAdd.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnAdd.ForeColor = System.Drawing.Color.White;
-            this.btnAdd.Location = new System.Drawing.Point(833, 16);
+            this.btnAdd.Location = new System.Drawing.Point(845, 16);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(115, 28);
             this.btnAdd.TabIndex = 5;
@@ -215,7 +235,8 @@ namespace src.Views
         public Guna.UI2.WinForms.Guna2Panel pnlToolbar;
         public System.Windows.Forms.TextBox txtSearch;
         public System.Windows.Forms.ComboBox cboRoom;
-        public System.Windows.Forms.ComboBox cboCPU;
+        public System.Windows.Forms.ComboBox cboMonitor;
+        public System.Windows.Forms.ComboBox cboStorage;
         public System.Windows.Forms.ComboBox cboRAM;
         public System.Windows.Forms.ComboBox cboStatus;
         public System.Windows.Forms.Button btnAdd;

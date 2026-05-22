@@ -229,18 +229,20 @@ namespace src.Views
                         var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
                         var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
                         var numSV      = FindControl<NumericUpDown>(dlg, "numSV");
-                        var numRam     = FindControl<NumericUpDown>(dlg, "numRam");
-                        var numStorage = FindControl<NumericUpDown>(dlg, "numStorage");
+                        var cboRam     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
+                        var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
                         DateTime date  = dtpDate.Value;
                         int soSV       = (int)numSV.Value;
-                        int reqRam     = (int)numRam.Value;
-                        int reqStorage = (int)numStorage.Value;
-                        int? roomId = (cboRoom != null && cboRoom.SelectedIndex > 0) ? ParseRoomId(cboRoom.SelectedItem?.ToString()) : null;
+                        int reqRam     = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
+                        int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
+                        int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                        int? roomId    = GetRoomId(cboRoom.SelectedItem);
 
                         _scheduleService.ValidateAndCreateSchedule(
                             date, cboLop.Text.Trim(), cboMon.Text.Trim(), 
-                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, roomId, AppSession.MaNguoiDung
+                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                         );
 
                         MessageBox.Show("Đã tạo lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -290,24 +292,34 @@ namespace src.Views
                         var cboCaCtrl = FindControl<ComboBox>(dlg, "cboCa");
                         cboCaCtrl.SelectedValue = sch.MaCa;
 
-                        FindControl<NumericUpDown>(dlg, "numRam").Value     = req.RAMToiThieu;
-                        FindControl<NumericUpDown>(dlg, "numStorage").Value = req.LuuTruToiThieu;
+                        var cboRamCtrl     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        var cboStorageCtrl = FindControl<ComboBox>(dlg, "cboInputStorage");
+                        var cboMonitorCtrl = FindControl<ComboBox>(dlg, "cboInputMonitor");
+
+                        cboRamCtrl.SelectedItem = req.RAMToiThieu + " GB";
+                        cboStorageCtrl.SelectedItem = req.LuuTruToiThieu + " GB";
+                        
+                        // We need to fetch ManHinhToiThieu. Assuming req has it now.
+                        // Wait, req might not have ManHinhToiThieu strongly typed if DTO isn't updated. 
+                        // I will update DTO next. Let's assume it's `req.ManHinhToiThieu`.
+                        cboMonitorCtrl.SelectedItem = req.ManHinhToiThieu + "\"";
+                        if (cboMonitorCtrl.SelectedIndex < 0) cboMonitorCtrl.SelectedIndex = 2;
 
                         if (room.MaPhong > 0)
                         {
                             var cboRoomCtrl = FindControl<ComboBox>(dlg, "cboRoom");
-                            string currentRoomLabel = $"{room.TenPhong}  (sức chứa: {room.SucChua} | đang dùng)  [ID:{room.MaPhong}]";
+                            string currentRoomLabel = $"{room.TenPhong}  (sức chứa: {room.SucChua} | đang dùng)";
                             
                             bool roomFound = false;
                             for (int i = 1; i < cboRoomCtrl.Items.Count; i++)
                             {
-                                int? rid = ParseRoomId(cboRoomCtrl.Items[i]?.ToString());
+                                int? rid = GetRoomId(cboRoomCtrl.Items[i]);
                                 if (rid.HasValue && rid.Value == room.MaPhong)
                                 { cboRoomCtrl.SelectedIndex = i; roomFound = true; break; }
                             }
                             if (!roomFound)
                             {
-                                cboRoomCtrl.Items.Add(currentRoomLabel);
+                                cboRoomCtrl.Items.Add(new RoomItem { Text = currentRoomLabel, Id = room.MaPhong });
                                 cboRoomCtrl.SelectedIndex = cboRoomCtrl.Items.Count - 1;
                             }
                         }
@@ -324,15 +336,20 @@ namespace src.Views
                             var cboMon     = FindControl<ComboBox>(dlg, "cboMon");
                             var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
                             var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
-                            int soSV       = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
-                            int reqRam     = (int)FindControl<NumericUpDown>(dlg, "numRam").Value;
-                            int reqStorage = (int)FindControl<NumericUpDown>(dlg, "numStorage").Value;
+                            var cboRam     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                            var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
+                            var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
-                            int? roomId = (cboRoom != null && cboRoom.SelectedIndex > 0) ? ParseRoomId(cboRoom.SelectedItem?.ToString()) : null;
+                            int soSV       = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                            int reqRam     = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
+                            int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
+                            int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+
+                            int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                             _scheduleService.ValidateAndUpdateSchedule(
                                 scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(), 
-                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, roomId, AppSession.MaNguoiDung
+                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                             );
 
                             MessageBox.Show("Đã cập nhật lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -432,7 +449,8 @@ namespace src.Views
                 Name = "cboLop", Location = new Point(140, y), Size = new Size(290, 26),
                 DropDownStyle = ComboBoxStyle.DropDown,
                 AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems
+                AutoCompleteSource = AutoCompleteSource.ListItems,
+                IntegralHeight = false, MaxDropDownItems = 5
             };
             try
             {
@@ -450,7 +468,8 @@ namespace src.Views
                 Name = "cboMon", Location = new Point(140, y), Size = new Size(290, 26),
                 DropDownStyle = ComboBoxStyle.DropDown,
                 AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems
+                AutoCompleteSource = AutoCompleteSource.ListItems,
+                IntegralHeight = false, MaxDropDownItems = 5
             };
             try
             {
@@ -466,7 +485,8 @@ namespace src.Views
             var cboCa = new ComboBox
             {
                 Name = "cboCa", Location = new Point(140, y), Size = new Size(290, 26),
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                IntegralHeight = false, MaxDropDownItems = 5
             };
             try
             {
@@ -489,22 +509,26 @@ namespace src.Views
 
             // RAM Tối thiểu
             dlg.Controls.Add(new Label { Text = "RAM tối thiểu (GB):", Location = new Point(20, y + 3), AutoSize = true });
-            var numRam = new NumericUpDown
-            {
-                Name = "numRam", Maximum = 512, Minimum = 0, Value = 8,
-                Location = new Point(160, y), Size = new Size(100, 26)
-            };
-            dlg.Controls.Add(numRam);
+            var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(220, y), Size = new Size(100, 26) };
+            cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
+            cboInputRam.SelectedItem = "8 GB";
+            dlg.Controls.Add(cboInputRam);
             y += 40;
 
             // Lưu trữ Tối thiểu
             dlg.Controls.Add(new Label { Text = "Lưu trữ tối thiểu (GB):", Location = new Point(20, y + 3), AutoSize = true });
-            var numStorage = new NumericUpDown
-            {
-                Name = "numStorage", Maximum = 4000, Minimum = 1, Value = 128,
-                Location = new Point(160, y), Size = new Size(100, 26)
-            };
-            dlg.Controls.Add(numStorage);
+            var cboInputStorage = new ComboBox { Name = "cboInputStorage", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(220, y), Size = new Size(100, 26) };
+            cboInputStorage.Items.AddRange(new object[] { "128 GB", "256 GB", "512 GB", "1024 GB" });
+            cboInputStorage.SelectedItem = "128 GB";
+            dlg.Controls.Add(cboInputStorage);
+            y += 40;
+
+            // Màn hình tối thiểu
+            dlg.Controls.Add(new Label { Text = "Màn hình tối thiểu (inch):", Location = new Point(20, y + 3), AutoSize = true });
+            var cboInputMonitor = new ComboBox { Name = "cboInputMonitor", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(220, y), Size = new Size(100, 26) };
+            cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
+            cboInputMonitor.SelectedItem = "24\"";
+            dlg.Controls.Add(cboInputMonitor);
             y += 45;
 
             // ── Gợi ý phòng tự động ─────────────────────────────────────────
@@ -525,7 +549,8 @@ namespace src.Views
             {
                 Name = "cboRoom", Location = new Point(8, 32), Size = new Size(280, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9.5F)
+                Font = new Font("Segoe UI", 9.5F),
+                IntegralHeight = false, MaxDropDownItems = 5
             };
             cboRoom.Items.Add("-- Chưa phân công --");
             cboRoom.SelectedIndex = 0;
@@ -562,15 +587,16 @@ namespace src.Views
                     DateTime selDate = dtpDate.Value.Date;
                     int svCount    = (int)numSV.Value;
 
-                    int reqRam = (int)((NumericUpDown)dlg.Controls["numRam"]).Value;
-                    int reqStorage = (int)((NumericUpDown)dlg.Controls["numStorage"]).Value;
+                    var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
+                    var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
+                    var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
-                    // Kiểm tra tổng sức chứa tối đa của tất cả phòng hoạt động
-                    // int maxCapacity = 0; // TODO: Implement if really needed or just ignore and rely on room results
-                    // Actually, if we don't have maxCapacity we can just continue and if no room found, show message
+                    int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
+                    int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
+                    int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
 
                     // Tìm phòng trống (chưa bị chiếm) có đủ sức chứa và đếm số lượng máy đạt cấu hình yêu cầu
-                    var dtRooms = _scheduleService.GetRoomsForAssignment(svCount, reqRam, reqStorage, selDate, (int)caId);
+                    var dtRooms = _scheduleService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, selDate, (int)caId);
 
                     int found = 0;
                     int roomCount = 0;
@@ -579,16 +605,16 @@ namespace src.Views
                         roomCount++;
                         int soMayTot = r.MayTot;
                         int sucChua  = r.SucChua;
-                        string label = $"{r.TenPhong}  (sức chứa: {sucChua} | máy tốt: {soMayTot})  [ID:{r.MaPhong}]";
+                        string label = $"Phòng {r.TenPhong} thỏa mãn điều kiện";
                         if (soMayTot >= svCount)
                         {
-                            cboRoom.Items.Add(label);
+                            cboRoom.Items.Add(new RoomItem { Text = label, Id = r.MaPhong, IsValid = true });
                             found++;
                         }
                         else
                         {
                             // Thêm vào nhưng đánh dấu là thiếu máy tốt
-                            cboRoom.Items.Add($"⚠ {r.TenPhong}  (chỉ có {soMayTot}/{svCount} máy tốt)  [ID:{r.MaPhong}]");
+                            cboRoom.Items.Add(new RoomItem { Text = $"Phòng {r.TenPhong} không thỏa mãn điều kiện", Id = r.MaPhong, IsValid = false });
                         }
                     }
 
@@ -597,7 +623,7 @@ namespace src.Views
                         // Chọn phòng đầu tiên đủ điều kiện
                         for (int i = 1; i < cboRoom.Items.Count; i++)
                         {
-                            if (!cboRoom.Items[i].ToString().StartsWith("⚠"))
+                            if (cboRoom.Items[i] is RoomItem ri && ri.IsValid)
                             { cboRoom.SelectedIndex = i; break; }
                         }
                         lblSuggestNote.Text = $"✅ Tìm được {found} phòng phù hợp (≥{svCount} máy tốt).";
@@ -626,6 +652,14 @@ namespace src.Views
             dlg.Controls.Add(pnlRoom);
             y += 100;
 
+            // Đăng ký sự kiện thay đổi -> tự động cập nhật gợi ý phòng
+            cboCa.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+            dtpDate.ValueChanged += (s, ev) => btnSuggest.PerformClick();
+            numSV.ValueChanged += (s, ev) => btnSuggest.PerformClick();
+            cboInputRam.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+            cboInputStorage.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+            cboInputMonitor.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+
             // Buttons
             var btnSave = new Button
             {
@@ -653,17 +687,18 @@ namespace src.Views
             return dlg;
         }
 
-        /// <summary>
-        /// Trích MaPhong từ chuỗi gợi ý dạng "Lab A-301 (30 máy)  [ID:3]"
-        /// </summary>
-        private int? ParseRoomId(string roomText)
+        private class RoomItem
         {
-            if (string.IsNullOrEmpty(roomText) || roomText.StartsWith("--")) return null;
-            int start = roomText.LastIndexOf("[ID:", StringComparison.Ordinal);
-            int end = roomText.LastIndexOf("]");
-            if (start < 0 || end <= start) return null;
-            string idStr = roomText.Substring(start + 4, end - start - 4);
-            return int.TryParse(idStr, out int id) ? id : (int?)null;
+            public string Text { get; set; }
+            public int? Id { get; set; }
+            public bool IsValid { get; set; }
+            public override string ToString() => Text;
+        }
+
+        private int? GetRoomId(object item)
+        {
+            if (item is RoomItem ri) return ri.Id;
+            return null;
         }
 
         private T FindControl<T>(Form form, string name) where T : Control

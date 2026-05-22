@@ -229,9 +229,15 @@ namespace src.Views
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
                         
                         string cpu     = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
-                        int    ram     = (int)(FindControl<NumericUpDown>(dlg, "numRAM")?.Value ?? 8);
-                        int    storage = (int)(FindControl<NumericUpDown>(dlg, "numStorage")?.Value ?? 256);
-                        int    monitor = (int)(FindControl<NumericUpDown>(dlg, "numMonitor")?.Value ?? 24);
+                        int    ram     = 8;
+                        int    storage = 256;
+                        int    monitor = 24;
+                        var cboR = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        if (cboR != null) ram = Convert.ToInt32(cboR.SelectedItem.ToString().Replace(" GB", ""));
+                        var cboS = FindControl<ComboBox>(dlg, "cboInputStorage");
+                        if (cboS != null) storage = Convert.ToInt32(cboS.SelectedItem.ToString().Replace(" GB", ""));
+                        var cboM = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                        if (cboM != null) monitor = Convert.ToInt32(cboM.SelectedItem.ToString().Replace("\"", ""));
 
                         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
                         {
@@ -399,18 +405,24 @@ namespace src.Views
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "RAM (GB):", Location = new Point(20, y + 3), AutoSize = true });
-                var numRAM = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 128, Value = 8, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numRAM);
+                var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
+                cboInputRam.SelectedItem = "8 GB";
+                dlg.Controls.Add(cboInputRam);
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "Lưu trữ (GB):", Location = new Point(20, y + 3), AutoSize = true });
-                var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = 256, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numStorage);
+                var cboInputStorage = new ComboBox { Name = "cboInputStorage", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputStorage.Items.AddRange(new object[] { "128 GB", "256 GB", "512 GB", "1024 GB" });
+                cboInputStorage.SelectedItem = "256 GB";
+                dlg.Controls.Add(cboInputStorage);
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "Màn hình (in):", Location = new Point(20, y + 3), AutoSize = true });
-                var numMonitor = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = 24, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numMonitor);
+                var cboInputMonitor = new ComboBox { Name = "cboInputMonitor", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
+                cboInputMonitor.SelectedItem = "24\"";
+                dlg.Controls.Add(cboInputMonitor);
                 y += 40;
             }
 

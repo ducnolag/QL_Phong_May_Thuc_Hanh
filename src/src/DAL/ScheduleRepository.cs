@@ -13,10 +13,10 @@ namespace src.DAL
         (int total, int assigned, int pending, int canceled) GetStatistics();
         IEnumerable<ScheduleDTO> GetActiveSchedules();
         ScheduleDTO GetScheduleById(int id);
-        (int RAMToiThieu, int LuuTruToiThieu) GetScheduleRequirements(int id);
+        (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id);
         (int MaPhong, string TenPhong, int SucChua) GetAssignedRoom(int scheduleId);
         
-        IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, DateTime date, int caId, int currentScheduleId = 0);
+        IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, DateTime date, int caId, int currentScheduleId = 0);
         
         int GetLopIdByName(string name);
         int CreateLop(string name);
@@ -24,11 +24,11 @@ namespace src.DAL
         int CreateMon(string name);
         
         int CheckDuplicateClassSchedule(int lopId, DateTime date, int caId, int excludeScheduleId = 0);
-        int CountAvailableComputers(int roomId, int reqRam, int reqStorage);
+        int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor);
         int CheckRoomConflict(int roomId, DateTime date, int caId, int excludeScheduleId = 0);
 
-        int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int? roomId);
-        void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int? roomId);
+        int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
+        void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
         void CancelSchedule(int id);
         void DeleteSchedule(int id);
         
@@ -91,13 +91,13 @@ namespace src.DAL
             }
         }
 
-        public (int RAMToiThieu, int LuuTruToiThieu) GetScheduleRequirements(int id)
+        public (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                var row = db.QueryFirstOrDefault("SELECT RAMToiThieu, LuuTruToiThieu FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new { id });
-                if (row == null) return (0, 0);
-                return (row.RAMToiThieu ?? 0, row.LuuTruToiThieu ?? 0);
+                var row = db.QueryFirstOrDefault("SELECT RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new { id });
+                if (row == null) return (0, 0, 0);
+                return (row.RAMToiThieu ?? 0, row.LuuTruToiThieu ?? 0, (int?)row.ManHinhToiThieu ?? 0);
             }
         }
 
@@ -113,7 +113,7 @@ namespace src.DAL
             }
         }
 
-        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, DateTime date, int caId, int currentScheduleId = 0)
+        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, DateTime date, int caId, int currentScheduleId = 0)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -122,7 +122,7 @@ namespace src.DAL
                            (SELECT COUNT(*) FROM MAY_TINH m 
                             JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                             WHERE m.MaPhong = p.MaPhong AND tm.TenTrangThaiMay = N'Tốt'
-                              AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage) AS MayTot
+                              AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor) AS MayTot
                     FROM PHONG_MAY p
                     JOIN TRANG_THAI_PHONG ttp ON p.MaTTPhong = ttp.MaTTPhong
                     WHERE ttp.TenTrangThaiPhong = N'Hoạt động'
@@ -132,10 +132,10 @@ namespace src.DAL
                           JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
                           WHERE pc.MaPhong = p.MaPhong
                             AND l.NgayThucHanh = @date AND l.MaCa = @caId
-                            AND l.TrangThaiLich != N'Đã hủy'
+                             AND l.TrangThaiLich != N'Đã hủy'
                             AND l.MaLich != @currentScheduleId
                       )";
-                return db.Query(sql, new { soSV, reqRam, reqStorage, date = date.Date, caId, currentScheduleId });
+                return db.Query(sql, new { soSV, reqRam, reqStorage, reqMonitor, date = date.Date, caId, currentScheduleId });
             }
         }
 
@@ -182,15 +182,15 @@ namespace src.DAL
             }
         }
 
-        public int CountAvailableComputers(int roomId, int reqRam, int reqStorage)
+        public int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
                 return db.ExecuteScalar<int>(@"SELECT COUNT(*) FROM MAY_TINH m
                                                JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                                                WHERE m.MaPhong = @roomId AND tm.TenTrangThaiMay = N'Tốt'
-                                                 AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage", 
-                                               new { roomId, reqRam, reqStorage });
+                                                 AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor", 
+                                               new { roomId, reqRam, reqStorage, reqMonitor });
             }
         }
 
@@ -206,7 +206,7 @@ namespace src.DAL
             }
         }
 
-        public int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int? roomId)
+        public int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -220,8 +220,8 @@ namespace src.DAL
                               OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLop, @MaMon, @MaCa, @NguoiTao)",
                             schedule, trans);
 
-                        conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu) VALUES (@newId, @reqRam, @reqStorage)", 
-                            new { newId, reqRam, reqStorage }, trans);
+                        conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu) VALUES (@newId, @reqRam, @reqStorage, @reqMonitor)", 
+                            new { newId, reqRam, reqStorage, reqMonitor }, trans);
 
                         if (roomId.HasValue)
                         {
@@ -241,7 +241,7 @@ namespace src.DAL
             }
         }
 
-        public void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int? roomId)
+        public void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -256,13 +256,13 @@ namespace src.DAL
                         int countYc = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM YEU_CAU_CAU_HINH WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);
                         if (countYc > 0)
                         {
-                            conn.Execute("UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@reqRam, LuuTruToiThieu=@reqStorage WHERE MaLich=@MaLich", 
-                                new { reqRam, reqStorage, schedule.MaLich }, trans);
+                            conn.Execute("UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@reqRam, LuuTruToiThieu=@reqStorage, ManHinhToiThieu=@reqMonitor WHERE MaLich=@MaLich", 
+                                new { reqRam, reqStorage, reqMonitor, schedule.MaLich }, trans);
                         }
                         else
                         {
-                            conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu) VALUES (@MaLich, @reqRam, @reqStorage)", 
-                                new { schedule.MaLich, reqRam, reqStorage }, trans);
+                            conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu) VALUES (@MaLich, @reqRam, @reqStorage, @reqMonitor)", 
+                                new { schedule.MaLich, reqRam, reqStorage, reqMonitor }, trans);
                         }
 
                         conn.Execute("DELETE FROM PHAN_CONG_PHONG WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);

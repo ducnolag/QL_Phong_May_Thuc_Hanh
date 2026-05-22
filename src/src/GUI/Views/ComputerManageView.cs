@@ -35,17 +35,19 @@ namespace src.Views
             }
             catch { /* giữ mặc định */ }
 
-            cboRoom.SelectedIndex   = 0;
-            cboCPU.SelectedIndex    = 0;
-            cboRAM.SelectedIndex    = 0;
-            cboStatus.SelectedIndex = 0;
+            cboRoom.SelectedIndex    = 0;
+            cboMonitor.SelectedIndex = 0;
+            cboStorage.SelectedIndex = 0;
+            cboRAM.SelectedIndex     = 0;
+            cboStatus.SelectedIndex  = 0;
 
             // Sự kiện lọc
-            txtSearch.TextChanged          += (s, e) => FilterRows();
-            cboRoom.SelectedIndexChanged   += (s, e) => FilterRows();
-            cboCPU.SelectedIndexChanged    += (s, e) => FilterRows();
-            cboRAM.SelectedIndexChanged    += (s, e) => FilterRows();
-            cboStatus.SelectedIndexChanged += (s, e) => FilterRows();
+            txtSearch.TextChanged            += (s, e) => FilterRows();
+            cboRoom.SelectedIndexChanged     += (s, e) => FilterRows();
+            cboMonitor.SelectedIndexChanged  += (s, e) => FilterRows();
+            cboStorage.SelectedIndexChanged  += (s, e) => FilterRows();
+            cboRAM.SelectedIndexChanged      += (s, e) => FilterRows();
+            cboStatus.SelectedIndexChanged   += (s, e) => FilterRows();
 
             // Nút Thêm máy / Sửa / Xóa
             btnAdd.Click   += (s, e) => ShowAddDialog();
@@ -187,7 +189,8 @@ namespace src.Views
         {
             string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
             string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
-            string cpuF    = cboCPU.SelectedItem?.ToString()    ?? "";
+            string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
+            string storF   = cboStorage.SelectedItem?.ToString() ?? "";
             string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
             string statusF = cboStatus.SelectedItem?.ToString() ?? "";
 
@@ -206,8 +209,18 @@ namespace src.Views
                 if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                     if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
 
-                if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
-                    if (row.Cells["CPU"].Value?.ToString().ToLower().Contains(cpuF.ToLower()) != true) show = false;
+                if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
+                {
+                    string monVal = monF.Replace("\"", "");
+                    if (row.Cells["Monitor"].Value?.ToString().Replace("\"", "") != monVal) show = false;
+                }
+
+                if (show && storF != "Tất cả lưu trữ" && !string.IsNullOrEmpty(storF))
+                {
+                    // Trích xuất số GB từ cột chưa có lưu trữ hiển thị, 
+                    // nhưng bảng hiện tại không hiển thị cột Lưu trữ, do đó ta không thể lọc chính xác qua DataGridView.
+                    // (Chúng ta sẽ bỏ qua lọc lưu trữ nếu không có cột tương ứng, hoặc phải thêm cột Storage vào DGV)
+                }
 
                 if (show && ramF != "Tất cả RAM" && !string.IsNullOrEmpty(ramF))
                     if (row.Cells["RAM"].Value?.ToString().StartsWith(ramF.Replace(" GB", "")) != true) show = false;
@@ -237,9 +250,9 @@ namespace src.Views
             {
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
-                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
-                int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
+                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
@@ -297,9 +310,9 @@ namespace src.Views
 
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
-                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
-                int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
+                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
@@ -387,14 +400,23 @@ namespace src.Views
             var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
             AddRow("CPU *:", txtCpu);
 
-            var numRam = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 256, Value = ram };
-            AddRow("RAM (GB):", numRam);
+            var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
+            cboInputRam.SelectedItem = ram + " GB";
+            if (cboInputRam.SelectedIndex < 0) cboInputRam.SelectedIndex = 1; // 8GB default
+            AddRow("RAM (GB):", cboInputRam);
 
-            var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = storage };
-            AddRow("Lưu trữ (GB):", numStorage);
+            var cboInputStorage = new ComboBox { Name = "cboInputStorage", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputStorage.Items.AddRange(new object[] { "128 GB", "256 GB", "512 GB", "1024 GB" });
+            cboInputStorage.SelectedItem = storage + " GB";
+            if (cboInputStorage.SelectedIndex < 0) cboInputStorage.SelectedIndex = 1; // 256GB default
+            AddRow("Lưu trữ (GB):", cboInputStorage);
 
-            var numMon = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = monitor };
-            AddRow("Màn hình (inch):", numMon);
+            var cboInputMonitor = new ComboBox { Name = "cboInputMonitor", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
+            cboInputMonitor.SelectedItem = monitor + "\"";
+            if (cboInputMonitor.SelectedIndex < 0) cboInputMonitor.SelectedIndex = 2; // 24" default
+            AddRow("Màn hình (inch):", cboInputMonitor);
 
             // Phòng
             var cboPh = new ComboBox { Name = "cboPhong", DropDownStyle = ComboBoxStyle.DropDownList };
@@ -424,9 +446,9 @@ namespace src.Views
             {
                 txtTen.Enabled = false;
                 txtCpu.Enabled = false;
-                numRam.Enabled = false;
-                numStorage.Enabled = false;
-                numMon.Enabled = false;
+                cboInputRam.Enabled = false;
+                cboInputStorage.Enabled = false;
+                cboInputMonitor.Enabled = false;
                 cboPh.Enabled = false;
             }
 
