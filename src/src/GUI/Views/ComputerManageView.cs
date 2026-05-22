@@ -13,16 +13,80 @@ namespace src.Views
     /// </summary>
     public partial class ComputerManageView : UserControl
     {
+        private int currentPage = 1;
+        private int pageSize = 15;
+        private Guna.UI2.WinForms.Guna2Panel pnlPagination;
+        private Button btnPrev;
+        private Button btnNext;
+        private Label lblPageInfo;
+
         public ComputerManageView()
         {
             InitializeComponent();
+            SetupPaginationUI();
             SetupView();
+        }
+
+        private void SetupPaginationUI()
+        {
+            pnlPagination = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50,
+                BackColor = Color.White,
+                Padding = new Padding(10)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "< Trước",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.FromArgb(245, 247, 250),
+                FlatAppearance = { BorderSize = 0 },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnPrev.Click += (s, e) => { if (currentPage > 1) { currentPage--; ApplyPagination(); } };
+
+            btnNext = new Button
+            {
+                Text = "Sau >",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.FromArgb(245, 247, 250),
+                FlatAppearance = { BorderSize = 0 },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnNext.Click += (s, e) => { currentPage++; ApplyPagination(); };
+
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Text = "Trang 1 / 1",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = ThemeColors.TextPrimary
+            };
+
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnNext);
+
+            pnlPagination.Resize += (s, e) =>
+            {
+                int cx = pnlPagination.Width / 2;
+                lblPageInfo.Location = new Point(cx - lblPageInfo.Width / 2, 15);
+                btnPrev.Location = new Point(cx - lblPageInfo.Width / 2 - 90, 10);
+                btnNext.Location = new Point(cx + lblPageInfo.Width / 2 + 10, 10);
+            };
+
+            this.pnlGrid.Controls.Add(pnlPagination);
         }
 
         private void SetupView()
         {
-            UIHelper.ApplyCardStyle(pnlToolbar, 14);
-            UIHelper.ApplyCardStyle(pnlGrid, 14);
+            // Toolbar và Grid đã được style bằng Guna2Panel trong Designer
 
             // Load danh sách phòng vào cboRoom
             cboRoom.Items.Clear();
@@ -36,17 +100,19 @@ namespace src.Views
             }
             catch { /* giữ mặc định */ }
 
-            cboRoom.SelectedIndex   = 0;
-            cboCPU.SelectedIndex    = 0;
-            cboRAM.SelectedIndex    = 0;
-            cboStatus.SelectedIndex = 0;
+            cboRoom.SelectedIndex    = 0;
+            cboMonitor.SelectedIndex = 0;
+            cboStorage.SelectedIndex = 0;
+            cboRAM.SelectedIndex     = 0;
+            cboStatus.SelectedIndex  = 0;
 
             // Sự kiện lọc
-            txtSearch.TextChanged          += (s, e) => FilterRows();
-            cboRoom.SelectedIndexChanged   += (s, e) => FilterRows();
-            cboCPU.SelectedIndexChanged    += (s, e) => FilterRows();
-            cboRAM.SelectedIndexChanged    += (s, e) => FilterRows();
-            cboStatus.SelectedIndexChanged += (s, e) => FilterRows();
+            txtSearch.TextChanged            += (s, e) => FilterRows();
+            cboRoom.SelectedIndexChanged     += (s, e) => FilterRows();
+            cboMonitor.SelectedIndexChanged  += (s, e) => FilterRows();
+            cboStorage.SelectedIndexChanged  += (s, e) => FilterRows();
+            cboRAM.SelectedIndexChanged      += (s, e) => FilterRows();
+            cboStatus.SelectedIndexChanged   += (s, e) => FilterRows();
 
             // Nút Thêm máy / Sửa / Xóa
             btnAdd.Click   += (s, e) => ShowAddDialog();
@@ -141,24 +207,19 @@ namespace src.Views
         // ── Tải dữ liệu ────────────────────────────────────────────────
         private void LoadData()
         {
+            dgv.SuspendLayout();
             dgv.Rows.Clear();
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT m.MaMay, m.MaPhong, m.TenMay, p.TenPhong, m.CPU, m.RAM,
-                      m.KichThuocManHinh, t.TenTrangThaiMay
-                      FROM MAY_TINH m
-                      JOIN PHONG_MAY p   ON m.MaPhong  = p.MaPhong
-                      JOIN TRANG_THAI_MAY t ON m.MaTTMay = t.MaTTMay
-                      ORDER BY p.TenPhong, m.TenMay");
-                foreach (DataRow r in dt.Rows)
+                var compService = new src.BLL.ComputerService();
+                var dt = compService.GetAllComputers();
+                foreach (var m in dt)
                 {
-                    string status = r["TenTrangThaiMay"].ToString();
                     int idx = dgv.Rows.Add(
-                        r["MaMay"], r["MaPhong"],
-                        r["TenMay"], r["TenPhong"], r["CPU"],
-                        r["RAM"] + " GB", r["KichThuocManHinh"] + "\"",
-                        status);
+                        m.MaMay, m.MaPhong,
+                        m.TenMay, m.TenPhong, m.CPU,
+                        m.RAM + " GB", m.KichThuocManHinh + "\"",
+                        m.TenTrangThaiMay);
                 }
             }
             catch
@@ -170,6 +231,8 @@ namespace src.Views
 
             // Reload cboRoom nếu cần
             RefreshRoomFilter();
+            dgv.ResumeLayout();
+            FilterRows(); // Trigger filter and pagination
         }
 
         private void RefreshRoomFilter()
@@ -194,9 +257,15 @@ namespace src.Views
         {
             string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
             string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
-            string cpuF    = cboCPU.SelectedItem?.ToString()    ?? "";
+            string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
+            string storF   = cboStorage.SelectedItem?.ToString() ?? "";
             string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
             string statusF = cboStatus.SelectedItem?.ToString() ?? "";
+
+            var filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
+
+            // Lấy currency manager để suspend binding / avoid layout issues during bulk hide/show
+            dgv.CurrentCell = null; 
 
             foreach (DataGridViewRow row in dgv.Rows)
             {
@@ -213,8 +282,11 @@ namespace src.Views
                 if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                     if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
 
-                if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
-                    if (row.Cells["CPU"].Value?.ToString().ToLower().Contains(cpuF.ToLower()) != true) show = false;
+                if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
+                {
+                    string monVal = monF.Replace("\"", "");
+                    if (row.Cells["Monitor"].Value?.ToString().Replace("\"", "") != monVal) show = false;
+                }
 
                 if (show && ramF != "Tất cả RAM" && !string.IsNullOrEmpty(ramF))
                     if (row.Cells["RAM"].Value?.ToString().StartsWith(ramF.Replace(" GB", "")) != true) show = false;
@@ -222,8 +294,77 @@ namespace src.Views
                 if (show && statusF != "Tất cả trạng thái" && !string.IsNullOrEmpty(statusF))
                     if (row.Cells["Status"].Value?.ToString() != statusF) show = false;
 
-                row.Visible = show;
+                if (show)
+                {
+                    filteredRows.Add(row);
+                }
+                else
+                {
+                    row.Visible = false;
+                }
             }
+
+            // Reset về trang 1 mỗi khi lọc
+            currentPage = 1;
+            ApplyPagination(filteredRows);
+        }
+
+        private void ApplyPagination(System.Collections.Generic.List<DataGridViewRow> filteredRows = null)
+        {
+            if (filteredRows == null)
+            {
+                filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
+                string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
+                string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
+                string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
+                string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
+                string statusF = cboStatus.SelectedItem?.ToString() ?? "";
+
+                foreach (DataGridViewRow row in dgv.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    bool show = true;
+                    if (!string.IsNullOrEmpty(kw))
+                    {
+                        bool m = false;
+                        foreach (DataGridViewCell c in row.Cells)
+                            if (c.Value?.ToString().ToLower().Contains(kw) == true) { m = true; break; }
+                        if (!m) show = false;
+                    }
+                    if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
+                        if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+                    if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
+                    {
+                        string monVal = monF.Replace("\"", "");
+                        if (row.Cells["Monitor"].Value?.ToString().Replace("\"", "") != monVal) show = false;
+                    }
+                    if (show && ramF != "Tất cả RAM" && !string.IsNullOrEmpty(ramF))
+                        if (row.Cells["RAM"].Value?.ToString().StartsWith(ramF.Replace(" GB", "")) != true) show = false;
+                    if (show && statusF != "Tất cả trạng thái" && !string.IsNullOrEmpty(statusF))
+                        if (row.Cells["Status"].Value?.ToString() != statusF) show = false;
+
+                    if (show) filteredRows.Add(row);
+                }
+            }
+
+            int totalRecords = filteredRows.Count;
+            int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalRecords / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            lblPageInfo.Text = $"Trang {currentPage} / {totalPages}";
+            btnPrev.Enabled = currentPage > 1;
+            btnNext.Enabled = currentPage < totalPages;
+
+            int startIndex = (currentPage - 1) * pageSize;
+            int endIndex = startIndex + pageSize - 1;
+
+            dgv.CurrentCell = null;
+            dgv.SuspendLayout();
+            for (int i = 0; i < filteredRows.Count; i++)
+            {
+                filteredRows[i].Visible = (i >= startIndex && i <= endIndex);
+            }
+            dgv.ResumeLayout();
         }
 
         // ── Click Sửa/Xóa trong bảng ───────────────────────────────────
@@ -244,29 +385,33 @@ namespace src.Views
             {
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
-                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
-                int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
+                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
-                var ttId = DatabaseHelper.ExecuteScalar(
-                    "SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=@t",
-                    new SqlParameter("@t", ttMay));
+                var compService = new src.BLL.ComputerService();
+                var result = compService.AddComputer(new src.DTO.MayTinhDTO 
+                {
+                    TenMay = tenMay,
+                    CPU = cpu,
+                    RAM = ram,
+                    DungLuongLuuTru = storage,
+                    KichThuocManHinh = monitor,
+                    MaPhong = maPhong,
+                    TenTrangThaiMay = ttMay
+                });
 
-                DatabaseHelper.ExecuteNonQuery(
-                    @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
-                      VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
-                    new SqlParameter("@ten",   tenMay),
-                    new SqlParameter("@cpu",   cpu),
-                    new SqlParameter("@ram",   ram),
-                    new SqlParameter("@sto",   storage),
-                    new SqlParameter("@mon",   monitor),
-                    new SqlParameter("@phong", maPhong),
-                    new SqlParameter("@tt",    ttId));
-
-                MessageBox.Show("Đã thêm máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã thêm máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -300,31 +445,34 @@ namespace src.Views
 
                 string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
                 string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = (int)Find<NumericUpDown>(dlg, "numRAM").Value;
-                int    storage = (int)Find<NumericUpDown>(dlg, "numStorage").Value;
-                int    monitor = (int)Find<NumericUpDown>(dlg, "numMonitor").Value;
+                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
-                var ttId = DatabaseHelper.ExecuteScalar(
-                    "SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=@t",
-                    new SqlParameter("@t", ttMay));
+                var compService = new src.BLL.ComputerService();
+                var result = compService.UpdateComputer(new src.DTO.MayTinhDTO 
+                {
+                    MaMay = maMay,
+                    TenMay = tenMay,
+                    CPU = cpu,
+                    RAM = ram,
+                    DungLuongLuuTru = storage,
+                    KichThuocManHinh = monitor,
+                    MaPhong = maPhong,
+                    TenTrangThaiMay = ttMay
+                });
 
-                DatabaseHelper.ExecuteNonQuery(
-                    @"UPDATE MAY_TINH SET TenMay=@ten, CPU=@cpu, RAM=@ram, DungLuongLuuTru=@sto,
-                      KichThuocManHinh=@mon, MaPhong=@phong, MaTTMay=@tt
-                      WHERE MaMay=@id",
-                    new SqlParameter("@ten",   tenMay),
-                    new SqlParameter("@cpu",   cpu),
-                    new SqlParameter("@ram",   ram),
-                    new SqlParameter("@sto",   storage),
-                    new SqlParameter("@mon",   monitor),
-                    new SqlParameter("@phong", maPhong),
-                    new SqlParameter("@tt",    ttId),
-                    new SqlParameter("@id",    maMay));
-
-                MessageBox.Show("Đã cập nhật máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã cập nhật máy tính!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -342,10 +490,17 @@ namespace src.Views
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             try
             {
-                DatabaseHelper.ExecuteNonQuery("DELETE FROM MAY_TINH WHERE MaMay=@id",
-                    new SqlParameter("@id", maMay));
-                MessageBox.Show("Đã xóa máy!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadData();
+                var compService = new src.BLL.ComputerService();
+                var result = compService.DeleteComputer(maMay);
+                if (result.IsSuccess)
+                {
+                    MessageBox.Show("Đã xóa máy!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadData();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             { MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -380,14 +535,23 @@ namespace src.Views
             var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
             AddRow("CPU *:", txtCpu);
 
-            var numRam = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 256, Value = ram };
-            AddRow("RAM (GB):", numRam);
+            var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
+            cboInputRam.SelectedItem = ram + " GB";
+            if (cboInputRam.SelectedIndex < 0) cboInputRam.SelectedIndex = 1; // 8GB default
+            AddRow("RAM (GB):", cboInputRam);
 
-            var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = storage };
-            AddRow("Lưu trữ (GB):", numStorage);
+            var cboInputStorage = new ComboBox { Name = "cboInputStorage", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputStorage.Items.AddRange(new object[] { "128 GB", "256 GB", "512 GB", "1024 GB" });
+            cboInputStorage.SelectedItem = storage + " GB";
+            if (cboInputStorage.SelectedIndex < 0) cboInputStorage.SelectedIndex = 1; // 256GB default
+            AddRow("Lưu trữ (GB):", cboInputStorage);
 
-            var numMon = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = monitor };
-            AddRow("Màn hình (inch):", numMon);
+            var cboInputMonitor = new ComboBox { Name = "cboInputMonitor", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
+            cboInputMonitor.SelectedItem = monitor + "\"";
+            if (cboInputMonitor.SelectedIndex < 0) cboInputMonitor.SelectedIndex = 2; // 24" default
+            AddRow("Màn hình (inch):", cboInputMonitor);
 
             // Phòng
             var cboPh = new ComboBox { Name = "cboPhong", DropDownStyle = ComboBoxStyle.DropDownList };
@@ -417,9 +581,9 @@ namespace src.Views
             {
                 txtTen.Enabled = false;
                 txtCpu.Enabled = false;
-                numRam.Enabled = false;
-                numStorage.Enabled = false;
-                numMon.Enabled = false;
+                cboInputRam.Enabled = false;
+                cboInputStorage.Enabled = false;
+                cboInputMonitor.Enabled = false;
                 cboPh.Enabled = false;
             }
 

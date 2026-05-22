@@ -95,51 +95,33 @@ namespace src.Forms
 
             try
             {
-                string sql = @"SELECT nd.MaNguoiDung, nd.HoTen, nd.MatKhauDaMaHoa, 
-                               vt.TenVaiTro, nd.TrangThai
-                               FROM NGUOI_DUNG nd 
-                               JOIN VAI_TRO vt ON nd.MaVaiTro = vt.MaVaiTro
-                               WHERE nd.TenDangNhap = @user";
+                var userService = new src.BLL.UserService();
+                var result = userService.Login(user, pass);
 
-                var dt = DatabaseHelper.ExecuteQuery(sql, new SqlParameter("@user", user));
-
-                if (dt.Rows.Count == 0)
+                if (!result.IsSuccess)
                 {
-                    ShowError("⚠ Tên đăng nhập không tồn tại!");
+                    ShowError(result.ErrorMessage);
+                    if (result.ErrorMessage.Contains("Mật khẩu"))
+                    {
+                        txtPassword.Clear();
+                        txtPassword.Focus();
+                    }
                     return;
                 }
 
-                var row = dt.Rows[0];
-                string storedHash = row["MatKhauDaMaHoa"].ToString();
-                bool trangThai = Convert.ToBoolean(row["TrangThai"]);
-                string hoTen = row["HoTen"].ToString();
-                string vaiTro = row["TenVaiTro"].ToString();
-
-                if (!trangThai)
-                {
-                    ShowError("⚠ Tài khoản chưa được kích hoạt!\nVui lòng liên hệ Admin để được mở quyền.");
-                    return;
-                }
-
-                if (!DatabaseHelper.VerifyPassword(pass, storedHash))
-                {
-                    ShowError("⚠ Mật khẩu không đúng!");
-                    txtPassword.Clear();
-                    txtPassword.Focus();
-                    return;
-                }
+                var loggedInUser = result.User;
 
                 // Đăng nhập thành công – ẩn LoginForm rồi mở MainForm
                 lblError.Visible = false;
-                bool isAdmin = vaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+                bool isAdmin = loggedInUser.TenVaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase);
 
                 // Lưu thông tin user vào session
-                AppSession.MaNguoiDung = Convert.ToInt32(row["MaNguoiDung"]);
-                AppSession.HoTen       = hoTen;
+                AppSession.MaNguoiDung = loggedInUser.MaNguoiDung;
+                AppSession.HoTen       = loggedInUser.HoTen;
                 AppSession.IsAdmin     = isAdmin;
 
                 this.Hide();
-                var mainForm = new MainForm(hoTen, isAdmin);
+                var mainForm = new MainForm(loggedInUser.HoTen, isAdmin);
                 // Khi MainForm đóng: nếu thoát bình thường (không phải logout) thì Exit
                 // Logout sẽ gọi Application.Restart() trong MainForm nên không cần Exit ở đây
                 mainForm.FormClosed += (s, args) =>

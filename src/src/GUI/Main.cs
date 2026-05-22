@@ -43,23 +43,15 @@ namespace src
                     lblAvatar.ClientRectangle, Color.White,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
                 // Cắt region hình tròn
-                using (var path = new GraphicsPath())
-                {
-                    path.AddEllipse(0, 0, lblAvatar.Width - 1, lblAvatar.Height - 1);
-                    lblAvatar.Region = new Region(path);
-                }
+                // path region removed
             };
 
             // Logo icon bo tròn
             lblLogoIcon.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var path = UIHelper.GetRoundedRectPath(lblLogoIcon.ClientRectangle, 8))
-                {
-                    lblLogoIcon.Region = new Region(path);
-                    using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
-                        e.Graphics.FillPath(br, path);
-                }
+                using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
+                    e.Graphics.FillEllipse(br, 0, 0, lblLogoIcon.Width - 1, lblLogoIcon.Height - 1);
                 TextRenderer.DrawText(e.Graphics, "🖥", new Font("Segoe UI", 14F),
                     lblLogoIcon.ClientRectangle, Color.White,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);

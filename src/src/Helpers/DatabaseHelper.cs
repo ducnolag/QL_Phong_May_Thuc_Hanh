@@ -71,27 +71,27 @@ namespace src.Helpers
         }
 
         /// <summary>
-        /// Hash password using SHA256 for storage.
+        /// Hash password using BCrypt with automatic salt generation.
         /// </summary>
         public static string HashPassword(string password)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                var sb = new StringBuilder();
-                foreach (byte b in bytes)
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         /// <summary>
-        /// Verify a password against a stored hash.
+        /// Verify a password against a stored BCrypt hash.
         /// </summary>
         public static bool VerifyPassword(string password, string storedHash)
         {
-            string hash = HashPassword(password);
-            return string.Equals(hash, storedHash, StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, storedHash);
+            }
+            catch
+            {
+                // In case the stored hash is old SHA256 and not BCrypt, it will throw an exception
+                return false;
+            }
         }
 
         /// <summary>
@@ -110,10 +110,9 @@ namespace src.Helpers
                     ExecuteNonQuery("INSERT INTO VAI_TRO (TenVaiTro, MoTa) VALUES (N'NhanVien', N'Nhân viên phòng máy')");
                 }
 
-                // Check if admin user exists, create if not
-                var adminCount = ExecuteScalar(
-                    "SELECT COUNT(*) FROM NGUOI_DUNG WHERE TenDangNhap = 'admin'");
-                if (Convert.ToInt32(adminCount) == 0)
+                // Check if admin user exists, create or update if needed
+                var dtAdmin = ExecuteQuery("SELECT MatKhauDaMaHoa FROM NGUOI_DUNG WHERE TenDangNhap = 'admin'");
+                if (dtAdmin.Rows.Count == 0)
                 {
                     // Get Admin role ID
                     var adminRoleId = ExecuteScalar("SELECT MaVaiTro FROM VAI_TRO WHERE TenVaiTro = N'Admin'");
@@ -128,6 +127,17 @@ namespace src.Helpers
                         new SqlParameter("@email", "admin@lab.edu.vn"),
                         new SqlParameter("@phone", "0901234567"),
                         new SqlParameter("@role", adminRoleId));
+                }
+                else
+                {
+                    // Force update password to BCrypt if it's still using the old SHA256 format
+                    string currentHash = dtAdmin.Rows[0]["MatKhauDaMaHoa"].ToString();
+                    if (!currentHash.StartsWith("$2a$") && !currentHash.StartsWith("$2b$") && !currentHash.StartsWith("$2y$"))
+                    {
+                        string newBcryptHash = HashPassword("admin123");
+                        ExecuteNonQuery("UPDATE NGUOI_DUNG SET MatKhauDaMaHoa = @pass WHERE TenDangNhap = 'admin'",
+                            new SqlParameter("@pass", newBcryptHash));
+                    }
                 }
 
                 // Seed room statuses

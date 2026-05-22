@@ -9,16 +9,13 @@ namespace src.Views
 {
     public partial class CatalogManageView : UserControl
     {
+        private readonly src.BLL.CatalogService _catalogService;
+
         public CatalogManageView()
         {
             InitializeComponent();
+            _catalogService = new src.BLL.CatalogService();
             DoubleBuffered = true;
-
-            // Apply card styles
-            UIHelper.ApplyCardStyle(pnlToolbarLop, 8);
-            UIHelper.ApplyCardStyle(pnlGridLop, 8);
-            UIHelper.ApplyCardStyle(pnlToolbarMon, 8);
-            UIHelper.ApplyCardStyle(pnlGridMon, 8);
 
             // Add columns
             SetupGridLop();
@@ -79,8 +76,8 @@ namespace src.Views
             dgvLopHoc.Rows.Clear();
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery("SELECT MaLop, TenLop FROM LOP_HOC ORDER BY TenLop");
-                foreach (DataRow r in dt.Rows) dgvLopHoc.Rows.Add(r["MaLop"], r["TenLop"]);
+                var dt = _catalogService.GetAllLopHoc();
+                foreach (var r in dt) dgvLopHoc.Rows.Add(r.MaLop, r.TenLop);
             }
             catch { }
         }
@@ -90,8 +87,8 @@ namespace src.Views
             dgvMonHoc.Rows.Clear();
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery("SELECT MaMon, TenMon FROM MON_HOC ORDER BY TenMon");
-                foreach (DataRow r in dt.Rows) dgvMonHoc.Rows.Add(r["MaMon"], r["TenMon"]);
+                var dt = _catalogService.GetAllMonHoc();
+                foreach (var r in dt) dgvMonHoc.Rows.Add(r.MaMon, r.TenMon);
             }
             catch { }
         }
@@ -106,19 +103,17 @@ namespace src.Views
             btnAddLop.Click += (s, e) => {
                 string name = ShowInputDialog("Thêm Lớp học", "Tên lớp:", "");
                 if (name == null) return;
-                ExecuteDb("INSERT INTO LOP_HOC (TenLop) VALUES (@ten)", new SqlParameter("@ten", name));
-                LoadLopHoc();
+                try { _catalogService.CreateLopHoc(name); LoadLopHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
             };
             btnAddMon.Click += (s, e) => {
                 string name = ShowInputDialog("Thêm Môn học", "Tên môn:", "");
                 if (name == null) return;
-                ExecuteDb("INSERT INTO MON_HOC (TenMon) VALUES (@ten)", new SqlParameter("@ten", name));
-                LoadMonHoc();
+                try { _catalogService.CreateMonHoc(name); LoadMonHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
             };
 
             // Grid clicks
-            dgvLopHoc.CellClick += (s, e) => HandleGridClick(e, dgvLopHoc, "lớp học", "LOP_HOC", "TenLop", "MaLop", LoadLopHoc);
-            dgvMonHoc.CellClick += (s, e) => HandleGridClick(e, dgvMonHoc, "môn học", "MON_HOC", "TenMon", "MaMon", LoadMonHoc);
+            dgvLopHoc.CellClick += (s, e) => HandleGridClick(e, dgvLopHoc, "lớp học", true, LoadLopHoc);
+            dgvMonHoc.CellClick += (s, e) => HandleGridClick(e, dgvMonHoc, "môn học", false, LoadMonHoc);
         }
 
         private void DoSearch(DataGridView dgv, string kw)
@@ -131,7 +126,7 @@ namespace src.Views
             }
         }
 
-        private void HandleGridClick(DataGridViewCellEventArgs e, DataGridView dgv, string label, string table, string colName, string colPk, Action reload)
+        private void HandleGridClick(DataGridViewCellEventArgs e, DataGridView dgv, string label, bool isLop, Action reload)
         {
             if (e.RowIndex < 0) return;
             var row = dgv.Rows[e.RowIndex];
@@ -139,36 +134,29 @@ namespace src.Views
             int pk = Convert.ToInt32(row.Cells["PK"].Value);
             string ten = row.Cells["Ten"].Value?.ToString() ?? "";
 
-            if (col == "Edit")
-            {
-                string newName = ShowInputDialog($"Sửa {label}", "Tên:", ten);
-                if (newName == null) return;
-                ExecuteDb($"UPDATE {table} SET {colName}=@ten WHERE {colPk}=@pk",
-                    new SqlParameter("@ten", newName), new SqlParameter("@pk", pk));
-                reload();
-            }
-            else if (col == "Delete")
-            {
-                if (MessageBox.Show($"Xóa '{ten}'?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    ExecuteDb($"DELETE FROM {table} WHERE {colPk}=@pk", new SqlParameter("@pk", pk));
-                    reload();
-                }
-            }
-        }
-
-        private void ExecuteDb(string sql, params SqlParameter[] parameters)
-        {
             try
             {
-                DatabaseHelper.ExecuteNonQuery(sql, parameters);
+                if (col == "Edit")
+                {
+                    string newName = ShowInputDialog($"Sửa {label}", "Tên:", ten);
+                    if (newName == null) return;
+                    if (isLop) _catalogService.UpdateLopHoc(pk, newName);
+                    else _catalogService.UpdateMonHoc(pk, newName);
+                    reload();
+                }
+                else if (col == "Delete")
+                {
+                    if (MessageBox.Show($"Xóa '{ten}'?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        if (isLop) _catalogService.DeleteLopHoc(pk);
+                        else _catalogService.DeleteMonHoc(pk);
+                        reload();
+                    }
+                }
             }
             catch (Exception ex)
             {
-                string msg = (ex.Message.Contains("REFERENCE") || ex.Message.Contains("FK_"))
-                    ? "Không thể xóa vì đang được sử dụng trong lịch thực hành."
-                    : "Lỗi: " + ex.Message;
-                MessageBox.Show(msg, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

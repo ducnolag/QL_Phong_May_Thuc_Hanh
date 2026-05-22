@@ -14,10 +14,77 @@ namespace src.Views
     /// </summary>
     public partial class RoomManageView : UserControl
     {
+        private int currentPage = 1;
+        private int pageSize = 6;
+        private System.Collections.Generic.List<Control> allRoomCards = new System.Collections.Generic.List<Control>();
+        private Guna.UI2.WinForms.Guna2Panel pnlPagination;
+        private Button btnPrev;
+        private Button btnNext;
+        private Label lblPageInfo;
+
         public RoomManageView()
         {
             InitializeComponent();
+            SetupPaginationUI();
             SetupView();
+        }
+
+        private void SetupPaginationUI()
+        {
+            pnlPagination = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50,
+                BackColor = Color.Transparent,
+                Padding = new Padding(10)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "< Trước",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White,
+                FlatAppearance = { BorderColor = Color.FromArgb(226, 232, 240) },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnPrev.Click += (s, e) => { if (currentPage > 1) { currentPage--; ApplyPagination(); } };
+
+            btnNext = new Button
+            {
+                Text = "Sau >",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White,
+                FlatAppearance = { BorderColor = Color.FromArgb(226, 232, 240) },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnNext.Click += (s, e) => { currentPage++; ApplyPagination(); };
+
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Text = "Trang 1 / 1",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = ThemeColors.TextPrimary
+            };
+
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnNext);
+
+            pnlPagination.Resize += (s, e) =>
+            {
+                int cx = pnlPagination.Width / 2;
+                lblPageInfo.Location = new Point(cx - lblPageInfo.Width / 2, 15);
+                btnPrev.Location = new Point(cx - lblPageInfo.Width / 2 - 90, 10);
+                btnNext.Location = new Point(cx + lblPageInfo.Width / 2 + 10, 10);
+            };
+
+            this.Controls.Add(pnlPagination);
+            pnlPagination.BringToFront();
         }
 
         /// <summary>
@@ -29,8 +96,6 @@ namespace src.Views
             btnAdd.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8))
-                    btnAdd.Region = new Region(p);
             };
             btnAdd.Click += (s, e) => ShowAddDialog();
 
@@ -43,33 +108,24 @@ namespace src.Views
         private void LoadData()
         {
             pnlStats.Controls.Clear();
-            pnlRoomCards.Controls.Clear();
+            allRoomCards.Clear();
 
             int totalRooms = 0, available = 0, occupied = 0;
             var rooms = new System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)>();
 
             try
             {
-                // Thống kê
-                totalRooms = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY"));
-                available = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'"));
-                occupied = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    "SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong!=N'Hoạt động'"));
+                var roomService = new src.BLL.RoomService();
+                var stats = roomService.GetRoomStats();
+                totalRooms = stats.TotalRooms;
+                available = stats.Available;
+                occupied = stats.Occupied;
 
-                // Lấy danh sách phòng
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT p.MaPhong, p.TenPhong, p.ViTri, p.SucChua, t.TenTrangThaiPhong,
-                      (SELECT COUNT(*) FROM MAY_TINH m WHERE m.MaPhong=p.MaPhong) AS SoMay
-                      FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong
-                      ORDER BY p.TenPhong");
-                foreach (DataRow r in dt.Rows)
+                // Lấy danh sách phòng qua BLL -> DAL (Dapper)
+                var dtRooms = roomService.GetAllRooms();
+                foreach (var r in dtRooms)
                 {
-                    string status = r["TenTrangThaiPhong"].ToString();
-                    string engStatus = status.Contains("Hoạt") ? "available" : status.Contains("Bảo") ? "maintenance" : "occupied";
-                    rooms.Add((Convert.ToInt32(r["MaPhong"]), r["TenPhong"].ToString(),
-                        r["ViTri"].ToString(), Convert.ToInt32(r["SucChua"]),
-                        Convert.ToInt32(r["SoMay"]), engStatus));
+                    rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.StatusEng));
                 }
             }
             catch
@@ -92,41 +148,78 @@ namespace src.Views
             // === Tạo room cards theo Figma ===
             foreach (var room in rooms)
             {
-                pnlRoomCards.Controls.Add(MakeRoomCard(room.id, room.name, room.location,
+                allRoomCards.Add(MakeRoomCard(room.id, room.name, room.location,
                     room.capacity, room.computerCount, room.status));
             }
+
+            currentPage = 1;
+            ApplyPagination();
+        }
+
+        private void ApplyPagination()
+        {
+            int totalRecords = allRoomCards.Count;
+            int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalRecords / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            lblPageInfo.Text = $"Trang {currentPage} / {totalPages}";
+            btnPrev.Enabled = currentPage > 1;
+            btnNext.Enabled = currentPage < totalPages;
+
+            int startIndex = (currentPage - 1) * pageSize;
+            int endIndex = startIndex + pageSize - 1;
+
+            pnlRoomCards.SuspendLayout();
+            pnlRoomCards.Controls.Clear();
+            for (int i = startIndex; i <= endIndex && i < totalRecords; i++)
+            {
+                pnlRoomCards.Controls.Add(allRoomCards[i]);
+            }
+            pnlRoomCards.ResumeLayout();
         }
 
         /// <summary>
-        /// Tạo thẻ tổng kết nhỏ (Total Rooms, Available, Occupied)
+        /// Tạo thẻ tổng kết nhỏ (Total Rooms, Available, Occupied) bằng Guna2Panel
         /// </summary>
-        private Panel MakeSummaryCard(string title, string value, Color valueColor)
+        private Guna.UI2.WinForms.Guna2Panel MakeSummaryCard(string title, string value, Color valueColor)
         {
-            var card = new Panel { Size = new Size(160, 75), Margin = new Padding(6), BackColor = Color.White };
-            card.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 10))
-                    card.Region = new Region(p);
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 10))
-                using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
-                    g.DrawPath(pen, p);
-
-                TextRenderer.DrawText(g, title, new Font("Segoe UI", 9F),
-                    new Point(14, 10), ThemeColors.TextSecondary);
-                TextRenderer.DrawText(g, value, new Font("Segoe UI", 22F, FontStyle.Bold),
-                    new Point(12, 30), valueColor);
+            var card = new Guna.UI2.WinForms.Guna2Panel 
+            { 
+                Size = new Size(160, 75), 
+                Margin = new Padding(6), 
+                BackColor = Color.Transparent,
+                FillColor = Color.White,
+                BorderRadius = 10,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                BorderThickness = 1
             };
+
+            var lblTitle = new Label { Text = title, Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(14, 10), AutoSize = true };
+            var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 22F, FontStyle.Bold), ForeColor = valueColor, Location = new Point(12, 30), AutoSize = true };
+            
+            card.Controls.Add(lblTitle);
+            card.Controls.Add(lblValue);
+
             return card;
         }
 
         /// <summary>
-        /// Tạo card phòng theo Figma: icon, tên, vị trí, capacity, computers, status, Edit/Delete
+        /// Tạo card phòng theo Figma: icon, tên, vị trí, capacity, computers, status, Edit/Delete bằng Guna2Panel
         /// </summary>
-        private Panel MakeRoomCard(int id, string name, string location, int capacity, int computers, string status)
+        private Guna.UI2.WinForms.Guna2Panel MakeRoomCard(int id, string name, string location, int capacity, int computers, string status)
         {
-            var card = new Panel { Size = new Size(300, 230), Margin = new Padding(6), BackColor = Color.White, Tag = id };
+            var card = new Guna.UI2.WinForms.Guna2Panel 
+            { 
+                Size = new Size(300, 230), 
+                Margin = new Padding(6), 
+                BackColor = Color.Transparent,
+                FillColor = Color.White,
+                BorderRadius = 12,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                BorderThickness = 1,
+                Tag = id 
+            };
+            
             Color statusColor = status == "available" ? ThemeColors.AccentGreen :
                                 status == "maintenance" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
             Color badgeBg = status == "available" ? ThemeColors.BadgeGreenBg :
@@ -138,11 +231,6 @@ namespace src.Views
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
-                    card.Region = new Region(p);
-                using (var p = UIHelper.GetRoundedRectPath(card.ClientRectangle, 12))
-                using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
-                    g.DrawPath(pen, p);
 
                 // Chấm trạng thái góc phải trên
                 using (var br = new SolidBrush(statusColor))
@@ -180,8 +268,7 @@ namespace src.Views
                 var sz = TextRenderer.MeasureText(status, new Font("Segoe UI", 8F));
                 int bx = card.Width / 2;
                 using (var br = new SolidBrush(badgeBg))
-                using (var p = UIHelper.GetRoundedRectPath(new Rectangle(bx, infoY + 50, sz.Width + 12, sz.Height + 2), 6))
-                    g.FillPath(br, p);
+                    g.FillRectangle(br, bx + 4, infoY + 50, sz.Width + 4, 18);
                 TextRenderer.DrawText(g, status, new Font("Segoe UI", 8F, FontStyle.Bold),
                     new Point(bx + 6, infoY + 52), badgeFg);
 
@@ -190,42 +277,30 @@ namespace src.Views
                     g.DrawLine(pen, 16, infoY + 80, card.Width - 16, infoY + 80);
             };
 
-            // Nút Edit
-            var btnEdit = new Button
+            // Nút Edit bằng Guna2Button
+            var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "✏  Edit", Size = new Size(120, 32), Location = new Point(16, 190),
-                FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = ThemeColors.TextPrimary,
-                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand
-            };
-            btnEdit.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
-            btnEdit.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnEdit.ClientRectangle, 6))
-                    btnEdit.Region = new Region(p);
+                FillColor = Color.White, ForeColor = ThemeColors.TextPrimary,
+                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
+                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)
             };
             btnEdit.Click += (s, e) => ShowEditDialog(id, name);
             card.Controls.Add(btnEdit);
 
-            // Nút Delete
-            var btnDel = new Button
+            // Nút Delete bằng Guna2Button
+            var btnDel = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "🗑", Size = new Size(38, 32), Location = new Point(144, 190),
-                FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = ThemeColors.AccentRed,
-                Font = new Font("Segoe UI", 12F), Cursor = Cursors.Hand
-            };
-            btnDel.FlatAppearance.BorderColor = Color.FromArgb(254, 226, 226);
-            btnDel.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var p = UIHelper.GetRoundedRectPath(btnDel.ClientRectangle, 6))
-                    btnDel.Region = new Region(p);
+                FillColor = Color.White, ForeColor = ThemeColors.AccentRed,
+                Font = new Font("Segoe UI", 12F), Cursor = Cursors.Hand,
+                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(254, 226, 226)
             };
             btnDel.Click += (s, e) => DeleteRoom(id, name);
             card.Controls.Add(btnDel);
 
-            card.MouseEnter += (s, e) => { card.BackColor = Color.FromArgb(249, 250, 251); card.Invalidate(); };
-            card.MouseLeave += (s, e) => { card.BackColor = Color.White; card.Invalidate(); };
+            card.MouseEnter += (s, e) => { card.FillColor = Color.FromArgb(249, 250, 251); card.Invalidate(); };
+            card.MouseLeave += (s, e) => { card.FillColor = Color.White; card.Invalidate(); };
             return card;
         }
 
@@ -246,9 +321,15 @@ namespace src.Views
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
                         
                         string cpu     = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
-                        int    ram     = (int)(FindControl<NumericUpDown>(dlg, "numRAM")?.Value ?? 8);
-                        int    storage = (int)(FindControl<NumericUpDown>(dlg, "numStorage")?.Value ?? 256);
-                        int    monitor = (int)(FindControl<NumericUpDown>(dlg, "numMonitor")?.Value ?? 24);
+                        int    ram     = 8;
+                        int    storage = 256;
+                        int    monitor = 24;
+                        var cboR = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        if (cboR != null) ram = Convert.ToInt32(cboR.SelectedItem.ToString().Replace(" GB", ""));
+                        var cboS = FindControl<ComboBox>(dlg, "cboInputStorage");
+                        if (cboS != null) storage = Convert.ToInt32(cboS.SelectedItem.ToString().Replace(" GB", ""));
+                        var cboM = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                        if (cboM != null) monitor = Convert.ToInt32(cboM.SelectedItem.ToString().Replace("\"", ""));
 
                         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
                         {
@@ -358,38 +439,20 @@ namespace src.Views
         /// </summary>
         private void DeleteRoom(int roomId, string roomName)
         {
-            try
-            {
-                var count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                    @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                      JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                      WHERE pc.MaPhong=@id AND l.TrangThaiLich != N'Đã hủy'",
-                    new SqlParameter("@id", roomId)));
-                if (count > 0)
-                {
-                    MessageBox.Show("Phòng đang có lịch thực hành không thể xóa!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-            }
-            catch { }
-
             if (MessageBox.Show($"Bạn có chắc muốn xóa phòng '{roomName}'?\nTất cả máy tính trong phòng cũng sẽ bị xóa!",
                 "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                try
+                var roomService = new src.BLL.RoomService();
+                var result = roomService.DeleteRoom(roomId);
+                
+                if (result.IsSuccess)
                 {
-                    // Xóa máy tính trước (FK constraint)
-                    DatabaseHelper.ExecuteNonQuery("DELETE FROM MAY_TINH WHERE MaPhong=@id",
-                        new SqlParameter("@id", roomId));
-                    DatabaseHelper.ExecuteNonQuery("DELETE FROM PHONG_MAY WHERE MaPhong=@id",
-                        new SqlParameter("@id", roomId));
-                    MessageBox.Show("Đã xóa phòng thành công!", "Thành công",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadData();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show("Lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(result.Message, "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }
@@ -434,18 +497,24 @@ namespace src.Views
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "RAM (GB):", Location = new Point(20, y + 3), AutoSize = true });
-                var numRAM = new NumericUpDown { Name = "numRAM", Minimum = 1, Maximum = 128, Value = 8, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numRAM);
+                var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
+                cboInputRam.SelectedItem = "8 GB";
+                dlg.Controls.Add(cboInputRam);
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "Lưu trữ (GB):", Location = new Point(20, y + 3), AutoSize = true });
-                var numStorage = new NumericUpDown { Name = "numStorage", Minimum = 32, Maximum = 4096, Value = 256, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numStorage);
+                var cboInputStorage = new ComboBox { Name = "cboInputStorage", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputStorage.Items.AddRange(new object[] { "128 GB", "256 GB", "512 GB", "1024 GB" });
+                cboInputStorage.SelectedItem = "256 GB";
+                dlg.Controls.Add(cboInputStorage);
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "Màn hình (in):", Location = new Point(20, y + 3), AutoSize = true });
-                var numMonitor = new NumericUpDown { Name = "numMonitor", Minimum = 10, Maximum = 50, Value = 24, Location = new Point(130, y), Size = new Size(100, 26) };
-                dlg.Controls.Add(numMonitor);
+                var cboInputMonitor = new ComboBox { Name = "cboInputMonitor", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(100, 26) };
+                cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
+                cboInputMonitor.SelectedItem = "24\"";
+                dlg.Controls.Add(cboInputMonitor);
                 y += 40;
             }
 

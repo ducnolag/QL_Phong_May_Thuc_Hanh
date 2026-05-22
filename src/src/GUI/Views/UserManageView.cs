@@ -15,24 +15,25 @@ namespace src.Views
     /// </summary>
     public partial class UserManageView : UserControl
     {
+        private readonly src.BLL.UserService _userService;
+
         public UserManageView()
         {
             InitializeComponent();
+            _userService = new src.BLL.UserService();
             SetupView();
         }
 
         private void SetupView()
         {
-            UIHelper.ApplyCardStyle(pnlToolbar, 14);
-            UIHelper.ApplyCardStyle(pnlGrid, 14);
+
+
             SetupGridStyles();
             LoadData();
             txtSearch.TextChanged += (s, e) => FilterRows();
             btnAdd.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using var p = UIHelper.GetRoundedRectPath(btnAdd.ClientRectangle, 8);
-                btnAdd.Region = new Region(p);
             };
             btnAdd.Click += (s, e) => ShowAddDialog();
         }
@@ -112,24 +113,18 @@ namespace src.Views
             dgv.Rows.Clear();
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT nd.MaNguoiDung, nd.TenDangNhap, nd.HoTen, nd.Email,
-                      vt.TenVaiTro, nd.TrangThai, nd.CreatedAt
-                      FROM NGUOI_DUNG nd
-                      JOIN VAI_TRO vt ON nd.MaVaiTro = vt.MaVaiTro
-                      ORDER BY nd.MaNguoiDung");
-
-                foreach (DataRow r in dt.Rows)
+                var users = _userService.GetAllUsers();
+                foreach (var r in users)
                 {
-                    bool active   = Convert.ToBoolean(r["TrangThai"]);
+                    bool active   = r.TrangThai;
                     string status = active ? "active" : "inactive";
-                    string ngay   = Convert.ToDateTime(r["CreatedAt"]).ToString("yyyy-MM-dd");
+                    string ngay   = r.CreatedAt.ToString("yyyy-MM-dd");
 
                     int idx = dgv.Rows.Add(
-                        r["TenDangNhap"], r["HoTen"], r["Email"],
-                        r["TenVaiTro"], status, ngay);
+                        r.TenDangNhap, r.HoTen, r.Email,
+                        r.TenVaiTro, status, ngay);
                     // Tag lưu MaNguoiDung và trạng thái active
-                    dgv.Rows[idx].Tag = (id: Convert.ToInt32(r["MaNguoiDung"]), active: active);
+                    dgv.Rows[idx].Tag = (id: r.MaNguoiDung, active: active);
                 }
             }
             catch
@@ -205,28 +200,7 @@ namespace src.Views
                 string role     = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
                 bool active     = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-                {
-                    MessageBox.Show("Vui lòng điền đầy đủ thông tin bắt buộc!", "Thiếu thông tin",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var roleId    = DatabaseHelper.ExecuteScalar("SELECT MaVaiTro FROM VAI_TRO WHERE TenVaiTro=@r",
-                                    new SqlParameter("@r", role));
-                string hashed = DatabaseHelper.HashPassword(password);
-
-                DatabaseHelper.ExecuteNonQuery(
-                    @"INSERT INTO NGUOI_DUNG
-                      (TenDangNhap, MatKhauDaMaHoa, HoTen, Email, SoDienThoai, TrangThai, MaVaiTro)
-                      VALUES (@u, @p, @n, @e, @hint, @s, @r)",
-                    new SqlParameter("@u",    username),
-                    new SqlParameter("@p",    hashed),
-                    new SqlParameter("@n",    string.IsNullOrEmpty(hoTen) ? username : hoTen),
-                    new SqlParameter("@e",    email),
-                    new SqlParameter("@hint", password),   // lưu plain-text vào SoDienThoai làm hint
-                    new SqlParameter("@s",    active ? 1 : 0),
-                    new SqlParameter("@r",    roleId));
+                _userService.CreateUser(username, password, hoTen, email, role, active);
 
                 MessageBox.Show("Đã thêm người dùng thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -260,28 +234,7 @@ namespace src.Views
                 string newRole    = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
                 bool newActive    = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                var roleId = DatabaseHelper.ExecuteScalar("SELECT MaVaiTro FROM VAI_TRO WHERE TenVaiTro=@r",
-                                 new SqlParameter("@r", newRole));
-
-                string sql = "UPDATE NGUOI_DUNG SET HoTen=@n, Email=@e, TrangThai=@s, MaVaiTro=@r";
-                var pars = new System.Collections.Generic.List<SqlParameter>
-                {
-                    new("@n", string.IsNullOrEmpty(newHoTen) ? username : newHoTen),
-                    new("@e", newEmail),
-                    new("@s", newActive ? 1 : 0),
-                    new("@r", roleId),
-                    new("@u", username)
-                };
-
-                if (!string.IsNullOrEmpty(newPw))
-                {
-                    sql += ", MatKhauDaMaHoa=@p, SoDienThoai=@hint";
-                    pars.Add(new SqlParameter("@p",    DatabaseHelper.HashPassword(newPw)));
-                    pars.Add(new SqlParameter("@hint", newPw));
-                }
-                sql += " WHERE TenDangNhap=@u";
-
-                DatabaseHelper.ExecuteNonQuery(sql, pars.ToArray());
+                _userService.UpdateUser(username, newPw, newHoTen, newEmail, newRole, newActive);
 
                 // Nếu đang sửa chính tài khoản đang đăng nhập → cập nhật sidebar
                 if (this.TopLevelControl is MainForm mf && string.Equals(mf._currentUser, username, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(newHoTen))
@@ -316,47 +269,10 @@ namespace src.Views
 
             try
             {
-                int hasDataCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(@"
-                    SELECT COUNT(*) FROM (
-                        SELECT 1 AS X FROM LICH_THUC_HANH WHERE NguoiTao = @id
-                        UNION ALL
-                        SELECT 1 FROM PHAN_CONG_PHONG WHERE MaNguoiDung = @id
-                        UNION ALL
-                        SELECT 1 FROM CAP_NHAT_PHONG WHERE MaNguoiDung = @id
-                        UNION ALL
-                        SELECT 1 FROM CAP_NHAT_MAY WHERE MaNguoiDung = @id
-                    ) T", new SqlParameter("@id", userId)));
-                
-                bool hasData = hasDataCount > 0;
-
-                if (hasData && active)
-                {
-                    MessageBox.Show("Tài khoản này đã được kích hoạt và đang sử dụng nên không thể xóa!", 
-                        "Không thể xóa", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
                 if (MessageBox.Show($"Xóa người dùng '{username}'?", "Xác nhận xóa",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
-                string sql = @"
-                    BEGIN TRAN;
-                    BEGIN TRY
-                        DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE NguoiTao = @id);
-                        DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE NguoiTao = @id);
-                        DELETE FROM PHAN_CONG_PHONG WHERE MaNguoiDung = @id;
-                        DELETE FROM LICH_THUC_HANH WHERE NguoiTao = @id;
-                        DELETE FROM CAP_NHAT_PHONG WHERE MaNguoiDung = @id;
-                        DELETE FROM CAP_NHAT_MAY WHERE MaNguoiDung = @id;
-                        DELETE FROM NGUOI_DUNG WHERE MaNguoiDung = @id;
-                        COMMIT TRAN;
-                    END TRY
-                    BEGIN CATCH
-                        ROLLBACK TRAN;
-                        THROW;
-                    END CATCH";
-
-                DatabaseHelper.ExecuteNonQuery(sql, new SqlParameter("@id", userId));
+                _userService.DeleteUser(userId, username, active);
 
                 MessageBox.Show("Đã xóa thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
