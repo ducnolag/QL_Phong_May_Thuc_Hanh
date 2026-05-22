@@ -14,10 +14,77 @@ namespace src.Views
     /// </summary>
     public partial class RoomManageView : UserControl
     {
+        private int currentPage = 1;
+        private int pageSize = 6;
+        private System.Collections.Generic.List<Control> allRoomCards = new System.Collections.Generic.List<Control>();
+        private Guna.UI2.WinForms.Guna2Panel pnlPagination;
+        private Button btnPrev;
+        private Button btnNext;
+        private Label lblPageInfo;
+
         public RoomManageView()
         {
             InitializeComponent();
+            SetupPaginationUI();
             SetupView();
+        }
+
+        private void SetupPaginationUI()
+        {
+            pnlPagination = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50,
+                BackColor = Color.Transparent,
+                Padding = new Padding(10)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "< Trước",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White,
+                FlatAppearance = { BorderColor = Color.FromArgb(226, 232, 240) },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnPrev.Click += (s, e) => { if (currentPage > 1) { currentPage--; ApplyPagination(); } };
+
+            btnNext = new Button
+            {
+                Text = "Sau >",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White,
+                FlatAppearance = { BorderColor = Color.FromArgb(226, 232, 240) },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnNext.Click += (s, e) => { currentPage++; ApplyPagination(); };
+
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Text = "Trang 1 / 1",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = ThemeColors.TextPrimary
+            };
+
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnNext);
+
+            pnlPagination.Resize += (s, e) =>
+            {
+                int cx = pnlPagination.Width / 2;
+                lblPageInfo.Location = new Point(cx - lblPageInfo.Width / 2, 15);
+                btnPrev.Location = new Point(cx - lblPageInfo.Width / 2 - 90, 10);
+                btnNext.Location = new Point(cx + lblPageInfo.Width / 2 + 10, 10);
+            };
+
+            this.Controls.Add(pnlPagination);
+            pnlPagination.BringToFront();
         }
 
         /// <summary>
@@ -41,7 +108,7 @@ namespace src.Views
         private void LoadData()
         {
             pnlStats.Controls.Clear();
-            pnlRoomCards.Controls.Clear();
+            allRoomCards.Clear();
 
             int totalRooms = 0, available = 0, occupied = 0;
             var rooms = new System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)>();
@@ -81,9 +148,34 @@ namespace src.Views
             // === Tạo room cards theo Figma ===
             foreach (var room in rooms)
             {
-                pnlRoomCards.Controls.Add(MakeRoomCard(room.id, room.name, room.location,
+                allRoomCards.Add(MakeRoomCard(room.id, room.name, room.location,
                     room.capacity, room.computerCount, room.status));
             }
+
+            currentPage = 1;
+            ApplyPagination();
+        }
+
+        private void ApplyPagination()
+        {
+            int totalRecords = allRoomCards.Count;
+            int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalRecords / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            lblPageInfo.Text = $"Trang {currentPage} / {totalPages}";
+            btnPrev.Enabled = currentPage > 1;
+            btnNext.Enabled = currentPage < totalPages;
+
+            int startIndex = (currentPage - 1) * pageSize;
+            int endIndex = startIndex + pageSize - 1;
+
+            pnlRoomCards.SuspendLayout();
+            pnlRoomCards.Controls.Clear();
+            for (int i = startIndex; i <= endIndex && i < totalRecords; i++)
+            {
+                pnlRoomCards.Controls.Add(allRoomCards[i]);
+            }
+            pnlRoomCards.ResumeLayout();
         }
 
         /// <summary>

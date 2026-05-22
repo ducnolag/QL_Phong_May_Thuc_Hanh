@@ -13,10 +13,75 @@ namespace src.Views
     /// </summary>
     public partial class ComputerManageView : UserControl
     {
+        private int currentPage = 1;
+        private int pageSize = 15;
+        private Guna.UI2.WinForms.Guna2Panel pnlPagination;
+        private Button btnPrev;
+        private Button btnNext;
+        private Label lblPageInfo;
+
         public ComputerManageView()
         {
             InitializeComponent();
+            SetupPaginationUI();
             SetupView();
+        }
+
+        private void SetupPaginationUI()
+        {
+            pnlPagination = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50,
+                BackColor = Color.White,
+                Padding = new Padding(10)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "< Trước",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.FromArgb(245, 247, 250),
+                FlatAppearance = { BorderSize = 0 },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnPrev.Click += (s, e) => { if (currentPage > 1) { currentPage--; ApplyPagination(); } };
+
+            btnNext = new Button
+            {
+                Text = "Sau >",
+                Size = new Size(80, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.FromArgb(245, 247, 250),
+                FlatAppearance = { BorderSize = 0 },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnNext.Click += (s, e) => { currentPage++; ApplyPagination(); };
+
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Text = "Trang 1 / 1",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = ThemeColors.TextPrimary
+            };
+
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnNext);
+
+            pnlPagination.Resize += (s, e) =>
+            {
+                int cx = pnlPagination.Width / 2;
+                lblPageInfo.Location = new Point(cx - lblPageInfo.Width / 2, 15);
+                btnPrev.Location = new Point(cx - lblPageInfo.Width / 2 - 90, 10);
+                btnNext.Location = new Point(cx + lblPageInfo.Width / 2 + 10, 10);
+            };
+
+            this.pnlGrid.Controls.Add(pnlPagination);
         }
 
         private void SetupView()
@@ -142,6 +207,7 @@ namespace src.Views
         // ── Tải dữ liệu ────────────────────────────────────────────────
         private void LoadData()
         {
+            dgv.SuspendLayout();
             dgv.Rows.Clear();
             try
             {
@@ -165,6 +231,8 @@ namespace src.Views
 
             // Reload cboRoom nếu cần
             RefreshRoomFilter();
+            dgv.ResumeLayout();
+            FilterRows(); // Trigger filter and pagination
         }
 
         private void RefreshRoomFilter()
@@ -194,6 +262,11 @@ namespace src.Views
             string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
             string statusF = cboStatus.SelectedItem?.ToString() ?? "";
 
+            var filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
+
+            // Lấy currency manager để suspend binding / avoid layout issues during bulk hide/show
+            dgv.CurrentCell = null; 
+
             foreach (DataGridViewRow row in dgv.Rows)
             {
                 if (row.IsNewRow) continue;
@@ -215,21 +288,83 @@ namespace src.Views
                     if (row.Cells["Monitor"].Value?.ToString().Replace("\"", "") != monVal) show = false;
                 }
 
-                if (show && storF != "Tất cả lưu trữ" && !string.IsNullOrEmpty(storF))
-                {
-                    // Trích xuất số GB từ cột chưa có lưu trữ hiển thị, 
-                    // nhưng bảng hiện tại không hiển thị cột Lưu trữ, do đó ta không thể lọc chính xác qua DataGridView.
-                    // (Chúng ta sẽ bỏ qua lọc lưu trữ nếu không có cột tương ứng, hoặc phải thêm cột Storage vào DGV)
-                }
-
                 if (show && ramF != "Tất cả RAM" && !string.IsNullOrEmpty(ramF))
                     if (row.Cells["RAM"].Value?.ToString().StartsWith(ramF.Replace(" GB", "")) != true) show = false;
 
                 if (show && statusF != "Tất cả trạng thái" && !string.IsNullOrEmpty(statusF))
                     if (row.Cells["Status"].Value?.ToString() != statusF) show = false;
 
-                row.Visible = show;
+                if (show)
+                {
+                    filteredRows.Add(row);
+                }
+                else
+                {
+                    row.Visible = false;
+                }
             }
+
+            // Reset về trang 1 mỗi khi lọc
+            currentPage = 1;
+            ApplyPagination(filteredRows);
+        }
+
+        private void ApplyPagination(System.Collections.Generic.List<DataGridViewRow> filteredRows = null)
+        {
+            if (filteredRows == null)
+            {
+                filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
+                string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
+                string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
+                string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
+                string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
+                string statusF = cboStatus.SelectedItem?.ToString() ?? "";
+
+                foreach (DataGridViewRow row in dgv.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    bool show = true;
+                    if (!string.IsNullOrEmpty(kw))
+                    {
+                        bool m = false;
+                        foreach (DataGridViewCell c in row.Cells)
+                            if (c.Value?.ToString().ToLower().Contains(kw) == true) { m = true; break; }
+                        if (!m) show = false;
+                    }
+                    if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
+                        if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+                    if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
+                    {
+                        string monVal = monF.Replace("\"", "");
+                        if (row.Cells["Monitor"].Value?.ToString().Replace("\"", "") != monVal) show = false;
+                    }
+                    if (show && ramF != "Tất cả RAM" && !string.IsNullOrEmpty(ramF))
+                        if (row.Cells["RAM"].Value?.ToString().StartsWith(ramF.Replace(" GB", "")) != true) show = false;
+                    if (show && statusF != "Tất cả trạng thái" && !string.IsNullOrEmpty(statusF))
+                        if (row.Cells["Status"].Value?.ToString() != statusF) show = false;
+
+                    if (show) filteredRows.Add(row);
+                }
+            }
+
+            int totalRecords = filteredRows.Count;
+            int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalRecords / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            lblPageInfo.Text = $"Trang {currentPage} / {totalPages}";
+            btnPrev.Enabled = currentPage > 1;
+            btnNext.Enabled = currentPage < totalPages;
+
+            int startIndex = (currentPage - 1) * pageSize;
+            int endIndex = startIndex + pageSize - 1;
+
+            dgv.CurrentCell = null;
+            dgv.SuspendLayout();
+            for (int i = 0; i < filteredRows.Count; i++)
+            {
+                filteredRows[i].Visible = (i >= startIndex && i <= endIndex);
+            }
+            dgv.ResumeLayout();
         }
 
         // ── Click Sửa/Xóa trong bảng ───────────────────────────────────
