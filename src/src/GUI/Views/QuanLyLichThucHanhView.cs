@@ -37,6 +37,19 @@ namespace src.Views
 
             this.Load += (s, e) =>
             {
+                pnlScheduleList.BringToFront();
+            };
+
+            pnlScheduleList.Resize += (s, e) =>
+            {
+                int w = pnlScheduleList.ClientSize.Width - 10;
+                if (w < 100) return;
+                pnlScheduleList.SuspendLayout();
+                foreach (Control c in pnlScheduleList.Controls)
+                {
+                    c.Width = w;
+                }
+                pnlScheduleList.ResumeLayout();
             };
 
             LoadData();
@@ -199,7 +212,8 @@ namespace src.Views
             {
                 Text = "✏",
                 Size = new Size(34, 30),
-                Location = new Point(card.Width - 175, 16),
+                Location = new Point(card.Width - 130, 16),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 FillColor = Color.White,
                 ForeColor = ThemeColors.TextSecondary,
                 Font = new Font("Segoe UI", 11F),
@@ -216,7 +230,8 @@ namespace src.Views
             {
                 Text = "Hủy lịch",
                 Size = new Size(80, 30),
-                Location = new Point(card.Width - 145, 16),
+                Location = new Point(card.Width - 90, 16),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 FillColor = Color.White,
                 ForeColor = ThemeColors.TextSecondary,
                 Font = new Font("Segoe UI", 9F),

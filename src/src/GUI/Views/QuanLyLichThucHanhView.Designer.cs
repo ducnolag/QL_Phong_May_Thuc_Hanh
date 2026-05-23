@@ -1,4 +1,4 @@
-﻿namespace src.Views
+namespace src.Views
 {
     partial class QuanLyLichThucHanhView
     {
@@ -100,14 +100,14 @@
             pnlScheduleList.AutoScroll = true;
             pnlScheduleList.BackColor = System.Drawing.Color.Transparent;
             pnlScheduleList.Dock = System.Windows.Forms.DockStyle.Fill;
-            pnlScheduleList.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            pnlScheduleList.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             pnlScheduleList.Location = new System.Drawing.Point(23, 307);
             pnlScheduleList.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             pnlScheduleList.Name = "pnlScheduleList";
             pnlScheduleList.Padding = new System.Windows.Forms.Padding(2, 3, 2, 3);
             pnlScheduleList.Size = new System.Drawing.Size(1097, 547);
             pnlScheduleList.TabIndex = 3;
-            pnlScheduleList.WrapContents = false;
+            pnlScheduleList.WrapContents = true;
             // 
             // lblListTitle
             // 

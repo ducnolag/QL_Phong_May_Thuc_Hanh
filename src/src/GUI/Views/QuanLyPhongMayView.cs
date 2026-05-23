@@ -84,7 +84,7 @@ namespace src.Views
             };
 
             this.Controls.Add(pnlPagination);
-            pnlPagination.BringToFront();
+            pnlRoomCards.BringToFront();
         }
 
         /// <summary>
@@ -141,8 +141,8 @@ namespace src.Views
 
             // === Tạo summary cards theo Figma ===
             pnlStats.Controls.Add(MakeSummaryCard("Tổng số phòng", totalRooms.ToString(), ThemeColors.TextPrimary));
-            pnlStats.Controls.Add(MakeSummaryCard("Trống", available.ToString(), ThemeColors.AccentGreen));
-            pnlStats.Controls.Add(MakeSummaryCard("Đang sử dụng", occupied.ToString(), ThemeColors.AccentRed));
+            pnlStats.Controls.Add(MakeSummaryCard("Đang hoạt động", available.ToString(), ThemeColors.AccentGreen));
+            pnlStats.Controls.Add(MakeSummaryCard("Đóng cửa", occupied.ToString(), ThemeColors.AccentRed));
 
             // === Tạo room cards theo Figma ===
             foreach (var room in rooms)

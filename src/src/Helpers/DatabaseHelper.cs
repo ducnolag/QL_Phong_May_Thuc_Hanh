@@ -6,19 +6,14 @@ using System.Text;
 
 namespace src.Helpers
 {
-    /// <summary>
-    /// Centralized database connection and query helper.
-    /// Uses ADO.NET with SQL Server via the user's connection string.
-    /// </summary>
+
     public static class DatabaseHelper
     {
         // Connection string for SQL Server
         public static readonly string ConnectionString =
             @"Data Source=LapLag;Initial Catalog=QuanLyPhongMay;Integrated Security=True;Encrypt=False";
 
-        /// <summary>
-        /// Get a new open SqlConnection.
-        /// </summary>
+
         public static SqlConnection GetConnection()
         {
             var conn = new SqlConnection(ConnectionString);
