@@ -326,6 +326,7 @@
             pnlContent.Name = "pnlContent";
             pnlContent.Size = new System.Drawing.Size(1189, 960);
             pnlContent.TabIndex = 1;
+            pnlContent.Paint += pnlContent_Paint;
             // 
             // SidebarForm
             // 

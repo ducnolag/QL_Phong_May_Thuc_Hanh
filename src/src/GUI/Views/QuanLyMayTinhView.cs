@@ -100,26 +100,26 @@ namespace src.Views
             }
             catch { /* giữ mặc định */ }
 
-            cboRoom.SelectedIndex    = 0;
+            cboRoom.SelectedIndex = 0;
             cboMonitor.SelectedIndex = 0;
             cboStorage.SelectedIndex = 0;
-            cboRAM.SelectedIndex     = 0;
-            cboStatus.SelectedIndex  = 0;
+            cboRAM.SelectedIndex = 0;
+            cboStatus.SelectedIndex = 0;
 
             // Sự kiện lọc
-            txtSearch.TextChanged            += (s, e) => FilterRows();
-            cboRoom.SelectedIndexChanged     += (s, e) => FilterRows();
-            cboMonitor.SelectedIndexChanged  += (s, e) => FilterRows();
-            cboStorage.SelectedIndexChanged  += (s, e) => FilterRows();
-            cboRAM.SelectedIndexChanged      += (s, e) => FilterRows();
-            cboStatus.SelectedIndexChanged   += (s, e) => FilterRows();
+            txtSearch.TextChanged += (s, e) => FilterRows();
+            cboRoom.SelectedIndexChanged += (s, e) => FilterRows();
+            cboMonitor.SelectedIndexChanged += (s, e) => FilterRows();
+            cboStorage.SelectedIndexChanged += (s, e) => FilterRows();
+            cboRAM.SelectedIndexChanged += (s, e) => FilterRows();
+            cboStatus.SelectedIndexChanged += (s, e) => FilterRows();
 
             // Nút Thêm máy / Sửa / Xóa
-            btnAdd.Click   += (s, e) => ShowAddDialog();
+            btnAdd.Click += (s, e) => ShowAddDialog();
             btnAdd.Visible = AppSession.IsAdmin;
-            
+
             // Sửa / Xóa theo hàng được chọn
-            dgv.CellClick  += Dgv_CellClick;
+            dgv.CellClick += Dgv_CellClick;
 
             SetupGridStyles();
             LoadData();
@@ -130,20 +130,24 @@ namespace src.Views
         {
             dgv.Columns.Clear();
             // Cột ẩn chứa PK để Sửa/Xóa
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaMay",   HeaderText = "MaMay",   Visible = false });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaMay", HeaderText = "MaMay", Visible = false });
             dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaPhong", HeaderText = "MaPhong", Visible = false });
 
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "ComputerID", HeaderText = "Mã máy",      Width = 110, ReadOnly = true });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Room",       HeaderText = "Phòng",       Width = 120, ReadOnly = true });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "CPU",        HeaderText = "CPU",         FillWeight = 100, ReadOnly = true });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "RAM",        HeaderText = "RAM",         Width = 70,  ReadOnly = true });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Monitor",    HeaderText = "Màn hình",    Width = 90,  ReadOnly = true });
-            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Status",     HeaderText = "Tình trạng",   Width = 90,  ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "ComputerID", HeaderText = "Mã máy", Width = 110, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Room", HeaderText = "Phòng", Width = 120, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "CPU", HeaderText = "CPU", FillWeight = 100, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "RAM", HeaderText = "RAM", Width = 70, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Monitor", HeaderText = "Màn hình", Width = 90, ReadOnly = true });
+            dgv.Columns.Add(new DataGridViewTextBoxColumn { Name = "Status", HeaderText = "Tình trạng", Width = 90, ReadOnly = true });
 
             var colEdit = new DataGridViewButtonColumn
             {
-                Name = "Edit", HeaderText = "Sửa", Text = "✏ Sửa",
-                UseColumnTextForButtonValue = true, Width = 75, FlatStyle = FlatStyle.Flat
+                Name = "Edit",
+                HeaderText = "Sửa",
+                Text = "✏ Sửa",
+                UseColumnTextForButtonValue = true,
+                Width = 75,
+                FlatStyle = FlatStyle.Flat
             };
             colEdit.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             colEdit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -151,8 +155,12 @@ namespace src.Views
 
             var colDel = new DataGridViewButtonColumn
             {
-                Name = "Delete", HeaderText = "Xóa", Text = "🗑",
-                UseColumnTextForButtonValue = true, Width = 46, FlatStyle = FlatStyle.Flat
+                Name = "Delete",
+                HeaderText = "Xóa",
+                Text = "🗑",
+                UseColumnTextForButtonValue = true,
+                Width = 46,
+                FlatStyle = FlatStyle.Flat
             };
             colDel.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             colDel.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -168,8 +176,6 @@ namespace src.Views
                     string val = e.Value?.ToString() ?? "";
                     if (val.Contains("Tốt"))
                     { e.CellStyle.ForeColor = ThemeColors.BadgeGreenFg; e.CellStyle.BackColor = ThemeColors.BadgeGreenBg; }
-                    else if (val.Contains("Bảo"))
-                    { e.CellStyle.ForeColor = ThemeColors.BadgeOrangeFg; e.CellStyle.BackColor = ThemeColors.BadgeOrangeBg; }
                     else if (val.Contains("Hỏng"))
                     { e.CellStyle.ForeColor = ThemeColors.BadgeRedFg; e.CellStyle.BackColor = ThemeColors.BadgeRedBg; }
                     e.CellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
@@ -255,17 +261,17 @@ namespace src.Views
         // ── Lọc bảng ────────────────────────────────────────────────────
         private void FilterRows()
         {
-            string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
-            string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
-            string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
-            string storF   = cboStorage.SelectedItem?.ToString() ?? "";
-            string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
+            string kw = txtSearch.Text?.Trim().ToLower() ?? "";
+            string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+            string monF = cboMonitor.SelectedItem?.ToString() ?? "";
+            string storF = cboStorage.SelectedItem?.ToString() ?? "";
+            string ramF = cboRAM.SelectedItem?.ToString() ?? "";
             string statusF = cboStatus.SelectedItem?.ToString() ?? "";
 
             var filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
 
             // Lấy currency manager để suspend binding / avoid layout issues during bulk hide/show
-            dgv.CurrentCell = null; 
+            dgv.CurrentCell = null;
 
             foreach (DataGridViewRow row in dgv.Rows)
             {
@@ -314,10 +320,10 @@ namespace src.Views
             if (filteredRows == null)
             {
                 filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
-                string kw      = txtSearch.Text?.Trim().ToLower() ?? "";
-                string roomF   = cboRoom.SelectedItem?.ToString()   ?? "";
-                string monF    = cboMonitor.SelectedItem?.ToString() ?? "";
-                string ramF    = cboRAM.SelectedItem?.ToString()    ?? "";
+                string kw = txtSearch.Text?.Trim().ToLower() ?? "";
+                string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+                string monF = cboMonitor.SelectedItem?.ToString() ?? "";
+                string ramF = cboRAM.SelectedItem?.ToString() ?? "";
                 string statusF = cboStatus.SelectedItem?.ToString() ?? "";
 
                 foreach (DataGridViewRow row in dgv.Rows)
@@ -372,7 +378,7 @@ namespace src.Views
         {
             if (e.RowIndex < 0) return;
             string col = dgv.Columns[e.ColumnIndex].Name;
-            if      (col == "Edit")   ShowEditDialog(e.RowIndex);
+            if (col == "Edit") ShowEditDialog(e.RowIndex);
             else if (col == "Delete") DeleteComputer(e.RowIndex);
         }
 
@@ -383,16 +389,16 @@ namespace src.Views
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
-                string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
-                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
-                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
-                string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
-                int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
+                string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
+                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
+                string ttMay = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
+                int maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
                 var compService = new src.BLL.MayTinhService();
-                var result = compService.AddComputer(new src.DTO.MayTinhDTO 
+                var result = compService.AddComputer(new src.DTO.MayTinhDTO
                 {
                     TenMay = tenMay,
                     CPU = cpu,
@@ -420,7 +426,7 @@ namespace src.Views
         // ── Dialog Sửa máy ─────────────────────────────────────────────
         private void ShowEditDialog(int rowIndex)
         {
-            var row   = dgv.Rows[rowIndex];
+            var row = dgv.Rows[rowIndex];
             int maMay = Convert.ToInt32(row.Cells["MaMay"].Value);
             if (maMay == 0) { MessageBox.Show("Không thể sửa dữ liệu mẫu!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             try
@@ -443,16 +449,16 @@ namespace src.Views
 
                 if (dlg.ShowDialog() != DialogResult.OK) return;
 
-                string tenMay  = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu     = Find<TextBox>(dlg, "txtCPU").Text.Trim();
-                int    ram     = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
-                int    storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
-                int    monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
-                int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
-                string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
+                string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
+                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
+                int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
+                int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
+                int maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
+                string ttMay = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
                 var compService = new src.BLL.MayTinhService();
-                var result = compService.UpdateComputer(new src.DTO.MayTinhDTO 
+                var result = compService.UpdateComputer(new src.DTO.MayTinhDTO
                 {
                     MaMay = maMay,
                     TenMay = tenMay,
@@ -481,7 +487,7 @@ namespace src.Views
         // ── Xóa máy ───────────────────────────────────────────────────
         private void DeleteComputer(int rowIndex)
         {
-            var row   = dgv.Rows[rowIndex];
+            var row = dgv.Rows[rowIndex];
             int maMay = Convert.ToInt32(row.Cells["MaMay"].Value);
             string ten = row.Cells["ComputerID"].Value?.ToString() ?? "";
             if (maMay == 0) { MessageBox.Show("Không thể xóa dữ liệu mẫu!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
@@ -512,18 +518,21 @@ namespace src.Views
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(420, 440),
+                Text = title,
+                Size = new Size(420, 440),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false, MinimizeBox = false,
-                BackColor = Color.White, Font = new Font("Segoe UI", 10F)
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 10F)
             };
 
             int y = 20;
             void AddRow(string label, Control ctrl)
             {
                 ctrl.Location = new Point(140, y);
-                ctrl.Size     = new Size(240, 26);
+                ctrl.Size = new Size(240, 26);
                 dlg.Controls.Add(new Label { Text = label, Location = new Point(20, y + 3), AutoSize = true });
                 dlg.Controls.Add(ctrl);
                 y += 40;
@@ -560,8 +569,8 @@ namespace src.Views
                 var dtP = DatabaseHelper.ExecuteQuery("SELECT MaPhong, TenPhong FROM PHONG_MAY ORDER BY TenPhong");
                 cboPh.DisplayMember = "TenPhong"; cboPh.ValueMember = "MaPhong";
                 cboPh.DataSource = dtP;
-                
-                dlg.Load += (s, e) => 
+
+                dlg.Load += (s, e) =>
                 {
                     if (maPhong > 0)
                         cboPh.SelectedValue = maPhong;
@@ -590,19 +599,29 @@ namespace src.Views
             y += 5;
             var btnSave = new Button
             {
-                Text = "💾  Lưu", Location = new Point(140, y), Size = new Size(120, 38),
-                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand, DialogResult = DialogResult.OK
+                Text = "💾  Lưu",
+                Location = new Point(140, y),
+                Size = new Size(120, 38),
+                BackColor = ThemeColors.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.OK
             };
             btnSave.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnSave);
 
             var btnCan = new Button
             {
-                Text = "Hủy", Location = new Point(270, y), Size = new Size(100, 38),
-                BackColor = Color.FromArgb(241, 245, 249), ForeColor = ThemeColors.TextSecondary,
-                FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel
+                Text = "Hủy",
+                Location = new Point(270, y),
+                Size = new Size(100, 38),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = ThemeColors.TextSecondary,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.Cancel
             };
             btnCan.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnCan);

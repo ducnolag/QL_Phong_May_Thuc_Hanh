@@ -108,7 +108,7 @@ namespace src
         {
             var menuBtns = pnlSidebarMenu.Controls.OfType<Button>().OrderBy(b => b.Top).ToList();
             if (menuBtns.Count == 0) return;
-            
+
             int y = menuBtns[0].Top; // Bắt đầu bằng toạ độ của nút đầu tiên
             foreach (var b in menuBtns)
             {
@@ -232,6 +232,11 @@ namespace src
         }
 
         private void SidebarForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pnlContent_Paint(object sender, PaintEventArgs e)
         {
 
         }

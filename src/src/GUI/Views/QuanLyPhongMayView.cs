@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -136,7 +136,6 @@ namespace src.Views
                 rooms.Add((2, "Lab A-302", "Tòa A, Tầng 3", 25, 25, "Đang sử dụng"));
                 rooms.Add((3, "Lab B-205", "Tòa B, Tầng 2", 20, 20, "Hoạt động"));
                 rooms.Add((4, "Lab B-206", "Tòa B, Tầng 2", 20, 15, "Đang sử dụng"));
-                rooms.Add((5, "Lab C-102", "Tòa C, Tầng 1", 35, 30, "Bảo trì"));
                 rooms.Add((6, "Lab C-201", "Tòa C, Tầng 2", 30, 28, "Hoạt động"));
             }
 
@@ -183,10 +182,10 @@ namespace src.Views
         /// </summary>
         private Guna.UI2.WinForms.Guna2Panel MakeSummaryCard(string title, string value, Color valueColor)
         {
-            var card = new Guna.UI2.WinForms.Guna2Panel 
-            { 
-                Size = new Size(160, 75), 
-                Margin = new Padding(6), 
+            var card = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(160, 75),
+                Margin = new Padding(6),
                 BackColor = Color.Transparent,
                 FillColor = Color.White,
                 BorderRadius = 10,
@@ -196,7 +195,7 @@ namespace src.Views
 
             var lblTitle = new Label { Text = title, Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(14, 10), AutoSize = true };
             var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 22F, FontStyle.Bold), ForeColor = valueColor, Location = new Point(12, 30), AutoSize = true };
-            
+
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);
 
@@ -208,24 +207,24 @@ namespace src.Views
         /// </summary>
         private Guna.UI2.WinForms.Guna2Panel MakeRoomCard(int id, string name, string location, int capacity, int computers, string status)
         {
-            var card = new Guna.UI2.WinForms.Guna2Panel 
-            { 
-                Size = new Size(300, 230), 
-                Margin = new Padding(6), 
+            var card = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(300, 230),
+                Margin = new Padding(6),
                 BackColor = Color.Transparent,
                 FillColor = Color.White,
                 BorderRadius = 12,
                 BorderColor = Color.FromArgb(226, 232, 240),
                 BorderThickness = 1,
-                Tag = id 
+                Tag = id
             };
-            
+
             Color statusColor = status == "Hoạt động" ? ThemeColors.AccentGreen :
-                                status == "Bảo trì" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
+                                status == "Đóng cửa" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
             Color badgeBg = status == "Hoạt động" ? ThemeColors.BadgeGreenBg :
-                            status == "Bảo trì" ? ThemeColors.BadgeOrangeBg : ThemeColors.BadgeRedBg;
+                            status == "Đóng cửa" ? ThemeColors.BadgeOrangeBg : ThemeColors.BadgeRedBg;
             Color badgeFg = status == "Hoạt động" ? ThemeColors.BadgeGreenFg :
-                            status == "Bảo trì" ? ThemeColors.BadgeOrangeFg : ThemeColors.BadgeRedFg;
+                            status == "Đóng cửa" ? ThemeColors.BadgeOrangeFg : ThemeColors.BadgeRedFg;
 
             card.Paint += (s, e) =>
             {
@@ -280,10 +279,16 @@ namespace src.Views
             // Nút Edit bằng Guna2Button
             var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "✏  Sửa", Size = new Size(120, 32), Location = new Point(16, 190),
-                FillColor = Color.White, ForeColor = ThemeColors.TextPrimary,
-                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
-                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)
+                Text = "✏  Sửa",
+                Size = new Size(120, 32),
+                Location = new Point(16, 190),
+                FillColor = Color.White,
+                ForeColor = ThemeColors.TextPrimary,
+                Font = new Font("Segoe UI", 9F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240)
             };
             btnEdit.Click += (s, e) => ShowEditDialog(id, name);
             card.Controls.Add(btnEdit);
@@ -291,10 +296,16 @@ namespace src.Views
             // Nút Delete bằng Guna2Button
             var btnDel = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "🗑", Size = new Size(38, 32), Location = new Point(144, 190),
-                FillColor = Color.White, ForeColor = ThemeColors.AccentRed,
-                Font = new Font("Segoe UI", 12F), Cursor = Cursors.Hand,
-                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(254, 226, 226)
+                Text = "🗑",
+                Size = new Size(38, 32),
+                Location = new Point(144, 190),
+                FillColor = Color.White,
+                ForeColor = ThemeColors.AccentRed,
+                Font = new Font("Segoe UI", 12F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(254, 226, 226)
             };
             btnDel.Click += (s, e) => DeleteRoom(id, name);
             card.Controls.Add(btnDel);
@@ -319,11 +330,11 @@ namespace src.Views
                         string location = FindControl<TextBox>(dlg, "txtLocation").Text.Trim();
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
-                        
-                        string cpu     = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
-                        int    ram     = 8;
-                        int    storage = 256;
-                        int    monitor = 24;
+
+                        string cpu = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
+                        int ram = 8;
+                        int storage = 256;
+                        int monitor = 24;
                         var cboR = FindControl<ComboBox>(dlg, "cboInputRAM");
                         if (cboR != null) ram = Convert.ToInt32(cboR.SelectedItem.ToString().Replace(" GB", ""));
                         var cboS = FindControl<ComboBox>(dlg, "cboInputStorage");
@@ -350,7 +361,7 @@ namespace src.Views
                             new SqlParameter("@loc", location),
                             new SqlParameter("@cap", capacity),
                             new SqlParameter("@status", statusId));
-                            
+
                         int maPhong = Convert.ToInt32(newRoomId);
                         var ttMayId = DatabaseHelper.ExecuteScalar("SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=N'Tốt'");
                         if (ttMayId == null || ttMayId == DBNull.Value) ttMayId = 1;
@@ -361,13 +372,13 @@ namespace src.Views
                             DatabaseHelper.ExecuteNonQuery(
                                 @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
                                   VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
-                                new SqlParameter("@ten",   tenMay),
-                                new SqlParameter("@cpu",   cpu),
-                                new SqlParameter("@ram",   ram),
-                                new SqlParameter("@sto",   storage),
-                                new SqlParameter("@mon",   monitor),
+                                new SqlParameter("@ten", tenMay),
+                                new SqlParameter("@cpu", cpu),
+                                new SqlParameter("@ram", ram),
+                                new SqlParameter("@sto", storage),
+                                new SqlParameter("@mon", monitor),
                                 new SqlParameter("@phong", maPhong),
-                                new SqlParameter("@tt",    ttMayId));
+                                new SqlParameter("@tt", ttMayId));
                         }
 
                         MessageBox.Show($"Đã thêm phòng và tự động tạo {capacity} máy tính thành công!", "Thành công",
@@ -444,7 +455,7 @@ namespace src.Views
             {
                 var PhongMayService = new src.BLL.PhongMayService();
                 var result = PhongMayService.DeleteRoom(roomId);
-                
+
                 if (result.IsSuccess)
                 {
                     MessageBox.Show(result.Message, "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -464,9 +475,14 @@ namespace src.Views
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(420, isAdd ? 530 : 350), StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false,
-                BackColor = Color.White, Font = new Font("Segoe UI", 10F)
+                Text = title,
+                Size = new Size(420, isAdd ? 530 : 350),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 10F)
             };
 
             int y = 20;
@@ -521,10 +537,12 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Trạng thái:", Location = new Point(20, y + 3), AutoSize = true });
             var cboStatus = new ComboBox
             {
-                Name = "cboStatus", Location = new Point(130, y), Size = new Size(250, 26),
+                Name = "cboStatus",
+                Location = new Point(130, y),
+                Size = new Size(250, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
-            cboStatus.Items.AddRange(new object[] { "Hoạt động", "Bảo trì" });
+            cboStatus.Items.AddRange(new object[] { "Hoạt động", "Đóng cửa" });
             cboStatus.SelectedItem = status;
             if (cboStatus.SelectedIndex < 0) cboStatus.SelectedIndex = 0;
             dlg.Controls.Add(cboStatus);
@@ -532,20 +550,30 @@ namespace src.Views
 
             var btnSave = new Button
             {
-                Text = "💾  Lưu", Size = new Size(120, 38), Location = new Point(130, y),
-                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand, DialogResult = DialogResult.OK
+                Text = "💾  Lưu",
+                Size = new Size(120, 38),
+                Location = new Point(130, y),
+                BackColor = ThemeColors.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.OK
             };
             btnSave.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnSave);
 
             var btnCancel = new Button
             {
-                Text = "Hủy", Size = new Size(100, 38), Location = new Point(260, y),
-                BackColor = Color.FromArgb(241, 245, 249), ForeColor = ThemeColors.TextSecondary,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10F),
-                Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel
+                Text = "Hủy",
+                Size = new Size(100, 38),
+                Location = new Point(260, y),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = ThemeColors.TextSecondary,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.Cancel
             };
             btnCancel.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnCancel);

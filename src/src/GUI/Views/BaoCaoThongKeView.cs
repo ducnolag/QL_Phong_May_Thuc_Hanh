@@ -5,7 +5,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
+using src.BLL;
+using src.DTO;
 using src.Helpers;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -28,10 +29,12 @@ namespace src.Views
         private int _totalUsers;
 
         private Panel _pnlCards, _pnlChartRooms, _pnlChartMay, _pnlMayTable, _pnlLichTable;
+        private readonly IBaoCaoThongKeService _service;
 
         public BaoCaoThongKeView()
         {
             InitializeComponent();
+            _service = new BaoCaoThongKeService();
             DoubleBuffered = true;
             BackColor      = Color.FromArgb(245, 247, 250);
             Dock           = DockStyle.Fill;
@@ -138,47 +141,27 @@ namespace src.Views
 
         private void LoadStats()
         {
-            string thC = "", nmC = "";
-            var ps = new List<SqlParameter>();
             int th = cboThang.SelectedIndex > 0 ? cboThang.SelectedIndex : 0;
             int nm = cboNam.SelectedIndex > 0 ? int.Parse(cboNam.SelectedItem.ToString()) : 0;
 
-            if (th > 0)
-            {
-                thC = " AND MONTH(l.NgayThucHanh)=@thang";
-                ps.Add(new SqlParameter("@thang", th));
-            }
-            if (nm > 0)
-            {
-                nmC = " AND YEAR(l.NgayThucHanh)=@nam";
-                ps.Add(new SqlParameter("@nam", nm));
-            }
-            var p = ps.ToArray();
-
             try
             {
-                _totalRooms  = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY"));
-                _activeRooms = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'"));
-                _closedRooms = Math.Max(0, _totalRooms - _activeRooms);
+                var dto = _service.GetThongKeTongQuan(th, nm);
+                
+                _totalRooms  = dto.TotalRooms;
+                _activeRooms = dto.ActiveRooms;
+                _closedRooms = dto.ClosedRooms;
 
-                _totalMay  = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH"));
-                _mayTot    = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'"));
-                _mayHong   = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'"));
+                _totalMay  = dto.TotalMay;
+                _mayTot    = dto.MayTot;
+                _mayHong   = dto.MayHong;
 
-                SqlParameter[] GetParams()
-                {
-                    var list = new List<SqlParameter>();
-                    if (th > 0) list.Add(new SqlParameter("@thang", th));
-                    if (nm > 0) list.Add(new SqlParameter("@nam", nm));
-                    return list.ToArray();
-                }
+                _totalLich = dto.TotalLich;
+                _lichDaXep = dto.LichDaXep;
+                _lichDaHuy = dto.LichDaHuy;
+                _lichChoXep = dto.LichChoXep;
 
-                _totalLich = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1" + thC + nmC, GetParams()));
-                _lichDaXep = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG)" + thC + nmC, GetParams()));
-                _lichDaHuy = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy'" + thC + nmC, GetParams()));
-                _lichChoXep = _totalLich - _lichDaXep - _lichDaHuy;
-
-                _totalUsers = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM NGUOI_DUNG"));
+                _totalUsers = dto.TotalUsers;
             }
             catch
             {
@@ -188,8 +171,6 @@ namespace src.Views
                 _totalUsers=3;
             }
         }
-
-        private static int ToInt(object v) => v == null || v == DBNull.Value ? 0 : Convert.ToInt32(v);
 
         // ── 4 Stat Cards ──────────────────────────────────────────────────────
         private void RenderCards()
@@ -297,20 +278,11 @@ namespace src.Views
 
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT p.TenPhong,
-                        COUNT(m.MaMay) AS Tong,
-                        SUM(CASE WHEN t.TenTrangThaiMay=N'Tốt'     THEN 1 ELSE 0 END) AS Tot,
-                        SUM(CASE WHEN t.TenTrangThaiMay=N'Hỏng'    THEN 1 ELSE 0 END) AS Hong
-                      FROM PHONG_MAY p
-                      LEFT JOIN MAY_TINH m ON m.MaPhong = p.MaPhong
-                      LEFT JOIN TRANG_THAI_MAY t ON m.MaTTMay = t.MaTTMay
-                      GROUP BY p.TenPhong ORDER BY p.TenPhong");
-                foreach (DataRow r in dt.Rows)
+                var list = _service.GetThongKeMayTheoPhong();
+                foreach (var item in list)
                 {
-                    int tong = ToInt(r["Tong"]), tot = ToInt(r["Tot"]);
-                    dgv.Rows.Add(r["TenPhong"], tong, tot, r["Hong"],
-                        tong > 0 ? $"{tot * 100 / tong}%" : "—");
+                    dgv.Rows.Add(item.TenPhong, item.Tong, item.Tot, item.Hong,
+                        item.Tong > 0 ? $"{item.Tot * 100 / item.Tong}%" : "—");
                 }
             }
             catch
@@ -359,42 +331,29 @@ namespace src.Views
 
             try
             {
-                string thC = "", nmC = "";
-                var ps = new List<SqlParameter>();
-                if (cboThang?.SelectedIndex > 0)
-                {
-                    thC = " AND MONTH(l.NgayThucHanh)=@thang";
-                    ps.Add(new SqlParameter("@thang", cboThang.SelectedIndex));
-                }
+                int th = cboThang?.SelectedIndex > 0 ? cboThang.SelectedIndex : 0;
+                int nm = 0;
                 if (cboNam?.SelectedItem?.ToString() != "Tất cả năm" && cboNam?.SelectedItem != null)
                 {
-                    nmC = " AND YEAR(l.NgayThucHanh)=@nam";
-                    ps.Add(new SqlParameter("@nam", int.Parse(cboNam.SelectedItem.ToString())));
+                    int.TryParse(cboNam.SelectedItem.ToString(), out nm);
                 }
 
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT TOP 30 l.NgayThucHanh, mh.TenMon, c.TenCa,
-                      l.SoLuongSinhVien, l.TrangThaiLich,
-                      ISNULL(p.TenPhong, N'Chưa xếp') AS TenPhong
-                      FROM LICH_THUC_HANH l
-                      JOIN MON_HOC mh ON l.MaMon = mh.MaMon
-                      JOIN CA_HOC c   ON l.MaCa  = c.MaCa
-                      LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
-                      LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
-                      WHERE 1=1" + thC + nmC + " ORDER BY l.NgayThucHanh DESC", ps.ToArray());
+                var list = _service.GetThongKeLich(th, nm);
 
-                foreach (DataRow r in dt.Rows)
+                foreach (var item in list)
                 {
-                    string trangThai = r["TrangThaiLich"].ToString() == "Đã hủy" ? "Đã hủy"
-                        : r["TenPhong"].ToString() == "Chưa xếp" ? "Chờ xếp phòng"
+                    string trangThai = item.TrangThaiLich == "Đã hủy" ? "Đã hủy"
+                        : item.TenPhong == "Chưa xếp" ? "Chờ xếp phòng"
                         : "Đã xếp phòng";
+                    
                     dgv.Rows.Add(
-                        Convert.ToDateTime(r["NgayThucHanh"]).ToString("dd/MM/yyyy"),
-                        r["TenMon"], r["TenCa"],
-                        r["SoLuongSinhVien"] + " SV",
-                        r["TenPhong"], trangThai);
+                        item.NgayThucHanh.ToString("dd/MM/yyyy"),
+                        item.TenMon, item.TenCa,
+                        item.SoLuongSinhVien + " SV",
+                        item.TenPhong, trangThai);
                 }
-                if (dt.Rows.Count == 0)
+                
+                if (list.Count == 0)
                     dgv.Rows.Add("—", "Chưa có lịch trong kỳ này", "—", "—", "—", "—");
             }
             catch
