@@ -145,7 +145,6 @@ namespace src.Helpers
                 if (Convert.ToInt32(ttPhongCount) == 0)
                 {
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Hoạt động')");
-                    ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Bảo trì')");
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Đóng cửa')");
                 }
 
@@ -154,7 +153,6 @@ namespace src.Helpers
                 if (Convert.ToInt32(ttMayCount) == 0)
                 {
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Tốt')");
-                    ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Bảo trì')");
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Hỏng')");
                 }
             }

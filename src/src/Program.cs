@@ -31,7 +31,7 @@ namespace src
                     MessageBoxIcon.Error);
             }
 
-            Application.Run(new Forms.LoginForm());
+            Application.Run(new Login.LoginForm());
         }
     }
 }
