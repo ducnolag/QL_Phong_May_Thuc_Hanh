@@ -19,7 +19,7 @@ namespace src.Views
     /// Báo Cáo & Thống Kê – vẽ chart thủ công (GDI+) để tránh lỗi LiveCharts.
     /// Layout: Header cố định → Panel cuộn chứa 4 cards + 2 charts + 2 tables.
     /// </summary>
-    public partial class ReportsView : UserControl
+    public partial class BaoCaoThongKeView : UserControl
     {
         // ── Dữ liệu ─────────────────────────────────────────────────────────
         private int _totalRooms, _activeRooms, _closedRooms;
@@ -29,7 +29,7 @@ namespace src.Views
 
         private Panel _pnlCards, _pnlChartRooms, _pnlChartMay, _pnlMayTable, _pnlLichTable;
 
-        public ReportsView()
+        public BaoCaoThongKeView()
         {
             InitializeComponent();
             DoubleBuffered = true;
@@ -165,9 +165,17 @@ namespace src.Views
                 _mayTot    = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'"));
                 _mayHong   = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'"));
 
-                _totalLich = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1" + thC + nmC, p));
-                _lichDaXep = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG)" + thC + nmC, p));
-                _lichDaHuy = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy'" + thC + nmC, p));
+                SqlParameter[] GetParams()
+                {
+                    var list = new List<SqlParameter>();
+                    if (th > 0) list.Add(new SqlParameter("@thang", th));
+                    if (nm > 0) list.Add(new SqlParameter("@nam", nm));
+                    return list.ToArray();
+                }
+
+                _totalLich = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1" + thC + nmC, GetParams()));
+                _lichDaXep = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG)" + thC + nmC, GetParams()));
+                _lichDaHuy = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy'" + thC + nmC, GetParams()));
                 _lichChoXep = _totalLich - _lichDaXep - _lichDaHuy;
 
                 _totalUsers = ToInt(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM NGUOI_DUNG"));
@@ -538,3 +546,4 @@ namespace src.Views
         }
     }
 }
+

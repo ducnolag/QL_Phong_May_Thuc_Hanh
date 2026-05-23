@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -12,7 +12,7 @@ namespace src.Views
     /// Quản lý phòng máy – Giao diện card-based theo Figma.
     /// CRUD đầy đủ: Thêm, Sửa, Xóa phòng. Hiển thị thống kê tổng quan.
     /// </summary>
-    public partial class RoomManageView : UserControl
+    public partial class QuanLyPhongMayView : UserControl
     {
         private int currentPage = 1;
         private int pageSize = 6;
@@ -22,7 +22,7 @@ namespace src.Views
         private Button btnNext;
         private Label lblPageInfo;
 
-        public RoomManageView()
+        public QuanLyPhongMayView()
         {
             InitializeComponent();
             SetupPaginationUI();
@@ -115,14 +115,14 @@ namespace src.Views
 
             try
             {
-                var roomService = new src.BLL.RoomService();
-                var stats = roomService.GetRoomStats();
+                var PhongMayService = new src.BLL.PhongMayService();
+                var stats = PhongMayService.GetRoomStats();
                 totalRooms = stats.TotalRooms;
                 available = stats.Available;
                 occupied = stats.Occupied;
 
                 // Lấy danh sách phòng qua BLL -> DAL (Dapper)
-                var dtRooms = roomService.GetAllRooms();
+                var dtRooms = PhongMayService.GetAllRooms();
                 foreach (var r in dtRooms)
                 {
                     rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.TenTrangThaiPhong)); // Use Vietnamese status
@@ -442,8 +442,8 @@ namespace src.Views
             if (MessageBox.Show($"Bạn có chắc muốn xóa phòng '{roomName}'?\nTất cả máy tính trong phòng cũng sẽ bị xóa!",
                 "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                var roomService = new src.BLL.RoomService();
-                var result = roomService.DeleteRoom(roomId);
+                var PhongMayService = new src.BLL.PhongMayService();
+                var result = PhongMayService.DeleteRoom(roomId);
                 
                 if (result.IsSuccess)
                 {
@@ -580,3 +580,4 @@ namespace src.Views
         }
     }
 }
+

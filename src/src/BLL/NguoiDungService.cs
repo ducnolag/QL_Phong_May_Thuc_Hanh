@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -6,18 +6,18 @@ using src.Helpers;
 
 namespace src.BLL
 {
-    public class UserService
+    public class NguoiDungService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly INguoiDungRepository _NguoiDungRepository;
 
-        public UserService(IUserRepository userRepository)
+        public NguoiDungService(INguoiDungRepository NguoiDungRepository)
         {
-            _userRepository = userRepository;
+            _NguoiDungRepository = NguoiDungRepository;
         }
 
-        public UserService()
+        public NguoiDungService()
         {
-            _userRepository = new UserRepository();
+            _NguoiDungRepository = new NguoiDungRepository();
         }
 
         public (bool IsSuccess, string ErrorMessage, TaiKhoanDTO User) Login(string username, string password)
@@ -29,7 +29,7 @@ namespace src.BLL
 
             try
             {
-                var user = _userRepository.GetUserByUsername(username);
+                var user = _NguoiDungRepository.GetUserByUsername(username);
 
                 if (user == null)
                 {
@@ -56,7 +56,7 @@ namespace src.BLL
 
         public IEnumerable<TaiKhoanDTO> GetAllUsers()
         {
-            return _userRepository.GetAllUsers();
+            return _NguoiDungRepository.GetAllUsers();
         }
 
         public void CreateUser(string username, string password, string hoTen, string email, string role, bool active)
@@ -66,13 +66,13 @@ namespace src.BLL
                 throw new Exception("Vui lòng điền đầy đủ thông tin bắt buộc!");
             }
 
-            var existingUser = _userRepository.GetUserByUsername(username);
+            var existingUser = _NguoiDungRepository.GetUserByUsername(username);
             if (existingUser != null)
             {
                 throw new Exception("Tên đăng nhập đã tồn tại!");
             }
 
-            int roleId = _userRepository.GetRoleIdByName(role);
+            int roleId = _NguoiDungRepository.GetRoleIdByName(role);
             string hashed = DatabaseHelper.HashPassword(password);
 
             var user = new TaiKhoanDTO
@@ -86,12 +86,12 @@ namespace src.BLL
                 MaVaiTro = roleId
             };
 
-            _userRepository.CreateUser(user);
+            _NguoiDungRepository.CreateUser(user);
         }
 
         public void UpdateUser(string username, string newPassword, string hoTen, string email, string role, bool active)
         {
-            int roleId = _userRepository.GetRoleIdByName(role);
+            int roleId = _NguoiDungRepository.GetRoleIdByName(role);
             
             var user = new TaiKhoanDTO
             {
@@ -109,7 +109,7 @@ namespace src.BLL
                 user.SoDienThoai = newPassword;
             }
 
-            _userRepository.UpdateUser(user, updatePassword);
+            _NguoiDungRepository.UpdateUser(user, updatePassword);
         }
 
         public void DeleteUser(int userId, string username, bool active)
@@ -119,13 +119,14 @@ namespace src.BLL
                 throw new Exception("Không thể xóa tài khoản admin!");
             }
 
-            bool hasData = _userRepository.CheckUserHasData(userId);
+            bool hasData = _NguoiDungRepository.CheckUserHasData(userId);
             if (hasData && active)
             {
                 throw new Exception("Tài khoản này đã được kích hoạt và đang sử dụng nên không thể xóa! Vui lòng ngừng kích hoạt (khóa) tài khoản trước.");
             }
 
-            _userRepository.DeleteUserAndRelatedData(userId);
+            _NguoiDungRepository.DeleteUserAndRelatedData(userId);
         }
     }
 }
+

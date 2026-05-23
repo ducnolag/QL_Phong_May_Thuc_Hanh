@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -6,13 +6,13 @@ using System.Linq;
 
 namespace src.BLL
 {
-    public class CatalogService
+    public class LopMonService
     {
-        private readonly ICatalogRepository _repository;
+        private readonly ILopMonRepository _repository;
 
-        public CatalogService()
+        public LopMonService()
         {
-            _repository = new CatalogRepository();
+            _repository = new LopMonRepository();
         }
 
         public IEnumerable<LopHocDTO> GetAllLopHoc() => _repository.GetAllLopHoc().ToList();
@@ -71,3 +71,4 @@ namespace src.BLL
         }
     }
 }
+

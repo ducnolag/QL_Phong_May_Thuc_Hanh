@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class ComputerManageView
+    partial class QuanLyMayTinhView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -206,7 +206,7 @@ namespace src.Views
             this.dgv.Size = new System.Drawing.Size(936, 474);
             this.dgv.TabIndex = 0;
             // 
-            // ComputerManageView
+            // QuanLyMayTinhView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -215,7 +215,7 @@ namespace src.Views
             this.Controls.Add(this.pnlToolbar);
             this.Controls.Add(this.pnlHeader);
             this.DoubleBuffered = true;
-            this.Name = "ComputerManageView";
+            this.Name = "QuanLyMayTinhView";
             this.Padding = new System.Windows.Forms.Padding(20, 10, 20, 10);
             this.Size = new System.Drawing.Size(1000, 650);
             this.pnlHeader.ResumeLayout(false);
@@ -244,3 +244,4 @@ namespace src.Views
         public System.Windows.Forms.DataGridView dgv;
     }
 }
+

@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class UserManageView
+    partial class QuanLyNguoiDungView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -70,7 +70,7 @@ namespace src.Views
             lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
             lblSubtitle.Location = new System.Drawing.Point(11, 73);
             lblSubtitle.Name = "lblSubtitle";
-            lblSubtitle.Size = new System.Drawing.Size(359, 23);
+            lblSubtitle.Size = new System.Drawing.Size(414, 23);
             lblSubtitle.TabIndex = 1;
             lblSubtitle.Text = "Quản lý tài khoản, vai trò và phân quyền người dùng";
             // 
@@ -109,7 +109,7 @@ namespace src.Views
             txtSearch.Location = new System.Drawing.Point(18, 80);
             txtSearch.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "🔍  Search users...";
+            txtSearch.PlaceholderText = "🔍  Tìm kiếm người dùng...";
             txtSearch.Size = new System.Drawing.Size(1060, 30);
             txtSearch.TabIndex = 2;
             // 
@@ -120,7 +120,7 @@ namespace src.Views
             lblSearchSub.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
             lblSearchSub.Location = new System.Drawing.Point(18, 44);
             lblSearchSub.Name = "lblSearchSub";
-            lblSearchSub.Size = new System.Drawing.Size(234, 20);
+            lblSearchSub.Size = new System.Drawing.Size(335, 20);
             lblSearchSub.TabIndex = 1;
             lblSearchSub.Text = "Xem và quản lý tất cả người dùng trong hệ thống";
             // 
@@ -131,7 +131,7 @@ namespace src.Views
             lblSearchTitle.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
             lblSearchTitle.Location = new System.Drawing.Point(18, 13);
             lblSearchTitle.Name = "lblSearchTitle";
-            lblSearchTitle.Size = new System.Drawing.Size(179, 28);
+            lblSearchTitle.Size = new System.Drawing.Size(251, 28);
             lblSearchTitle.TabIndex = 0;
             lblSearchTitle.Text = "Người Dùng && Tài Khoản";
             // 
@@ -171,7 +171,7 @@ namespace src.Views
             dgv.Size = new System.Drawing.Size(1069, 585);
             dgv.TabIndex = 0;
             // 
-            // UserManageView
+            // QuanLyNguoiDungView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -181,7 +181,7 @@ namespace src.Views
             Controls.Add(pnlHeader);
             DoubleBuffered = true;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            Name = "UserManageView";
+            Name = "QuanLyNguoiDungView";
             Padding = new System.Windows.Forms.Padding(23, 13, 23, 13);
             Size = new System.Drawing.Size(1143, 867);
             pnlHeader.ResumeLayout(false);
@@ -207,3 +207,4 @@ namespace src.Views
         public System.Windows.Forms.DataGridView dgv;
     }
 }
+

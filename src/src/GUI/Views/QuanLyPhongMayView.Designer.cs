@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class RoomManageView
+    partial class QuanLyPhongMayView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -102,7 +102,7 @@ namespace src.Views
             pnlRoomCards.Size = new System.Drawing.Size(1097, 614);
             pnlRoomCards.TabIndex = 2;
             // 
-            // RoomManageView
+            // QuanLyPhongMayView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -112,7 +112,7 @@ namespace src.Views
             Controls.Add(pnlHeader);
             DoubleBuffered = true;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            Name = "RoomManageView";
+            Name = "QuanLyPhongMayView";
             Padding = new System.Windows.Forms.Padding(23, 13, 23, 13);
             Size = new System.Drawing.Size(1143, 867);
             pnlHeader.ResumeLayout(false);
@@ -130,3 +130,4 @@ namespace src.Views
         public System.Windows.Forms.FlowLayoutPanel pnlRoomCards;
     }
 }
+

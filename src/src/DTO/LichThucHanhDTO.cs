@@ -2,7 +2,7 @@ using System;
 
 namespace src.DTO
 {
-    public class ScheduleDTO
+    public class LichThucHanhDTO
     {
         public int MaLich { get; set; }
         public DateTime NgayThucHanh { get; set; }

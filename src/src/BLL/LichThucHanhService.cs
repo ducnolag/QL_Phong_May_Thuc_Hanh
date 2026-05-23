@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using src.DAL;
@@ -6,13 +6,13 @@ using src.DTO;
 
 namespace src.BLL
 {
-    public class ScheduleService
+    public class LichThucHanhService
     {
-        private readonly IScheduleRepository _repository;
+        private readonly ILichThucHanhRepository _repository;
 
-        public ScheduleService()
+        public LichThucHanhService()
         {
-            _repository = new ScheduleRepository();
+            _repository = new LichThucHanhRepository();
         }
 
         public (int total, int assigned, int pending, int canceled) GetStatistics()
@@ -20,12 +20,12 @@ namespace src.BLL
             return _repository.GetStatistics();
         }
 
-        public IEnumerable<ScheduleDTO> GetActiveSchedules()
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules()
         {
             return _repository.GetActiveSchedules();
         }
 
-        public ScheduleDTO GetScheduleById(int id)
+        public LichThucHanhDTO GetScheduleById(int id)
         {
             return _repository.GetScheduleById(id);
         }
@@ -79,7 +79,7 @@ namespace src.BLL
                 }
             }
 
-            var schedule = new ScheduleDTO
+            var schedule = new LichThucHanhDTO
             {
                 NgayThucHanh = date,
                 SoLuongSinhVien = soSV,
@@ -121,7 +121,7 @@ namespace src.BLL
                 }
             }
 
-            var schedule = new ScheduleDTO
+            var schedule = new LichThucHanhDTO
             {
                 MaLich = scheduleId,
                 NgayThucHanh = date,
@@ -146,3 +146,4 @@ namespace src.BLL
         }
     }
 }
+

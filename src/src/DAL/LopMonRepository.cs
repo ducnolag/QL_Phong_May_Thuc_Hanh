@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using Dapper;
 using src.DTO;
@@ -6,7 +6,7 @@ using src.Helpers;
 
 namespace src.DAL
 {
-    public interface ICatalogRepository
+    public interface ILopMonRepository
     {
         IEnumerable<LopHocDTO> GetAllLopHoc();
         IEnumerable<MonHocDTO> GetAllMonHoc();
@@ -18,7 +18,7 @@ namespace src.DAL
         void DeleteMonHoc(int maMon);
     }
 
-    public class CatalogRepository : ICatalogRepository
+    public class LopMonRepository : ILopMonRepository
     {
         public IEnumerable<LopHocDTO> GetAllLopHoc()
         {
@@ -85,3 +85,4 @@ namespace src.DAL
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace src.Forms
+﻿namespace src.Login
 {
     partial class LoginForm
     {
@@ -326,3 +326,4 @@ namespace src.Forms
         private System.Windows.Forms.Label lblCopyright;
     }
 }
+

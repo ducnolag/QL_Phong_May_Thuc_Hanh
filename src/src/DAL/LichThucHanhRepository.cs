@@ -8,11 +8,11 @@ using Microsoft.Data.SqlClient;
 
 namespace src.DAL
 {
-    public interface IScheduleRepository
+    public interface ILichThucHanhRepository
     {
         (int total, int assigned, int pending, int canceled) GetStatistics();
-        IEnumerable<ScheduleDTO> GetActiveSchedules();
-        ScheduleDTO GetScheduleById(int id);
+        IEnumerable<LichThucHanhDTO> GetActiveSchedules();
+        LichThucHanhDTO GetScheduleById(int id);
         (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id);
         (int MaPhong, string TenPhong, int SucChua) GetAssignedRoom(int scheduleId);
         
@@ -27,8 +27,8 @@ namespace src.DAL
         int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor);
         int CheckRoomConflict(int roomId, DateTime date, int caId, int excludeScheduleId = 0);
 
-        int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
-        void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
+        int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
+        void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
         void CancelSchedule(int id);
         void DeleteSchedule(int id);
         
@@ -43,21 +43,22 @@ namespace src.DAL
         public TimeSpan GioKetThuc { get; set; }
     }
 
-    public class ScheduleRepository : IScheduleRepository
+    public class LichThucHanhRepository : ILichThucHanhRepository
     {
         public (int total, int assigned, int pending, int canceled) GetStatistics()
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                int total = db.ExecuteScalar<int>("SELECT COUNT(*) FROM LICH_THUC_HANH");
-                int assigned = db.ExecuteScalar<int>("SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG)");
-                int pending = db.ExecuteScalar<int>("SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich NOT IN (SELECT MaLich FROM PHAN_CONG_PHONG)");
-                int canceled = db.ExecuteScalar<int>("SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy'");
+                string monthFilter = "MONTH(NgayThucHanh) = MONTH(GETDATE()) AND YEAR(NgayThucHanh) = YEAR(GETDATE())";
+                int total = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {monthFilter}");
+                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {monthFilter}");
+                int pending = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich NOT IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {monthFilter}");
+                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {monthFilter}");
                 return (total, assigned, pending, canceled);
             }
         }
 
-        public IEnumerable<ScheduleDTO> GetActiveSchedules()
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules()
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -72,11 +73,11 @@ namespace src.DAL
                                WHERE l.TrangThaiLich != N'Đã hủy'
                                  AND l.NgayThucHanh >= CAST(GETDATE() AS DATE)
                                ORDER BY l.NgayThucHanh DESC, c.GioBatDau";
-                return db.Query<ScheduleDTO>(sql);
+                return db.Query<LichThucHanhDTO>(sql);
             }
         }
 
-        public ScheduleDTO GetScheduleById(int id)
+        public LichThucHanhDTO GetScheduleById(int id)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -87,7 +88,7 @@ namespace src.DAL
                                JOIN MON_HOC mh ON l.MaMon = mh.MaMon
                                JOIN CA_HOC c   ON l.MaCa  = c.MaCa
                                WHERE l.MaLich = @id";
-                return db.QueryFirstOrDefault<ScheduleDTO>(sql, new { id });
+                return db.QueryFirstOrDefault<LichThucHanhDTO>(sql, new { id });
             }
         }
 
@@ -206,7 +207,7 @@ namespace src.DAL
             }
         }
 
-        public int CreateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
+        public int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -241,7 +242,7 @@ namespace src.DAL
             }
         }
 
-        public void UpdateSchedule(ScheduleDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
+        public void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -323,3 +324,4 @@ namespace src.DAL
         }
     }
 }
+

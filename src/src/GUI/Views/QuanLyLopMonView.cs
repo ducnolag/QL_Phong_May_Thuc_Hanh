@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -7,14 +7,14 @@ using src.Helpers;
 
 namespace src.Views
 {
-    public partial class CatalogManageView : UserControl
+    public partial class QuanLyLopMonView : UserControl
     {
-        private readonly src.BLL.CatalogService _catalogService;
+        private readonly src.BLL.LopMonService _LopMonService;
 
-        public CatalogManageView()
+        public QuanLyLopMonView()
         {
             InitializeComponent();
-            _catalogService = new src.BLL.CatalogService();
+            _LopMonService = new src.BLL.LopMonService();
             DoubleBuffered = true;
 
             // Add columns
@@ -76,7 +76,7 @@ namespace src.Views
             dgvLopHoc.Rows.Clear();
             try
             {
-                var dt = _catalogService.GetAllLopHoc();
+                var dt = _LopMonService.GetAllLopHoc();
                 foreach (var r in dt) dgvLopHoc.Rows.Add(r.MaLop, r.TenLop);
             }
             catch { }
@@ -87,7 +87,7 @@ namespace src.Views
             dgvMonHoc.Rows.Clear();
             try
             {
-                var dt = _catalogService.GetAllMonHoc();
+                var dt = _LopMonService.GetAllMonHoc();
                 foreach (var r in dt) dgvMonHoc.Rows.Add(r.MaMon, r.TenMon);
             }
             catch { }
@@ -103,12 +103,12 @@ namespace src.Views
             btnAddLop.Click += (s, e) => {
                 string name = ShowInputDialog("Thêm Lớp học", "Tên lớp:", "");
                 if (name == null) return;
-                try { _catalogService.CreateLopHoc(name); LoadLopHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
+                try { _LopMonService.CreateLopHoc(name); LoadLopHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
             };
             btnAddMon.Click += (s, e) => {
                 string name = ShowInputDialog("Thêm Môn học", "Tên môn:", "");
                 if (name == null) return;
-                try { _catalogService.CreateMonHoc(name); LoadMonHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
+                try { _LopMonService.CreateMonHoc(name); LoadMonHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
             };
 
             // Grid clicks
@@ -140,16 +140,16 @@ namespace src.Views
                 {
                     string newName = ShowInputDialog($"Sửa {label}", "Tên:", ten);
                     if (newName == null) return;
-                    if (isLop) _catalogService.UpdateLopHoc(pk, newName);
-                    else _catalogService.UpdateMonHoc(pk, newName);
+                    if (isLop) _LopMonService.UpdateLopHoc(pk, newName);
+                    else _LopMonService.UpdateMonHoc(pk, newName);
                     reload();
                 }
                 else if (col == "Delete")
                 {
                     if (MessageBox.Show($"Xóa '{ten}'?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
-                        if (isLop) _catalogService.DeleteLopHoc(pk);
-                        else _catalogService.DeleteMonHoc(pk);
+                        if (isLop) _LopMonService.DeleteLopHoc(pk);
+                        else _LopMonService.DeleteMonHoc(pk);
                         reload();
                     }
                 }
@@ -194,3 +194,4 @@ namespace src.Views
 
     }
 }
+

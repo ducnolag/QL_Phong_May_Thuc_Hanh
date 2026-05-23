@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class ScheduleManageView
+    partial class QuanLyLichThucHanhView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -143,7 +143,7 @@ namespace src.Views
             pnlListHeader.Size = new System.Drawing.Size(1097, 67);
             pnlListHeader.TabIndex = 2;
             // 
-            // ScheduleManageView
+            // QuanLyLichThucHanhView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -154,7 +154,7 @@ namespace src.Views
             Controls.Add(pnlHeader);
             DoubleBuffered = true;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            Name = "ScheduleManageView";
+            Name = "QuanLyLichThucHanhView";
             Padding = new System.Windows.Forms.Padding(23, 13, 23, 13);
             Size = new System.Drawing.Size(1143, 867);
             pnlHeader.ResumeLayout(false);
@@ -177,3 +177,4 @@ namespace src.Views
         public System.Windows.Forms.FlowLayoutPanel pnlScheduleList;
     }
 }
+

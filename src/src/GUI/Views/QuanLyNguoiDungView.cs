@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -13,14 +13,14 @@ namespace src.Views
     /// Chỉ có 2 nút hành động: ✏ Sửa và 🗑 Xóa.
     /// Dialog Sửa cho phép xem/đổi mật khẩu có icon mắt toggle.
     /// </summary>
-    public partial class UserManageView : UserControl
+    public partial class QuanLyNguoiDungView : UserControl
     {
-        private readonly src.BLL.UserService _userService;
+        private readonly src.BLL.NguoiDungService _NguoiDungService;
 
-        public UserManageView()
+        public QuanLyNguoiDungView()
         {
             InitializeComponent();
-            _userService = new src.BLL.UserService();
+            _NguoiDungService = new src.BLL.NguoiDungService();
             SetupView();
         }
 
@@ -121,7 +121,7 @@ namespace src.Views
             dgv.Rows.Clear();
             try
             {
-                var users = _userService.GetAllUsers();
+                var users = _NguoiDungService.GetAllUsers();
                 foreach (var r in users)
                 {
                     bool active = r.TrangThai;
@@ -208,7 +208,7 @@ namespace src.Views
                 string role = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
                 bool active = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                _userService.CreateUser(username, password, hoTen, email, role, active);
+                _NguoiDungService.CreateUser(username, password, hoTen, email, role, active);
 
                 MessageBox.Show("Đã thêm người dùng thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -242,10 +242,10 @@ namespace src.Views
                 string newRole = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
                 bool newActive = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                _userService.UpdateUser(username, newPw, newHoTen, newEmail, newRole, newActive);
+                _NguoiDungService.UpdateUser(username, newPw, newHoTen, newEmail, newRole, newActive);
 
                 // Nếu đang sửa chính tài khoản đang đăng nhập → cập nhật sidebar
-                if (this.TopLevelControl is MainForm mf && string.Equals(mf._currentUser, username, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(newHoTen))
+                if (this.TopLevelControl is SidebarForm mf && string.Equals(mf._currentUser, username, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(newHoTen))
                     mf.UpdateSidebarName(newHoTen);
 
                 MessageBox.Show("Cập nhật thành công!", "Thành công",
@@ -280,7 +280,7 @@ namespace src.Views
                 if (MessageBox.Show($"Xóa người dùng '{username}'?", "Xác nhận xóa",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
-                _userService.DeleteUser(userId, username, active);
+                _NguoiDungService.DeleteUser(userId, username, active);
 
                 MessageBox.Show("Đã xóa thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -535,3 +535,4 @@ namespace src.Views
         }
     }
 }
+

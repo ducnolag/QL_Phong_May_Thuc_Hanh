@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class CatalogManageView
+    partial class QuanLyLopMonView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -265,7 +265,7 @@ namespace src.Views
             lblDesc.TabIndex = 1;
             lblDesc.Text = "Quản lý thông tin và thiết lập Lớp học phần cùng Môn học";
             // 
-            // CatalogManageView
+            // QuanLyLopMonView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -274,7 +274,7 @@ namespace src.Views
             Controls.Add(pnlHeader);
             DoubleBuffered = true;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            Name = "CatalogManageView";
+            Name = "QuanLyLopMonView";
             Padding = new System.Windows.Forms.Padding(23, 16, 23, 16);
             Size = new System.Drawing.Size(1143, 784);
             pnlHeader.ResumeLayout(false);
@@ -314,3 +314,4 @@ namespace src.Views
         public System.Windows.Forms.Label lblDesc;
     }
 }
+

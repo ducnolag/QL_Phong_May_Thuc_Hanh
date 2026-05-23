@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Dapper;
@@ -7,14 +7,14 @@ using src.Helpers;
 
 namespace src.DAL
 {
-    public interface IRoomRepository
+    public interface IPhongMayRepository
     {
         List<PhongMayDTO> GetAllRooms();
         PhongMayDTO GetRoomById(int roomId);
         bool DeleteRoomWithTransaction(int roomId);
     }
 
-    public class RoomRepository : IRoomRepository
+    public class PhongMayRepository : IPhongMayRepository
     {
         public List<PhongMayDTO> GetAllRooms()
         {
@@ -76,3 +76,4 @@ namespace src.DAL
         }
     }
 }
+

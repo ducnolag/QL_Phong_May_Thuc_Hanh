@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using Dapper;
 using src.DTO;
@@ -6,7 +6,7 @@ using src.Helpers;
 
 namespace src.DAL
 {
-    public interface IUserRepository
+    public interface INguoiDungRepository
     {
         TaiKhoanDTO GetUserByUsername(string username);
         IEnumerable<TaiKhoanDTO> GetAllUsers();
@@ -17,7 +17,7 @@ namespace src.DAL
         void DeleteUserAndRelatedData(int userId);
     }
 
-    public class UserRepository : IUserRepository
+    public class NguoiDungRepository : INguoiDungRepository
     {
         public TaiKhoanDTO GetUserByUsername(string username)
         {
@@ -126,3 +126,4 @@ namespace src.DAL
         }
     }
 }
+

@@ -1,6 +1,6 @@
-namespace src.Views
+﻿namespace src.Views
 {
-    partial class ReportsView
+    partial class BaoCaoThongKeView
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -151,7 +151,7 @@ namespace src.Views
             pnlBody.Size = new System.Drawing.Size(0, 0);
             pnlBody.TabIndex = 0;
             // 
-            // ReportsView
+            // BaoCaoThongKeView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -159,7 +159,7 @@ namespace src.Views
             Controls.Add(pnlScroll);
             Controls.Add(pnlHeader);
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            Name = "ReportsView";
+            Name = "BaoCaoThongKeView";
             Size = new System.Drawing.Size(1143, 784);
             pnlHeader.ResumeLayout(false);
             pnlHeader.PerformLayout();
@@ -182,3 +182,4 @@ namespace src.Views
         public System.Windows.Forms.Panel pnlBody;
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -11,7 +11,7 @@ namespace src.Views
     /// <summary>
     /// Quản lý máy tính – Bộ lọc theo phòng/CPU/RAM/Status + CRUD đầy đủ.
     /// </summary>
-    public partial class ComputerManageView : UserControl
+    public partial class QuanLyMayTinhView : UserControl
     {
         private int currentPage = 1;
         private int pageSize = 15;
@@ -20,7 +20,7 @@ namespace src.Views
         private Button btnNext;
         private Label lblPageInfo;
 
-        public ComputerManageView()
+        public QuanLyMayTinhView()
         {
             InitializeComponent();
             SetupPaginationUI();
@@ -211,7 +211,7 @@ namespace src.Views
             dgv.Rows.Clear();
             try
             {
-                var compService = new src.BLL.ComputerService();
+                var compService = new src.BLL.MayTinhService();
                 var dt = compService.GetAllComputers();
                 foreach (var m in dt)
                 {
@@ -391,7 +391,7 @@ namespace src.Views
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
 
-                var compService = new src.BLL.ComputerService();
+                var compService = new src.BLL.MayTinhService();
                 var result = compService.AddComputer(new src.DTO.MayTinhDTO 
                 {
                     TenMay = tenMay,
@@ -451,7 +451,7 @@ namespace src.Views
                 int    maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay   = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
-                var compService = new src.BLL.ComputerService();
+                var compService = new src.BLL.MayTinhService();
                 var result = compService.UpdateComputer(new src.DTO.MayTinhDTO 
                 {
                     MaMay = maMay,
@@ -490,7 +490,7 @@ namespace src.Views
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             try
             {
-                var compService = new src.BLL.ComputerService();
+                var compService = new src.BLL.MayTinhService();
                 var result = compService.DeleteComputer(maMay);
                 if (result.IsSuccess)
                 {
@@ -655,3 +655,4 @@ namespace src.Views
         }
     }
 }
+

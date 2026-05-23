@@ -1,6 +1,6 @@
-namespace src
+﻿namespace src
 {
-    partial class MainForm
+    partial class SidebarForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -327,7 +327,7 @@ namespace src
             pnlContent.Size = new System.Drawing.Size(1189, 960);
             pnlContent.TabIndex = 1;
             // 
-            // MainForm
+            // SidebarForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -338,7 +338,7 @@ namespace src
             DoubleBuffered = true;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             MinimumSize = new System.Drawing.Size(1255, 851);
-            Name = "MainForm";
+            Name = "SidebarForm";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Lab Management System";
             pnlSidebar.ResumeLayout(false);
@@ -372,3 +372,4 @@ namespace src
         private System.Windows.Forms.Label lblRole;
     }
 }
+

@@ -13,16 +13,16 @@ namespace src.Views
     /// Hiển thị: summary cards, danh sách lịch dạng card với các nút Edit/Cancel/Delete.
     /// CRUD đầy đủ: Tạo lịch, Sửa lịch, Hủy lịch, Xóa lịch.
     /// </summary>
-    public partial class ScheduleManageView : UserControl
+    public partial class QuanLyLichThucHanhView : UserControl
     {
-        private readonly src.BLL.ScheduleService _scheduleService;
-        private readonly src.BLL.CatalogService _catalogService;
+        private readonly src.BLL.LichThucHanhService _LichThucHanhService;
+        private readonly src.BLL.LopMonService _LopMonService;
 
-        public ScheduleManageView()
+        public QuanLyLichThucHanhView()
         {
             InitializeComponent();
-            _scheduleService = new src.BLL.ScheduleService();
-            _catalogService = new src.BLL.CatalogService();
+            _LichThucHanhService = new src.BLL.LichThucHanhService();
+            _LopMonService = new src.BLL.LopMonService();
             SetupView();
         }
 
@@ -55,13 +55,13 @@ namespace src.Views
 
             try
             {
-                var stats = _scheduleService.GetStatistics();
+                var stats = _LichThucHanhService.GetStatistics();
                 totalSchedules = stats.total;
                 assigned = stats.assigned;
                 pending = stats.pending;
                 canceled = stats.canceled;
 
-                var dt = _scheduleService.GetActiveSchedules();
+                var dt = _LichThucHanhService.GetActiveSchedules();
                 foreach (var r in dt)
                 {
                     string status = r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp";
@@ -88,7 +88,7 @@ namespace src.Views
             }
 
             // === Summary cards: Tổng lịch | Đã xếp | Chờ xếp | Đã hủy ===
-            pnlStats.Controls.Add(MakeSummaryCard("Tổng số lịch", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
+            pnlStats.Controls.Add(MakeSummaryCard("Tổng lịch trong tháng", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
             pnlStats.Controls.Add(MakeSummaryCard("Đã xếp phòng", assigned.ToString(), ThemeColors.AccentGreen));
             pnlStats.Controls.Add(MakeSummaryCard("Chờ xếp phòng", pending.ToString(), ThemeColors.AccentOrange));
             pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.AccentRed));
@@ -261,7 +261,7 @@ namespace src.Views
                         int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
                         int? roomId = GetRoomId(cboRoom.SelectedItem);
 
-                        _scheduleService.ValidateAndCreateSchedule(
+                        _LichThucHanhService.ValidateAndCreateSchedule(
                             date, cboLop.Text.Trim(), cboMon.Text.Trim(),
                             (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                         );
@@ -290,13 +290,13 @@ namespace src.Views
         {
             try
             {
-                var sch = _scheduleService.GetScheduleById(scheduleId);
+                var sch = _LichThucHanhService.GetScheduleById(scheduleId);
                 if (sch == null) return;
 
-                var req = _scheduleService.GetScheduleRequirements(scheduleId);
-                var room = _scheduleService.GetAssignedRoom(scheduleId);
+                var req = _LichThucHanhService.GetScheduleRequirements(scheduleId);
+                var room = _LichThucHanhService.GetAssignedRoom(scheduleId);
 
-                using (var dlg = CreateScheduleDialog("Sửa Lịch Thực Hành"))
+                using (var dlg = CreateScheduleDialog("Sửa Lịch Thực Hành", scheduleId))
                 {
                     // ── Load dữ liệu cũ vào form ─────────────────────────────
                     dlg.Shown += (s, ev) =>
@@ -368,7 +368,7 @@ namespace src.Views
 
                             int? roomId = GetRoomId(cboRoom.SelectedItem);
 
-                            _scheduleService.ValidateAndUpdateSchedule(
+                            _LichThucHanhService.ValidateAndUpdateSchedule(
                                 scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(),
                                 (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                             );
@@ -405,7 +405,7 @@ namespace src.Views
             {
                 try
                 {
-                    _scheduleService.CancelSchedule(scheduleId);
+                    _LichThucHanhService.CancelSchedule(scheduleId);
                     MessageBox.Show("Đã hủy lịch!", "Thành công",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadData();
@@ -427,7 +427,7 @@ namespace src.Views
             {
                 try
                 {
-                    _scheduleService.DeleteSchedule(scheduleId);
+                    _LichThucHanhService.DeleteSchedule(scheduleId);
                     MessageBox.Show("Đã xóa lịch!", "Thành công",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadData();
@@ -442,7 +442,7 @@ namespace src.Views
         /// <summary>
         /// Tạo dialog form cho tạo/sửa lịch thực hành – có gợi ý phòng tự động
         /// </summary>
-        private Form CreateScheduleDialog(string title)
+        private Form CreateScheduleDialog(string title, int currentScheduleId = 0)
         {
             var dlg = new Form
             {
@@ -485,7 +485,7 @@ namespace src.Views
             };
             try
             {
-                var dtLop = _catalogService.GetAllLopHoc();
+                var dtLop = _LopMonService.GetAllLopHoc();
                 cboLop.DisplayMember = "TenLop"; cboLop.ValueMember = "MaLop"; cboLop.DataSource = dtLop;
             }
             catch { cboLop.Items.AddRange(new object[] { "CNTT01", "CNTT02", "KTPM01" }); }
@@ -507,7 +507,7 @@ namespace src.Views
             };
             try
             {
-                var dtMon = _catalogService.GetAllMonHoc();
+                var dtMon = _LopMonService.GetAllMonHoc();
                 cboMon.DisplayMember = "TenMon"; cboMon.ValueMember = "MaMon"; cboMon.DataSource = dtMon;
             }
             catch { cboMon.Items.AddRange(new object[] { "Lập trình C#", "Mạng MT" }); }
@@ -527,7 +527,7 @@ namespace src.Views
             };
             try
             {
-                var dtCa = _scheduleService.GetAllCaHoc();
+                var dtCa = _LichThucHanhService.GetAllCaHoc();
                 cboCa.DisplayMember = "TenCa"; cboCa.ValueMember = "MaCa"; cboCa.DataSource = dtCa;
             }
             catch { cboCa.Items.AddRange(new object[] { "Ca 1 (7:00)", "Ca 2 (9:30)", "Ca 3 (13:00)" }); }
@@ -648,11 +648,9 @@ namespace src.Views
                     int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                     int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                     int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
-
-                    // Tìm phòng trống (chưa bị chiếm) có đủ sức chứa và đếm số lượng máy đạt cấu hình yêu cầu
-                    var dtRooms = _scheduleService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, selDate, (int)caId);
-
                     int found = 0;
+                    // Tìm phòng trống (chưa bị chiếm) có đủ sức chứa và đếm số lượng máy đạt cấu hình yêu cầu
+                    var dtRooms = _LichThucHanhService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, selDate, (int)caId, currentScheduleId);
                     int roomCount = 0;
                     foreach (var r in dtRooms)
                     {
@@ -782,3 +780,4 @@ namespace src.Views
         }
     }
 }
+

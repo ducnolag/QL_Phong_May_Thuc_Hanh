@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -8,14 +8,14 @@ using src.Views;
 
 namespace src
 {
-    public partial class MainForm : Form
+    public partial class SidebarForm : Form
     {
         private Button _activeBtn;
         internal string _currentUser;
         internal bool _isAdmin;
         private UserControl _currentView;
 
-        public MainForm(string username = "admin", bool isAdmin = true)
+        public SidebarForm(string username = "admin", bool isAdmin = true)
         {
             InitializeComponent();
             _currentUser = username;
@@ -188,13 +188,13 @@ namespace src
             // Tạo view mới
             _currentView = viewName switch
             {
-                "RoomManage" => new RoomManageView(),
-                "ComputerManage" => new ComputerManageView(),
-                "CatalogManage" => new CatalogManageView(),
-                "ScheduleManage" => new ScheduleManageView(),
-                "UserManage" => new UserManageView(),
-                "Reports" => new ReportsView(),
-                _ => new RoomManageView()
+                "RoomManage" => new QuanLyPhongMayView(),
+                "ComputerManage" => new QuanLyMayTinhView(),
+                "CatalogManage" => new QuanLyLopMonView(),
+                "ScheduleManage" => new QuanLyLichThucHanhView(),
+                "UserManage" => new QuanLyNguoiDungView(),
+                "Reports" => new BaoCaoThongKeView(),
+                _ => new QuanLyPhongMayView()
             };
 
             _currentView.Dock = DockStyle.Fill;
@@ -231,9 +231,10 @@ namespace src
 
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        private void SidebarForm_Load(object sender, EventArgs e)
         {
 
         }
     }
 }
+

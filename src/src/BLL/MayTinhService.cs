@@ -1,21 +1,21 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
 
 namespace src.BLL
 {
-    public class ComputerService
+    public class MayTinhService
     {
-        private readonly IComputerRepository _computerRepository;
+        private readonly IMayTinhRepository _MayTinhRepository;
 
-        public ComputerService()
+        public MayTinhService()
         {
-            _computerRepository = new ComputerRepository();
+            _MayTinhRepository = new MayTinhRepository();
         }
 
         public List<MayTinhDTO> GetAllComputers()
         {
-            return _computerRepository.GetAllComputers();
+            return _MayTinhRepository.GetAllComputers();
         }
 
         public (bool IsSuccess, string Message) AddComputer(MayTinhDTO computer)
@@ -23,7 +23,7 @@ namespace src.BLL
             if (string.IsNullOrEmpty(computer.TenMay) || string.IsNullOrEmpty(computer.CPU))
                 return (false, "Mã máy và CPU không được để trống!");
 
-            bool success = _computerRepository.AddComputer(computer);
+            bool success = _MayTinhRepository.AddComputer(computer);
             if (success)
                 return (true, "Đã thêm máy tính thành công!");
             else
@@ -35,7 +35,7 @@ namespace src.BLL
             if (string.IsNullOrEmpty(computer.TenMay) || string.IsNullOrEmpty(computer.CPU))
                 return (false, "Mã máy và CPU không được để trống!");
 
-            bool success = _computerRepository.UpdateComputer(computer);
+            bool success = _MayTinhRepository.UpdateComputer(computer);
             if (success)
                 return (true, "Đã cập nhật máy tính thành công!");
             else
@@ -44,7 +44,7 @@ namespace src.BLL
 
         public (bool IsSuccess, string Message) DeleteComputer(int maMay)
         {
-            bool success = _computerRepository.DeleteComputer(maMay);
+            bool success = _MayTinhRepository.DeleteComputer(maMay);
             if (success)
                 return (true, "Đã xóa máy tính thành công!");
             else
@@ -52,3 +52,4 @@ namespace src.BLL
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Dapper;
@@ -7,7 +7,7 @@ using src.Helpers;
 
 namespace src.DAL
 {
-    public interface IComputerRepository
+    public interface IMayTinhRepository
     {
         List<MayTinhDTO> GetAllComputers();
         bool AddComputer(MayTinhDTO computer);
@@ -15,7 +15,7 @@ namespace src.DAL
         bool DeleteComputer(int maMay);
     }
 
-    public class ComputerRepository : IComputerRepository
+    public class MayTinhRepository : IMayTinhRepository
     {
         public List<MayTinhDTO> GetAllComputers()
         {
@@ -80,3 +80,4 @@ namespace src.DAL
         }
     }
 }
+

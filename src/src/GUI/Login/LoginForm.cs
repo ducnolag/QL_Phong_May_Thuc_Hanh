@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Drawing;
@@ -6,7 +6,7 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using src.Helpers;
 
-namespace src.Forms
+namespace src.Login
 {
     public partial class LoginForm : Form
     {
@@ -95,8 +95,8 @@ namespace src.Forms
 
             try
             {
-                var userService = new src.BLL.UserService();
-                var result = userService.Login(user, pass);
+                var NguoiDungService = new src.BLL.NguoiDungService();
+                var result = NguoiDungService.Login(user, pass);
 
                 if (!result.IsSuccess)
                 {
@@ -111,7 +111,7 @@ namespace src.Forms
 
                 var loggedInUser = result.User;
 
-                // Đăng nhập thành công – ẩn LoginForm rồi mở MainForm
+                // Đăng nhập thành công – ẩn LoginForm rồi mở SidebarForm
                 lblError.Visible = false;
                 bool isAdmin = loggedInUser.TenVaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase);
 
@@ -121,16 +121,16 @@ namespace src.Forms
                 AppSession.IsAdmin     = isAdmin;
 
                 this.Hide();
-                var mainForm = new MainForm(loggedInUser.HoTen, isAdmin);
-                // Khi MainForm đóng: nếu thoát bình thường (không phải logout) thì Exit
-                // Logout sẽ gọi Application.Restart() trong MainForm nên không cần Exit ở đây
-                mainForm.FormClosed += (s, args) =>
+                var SidebarForm = new SidebarForm(loggedInUser.HoTen, isAdmin);
+                // Khi SidebarForm đóng: nếu thoát bình thường (không phải logout) thì Exit
+                // Logout sẽ gọi Application.Restart() trong SidebarForm nên không cần Exit ở đây
+                SidebarForm.FormClosed += (s, args) =>
                 {
                     // Chỉ exit nếu không có form nào khác đang mở (tức là không phải logout)
                     if (Application.OpenForms.Count == 0)
                         Application.Exit();
                 };
-                mainForm.Show();
+                SidebarForm.Show();
             }
             catch (Exception ex)
             {
@@ -156,3 +156,4 @@ namespace src.Forms
         }
     }
 }
+

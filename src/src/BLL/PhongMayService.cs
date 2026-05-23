@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -8,18 +8,18 @@ using Microsoft.Data.SqlClient;
 
 namespace src.BLL
 {
-    public class RoomService
+    public class PhongMayService
     {
-        private readonly IRoomRepository _roomRepository;
+        private readonly IPhongMayRepository _PhongMayRepository;
 
-        public RoomService()
+        public PhongMayService()
         {
-            _roomRepository = new RoomRepository();
+            _PhongMayRepository = new PhongMayRepository();
         }
 
         public List<PhongMayDTO> GetAllRooms()
         {
-            return _roomRepository.GetAllRooms();
+            return _PhongMayRepository.GetAllRooms();
         }
 
         public (int TotalRooms, int Available, int Occupied) GetRoomStats()
@@ -53,7 +53,7 @@ namespace src.BLL
                 return (false, "Phòng đang có lịch thực hành không thể xóa!");
             }
 
-            bool success = _roomRepository.DeleteRoomWithTransaction(roomId);
+            bool success = _PhongMayRepository.DeleteRoomWithTransaction(roomId);
             if (success)
                 return (true, "Đã xóa phòng thành công!");
             else
@@ -61,3 +61,4 @@ namespace src.BLL
         }
     }
 }
+
