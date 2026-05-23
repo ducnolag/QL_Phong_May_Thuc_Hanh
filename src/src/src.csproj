@@ -10,7 +10,7 @@
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ImplicitUsings>disable</ImplicitUsings>
-    <NoWarn>CA1416</NoWarn>
+    <NoWarn>CA1416;NU1701</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

@@ -20,7 +20,6 @@ namespace src.Forms
             pnlMain = new System.Windows.Forms.Panel();
             pnlRight = new System.Windows.Forms.Panel();
             lblCopyright = new System.Windows.Forms.Label();
-            lblHint = new System.Windows.Forms.Label();
             btnLogin = new System.Windows.Forms.Button();
             lblError = new System.Windows.Forms.Label();
             pnlPassWrap = new System.Windows.Forms.Panel();
@@ -59,7 +58,6 @@ namespace src.Forms
             // 
             pnlRight.BackColor = System.Drawing.Color.White;
             pnlRight.Controls.Add(lblCopyright);
-            pnlRight.Controls.Add(lblHint);
             pnlRight.Controls.Add(btnLogin);
             pnlRight.Controls.Add(lblError);
             pnlRight.Controls.Add(pnlPassWrap);
@@ -80,22 +78,11 @@ namespace src.Forms
             lblCopyright.AutoSize = true;
             lblCopyright.Font = new System.Drawing.Font("Segoe UI", 8F);
             lblCopyright.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            lblCopyright.Location = new System.Drawing.Point(166, 593);
+            lblCopyright.Location = new System.Drawing.Point(166, 566);
             lblCopyright.Name = "lblCopyright";
             lblCopyright.Size = new System.Drawing.Size(217, 19);
             lblCopyright.TabIndex = 10;
             lblCopyright.Text = "© 2026 Lab Management System";
-            // 
-            // lblHint
-            // 
-            lblHint.AutoSize = true;
-            lblHint.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Italic);
-            lblHint.ForeColor = System.Drawing.Color.FromArgb(150, 160, 175);
-            lblHint.Location = new System.Drawing.Point(126, 553);
-            lblHint.Name = "lblHint";
-            lblHint.Size = new System.Drawing.Size(263, 20);
-            lblHint.TabIndex = 9;
-            lblHint.Text = "Tài khoản mặc định: admin / admin123";
             // 
             // btnLogin
             // 
@@ -336,7 +323,6 @@ namespace src.Forms
         private System.Windows.Forms.Button btnShowPass;
         private System.Windows.Forms.Label lblError;
         private System.Windows.Forms.Button btnLogin;
-        private System.Windows.Forms.Label lblHint;
         private System.Windows.Forms.Label lblCopyright;
     }
 }

@@ -125,25 +125,25 @@ namespace src.Views
                 var dtRooms = roomService.GetAllRooms();
                 foreach (var r in dtRooms)
                 {
-                    rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.StatusEng));
+                    rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.TenTrangThaiPhong)); // Use Vietnamese status
                 }
             }
             catch
             {
                 // Dữ liệu mẫu
                 totalRooms = 6; available = 3; occupied = 2;
-                rooms.Add((1, "Lab A-301", "Building A, Floor 3", 30, 30, "available"));
-                rooms.Add((2, "Lab A-302", "Building A, Floor 3", 25, 25, "occupied"));
-                rooms.Add((3, "Lab B-205", "Building B, Floor 2", 20, 20, "available"));
-                rooms.Add((4, "Lab B-206", "Building B, Floor 2", 20, 15, "occupied"));
-                rooms.Add((5, "Lab C-102", "Building C, Floor 1", 35, 30, "maintenance"));
-                rooms.Add((6, "Lab C-201", "Building C, Floor 2", 30, 28, "available"));
+                rooms.Add((1, "Lab A-301", "Tòa A, Tầng 3", 30, 30, "Hoạt động"));
+                rooms.Add((2, "Lab A-302", "Tòa A, Tầng 3", 25, 25, "Đang sử dụng"));
+                rooms.Add((3, "Lab B-205", "Tòa B, Tầng 2", 20, 20, "Hoạt động"));
+                rooms.Add((4, "Lab B-206", "Tòa B, Tầng 2", 20, 15, "Đang sử dụng"));
+                rooms.Add((5, "Lab C-102", "Tòa C, Tầng 1", 35, 30, "Bảo trì"));
+                rooms.Add((6, "Lab C-201", "Tòa C, Tầng 2", 30, 28, "Hoạt động"));
             }
 
             // === Tạo summary cards theo Figma ===
-            pnlStats.Controls.Add(MakeSummaryCard("Total Rooms", totalRooms.ToString(), ThemeColors.TextPrimary));
-            pnlStats.Controls.Add(MakeSummaryCard("Available", available.ToString(), ThemeColors.AccentGreen));
-            pnlStats.Controls.Add(MakeSummaryCard("Occupied", occupied.ToString(), ThemeColors.AccentRed));
+            pnlStats.Controls.Add(MakeSummaryCard("Tổng số phòng", totalRooms.ToString(), ThemeColors.TextPrimary));
+            pnlStats.Controls.Add(MakeSummaryCard("Trống", available.ToString(), ThemeColors.AccentGreen));
+            pnlStats.Controls.Add(MakeSummaryCard("Đang sử dụng", occupied.ToString(), ThemeColors.AccentRed));
 
             // === Tạo room cards theo Figma ===
             foreach (var room in rooms)
@@ -220,12 +220,12 @@ namespace src.Views
                 Tag = id 
             };
             
-            Color statusColor = status == "available" ? ThemeColors.AccentGreen :
-                                status == "maintenance" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
-            Color badgeBg = status == "available" ? ThemeColors.BadgeGreenBg :
-                            status == "maintenance" ? ThemeColors.BadgeOrangeBg : ThemeColors.BadgeRedBg;
-            Color badgeFg = status == "available" ? ThemeColors.BadgeGreenFg :
-                            status == "maintenance" ? ThemeColors.BadgeOrangeFg : ThemeColors.BadgeRedFg;
+            Color statusColor = status == "Hoạt động" ? ThemeColors.AccentGreen :
+                                status == "Bảo trì" ? ThemeColors.AccentOrange : ThemeColors.AccentRed;
+            Color badgeBg = status == "Hoạt động" ? ThemeColors.BadgeGreenBg :
+                            status == "Bảo trì" ? ThemeColors.BadgeOrangeBg : ThemeColors.BadgeRedBg;
+            Color badgeFg = status == "Hoạt động" ? ThemeColors.BadgeGreenFg :
+                            status == "Bảo trì" ? ThemeColors.BadgeOrangeFg : ThemeColors.BadgeRedFg;
 
             card.Paint += (s, e) =>
             {
@@ -261,7 +261,7 @@ namespace src.Views
                 TextRenderer.DrawText(g, $"💻 {computers}", new Font("Segoe UI", 9F, FontStyle.Bold),
                     new Point(card.Width / 2, infoY + 26), ThemeColors.TextPrimary);
 
-                TextRenderer.DrawText(g, "Status", new Font("Segoe UI", 9F),
+                TextRenderer.DrawText(g, "Trạng thái", new Font("Segoe UI", 9F),
                     new Point(16, infoY + 52), ThemeColors.TextSecondary);
 
                 // Badge trạng thái
@@ -280,7 +280,7 @@ namespace src.Views
             // Nút Edit bằng Guna2Button
             var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "✏  Edit", Size = new Size(120, 32), Location = new Point(16, 190),
+                Text = "✏  Sửa", Size = new Size(120, 32), Location = new Point(16, 190),
                 FillColor = Color.White, ForeColor = ThemeColors.TextPrimary,
                 Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
                 BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)

@@ -44,34 +44,42 @@ namespace src.Views
             dgv.Columns.Clear();
 
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "TenDN",     HeaderText = "Tên đăng nhập", Width = 140, ReadOnly = true });
+            { Name = "TenDN", HeaderText = "Tên đăng nhập", Width = 140, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "HoTen",     HeaderText = "Họ tên",        Width = 150, ReadOnly = true });
+            { Name = "HoTen", HeaderText = "Họ tên", Width = 150, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "Email",     HeaderText = "Email",          Width = 185, ReadOnly = true });
+            { Name = "Email", HeaderText = "Email", Width = 185, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "VaiTro",    HeaderText = "Vai trò",       Width = 90,  ReadOnly = true });
+            { Name = "VaiTro", HeaderText = "Vai trò", Width = 90, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "TrangThai", HeaderText = "Trạng thái",   Width = 90,  ReadOnly = true });
+            { Name = "TrangThai", HeaderText = "Trạng thái", Width = 90, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "NgayTao",   HeaderText = "Ngày tạo",     Width = 100, ReadOnly = true });
+            { Name = "NgayTao", HeaderText = "Ngày tạo", Width = 100, ReadOnly = true });
 
             // Nút sửa
             dgv.Columns.Add(new DataGridViewButtonColumn
             {
-                Name = "Edit", HeaderText = "Sửa", Text = "✏  Sửa",
-                UseColumnTextForButtonValue = true, Width = 80, FlatStyle = FlatStyle.Flat
+                Name = "Edit",
+                HeaderText = "Sửa",
+                Text = "✏  Sửa",
+                UseColumnTextForButtonValue = true,
+                Width = 80,
+                FlatStyle = FlatStyle.Flat
             });
 
             // Nút xóa
             dgv.Columns.Add(new DataGridViewButtonColumn
             {
-                Name = "Delete", HeaderText = "Xóa", Text = "🗑",
-                UseColumnTextForButtonValue = true, Width = 50, FlatStyle = FlatStyle.Flat
+                Name = "Delete",
+                HeaderText = "Xóa",
+                Text = "🗑",
+                UseColumnTextForButtonValue = true,
+                Width = 50,
+                FlatStyle = FlatStyle.Flat
             });
 
             dgv.CellFormatting += Dgv_CellFormatting;
-            dgv.CellClick      += Dgv_CellClick;
+            dgv.CellClick += Dgv_CellClick;
 
             dgv.Columns["Edit"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgv.Columns["Edit"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -116,9 +124,9 @@ namespace src.Views
                 var users = _userService.GetAllUsers();
                 foreach (var r in users)
                 {
-                    bool active   = r.TrangThai;
+                    bool active = r.TrangThai;
                     string status = active ? "active" : "inactive";
-                    string ngay   = r.CreatedAt.ToString("yyyy-MM-dd");
+                    string ngay = r.CreatedAt.ToString("yyyy-MM-dd");
 
                     int idx = dgv.Rows.Add(
                         r.TenDangNhap, r.HoTen, r.Email,
@@ -129,9 +137,9 @@ namespace src.Views
             }
             catch
             {
-                dgv.Rows.Add("admin",      "Administrator", "admin@lab.vn", "Admin",    "active",   "2024-01-15");
-                dgv.Rows.Add("nhanvien1",  "Trần Thị Bình", "binh@lab.vn",  "NhanVien", "active",   "2024-02-20");
-                dgv.Rows.Add("nhanvien2",  "Lê Hoàng Nam",  "nam@lab.vn",   "NhanVien", "inactive", "2024-03-10");
+                dgv.Rows.Add("admin", "Administrator", "admin@lab.vn", "Admin", "active", "2024-01-15");
+                dgv.Rows.Add("nhanvien1", "Trần Thị Bình", "binh@lab.vn", "NhanVien", "active", "2024-02-20");
+                dgv.Rows.Add("nhanvien2", "Lê Hoàng Nam", "nam@lab.vn", "NhanVien", "inactive", "2024-03-10");
             }
         }
 
@@ -145,19 +153,19 @@ namespace src.Views
             if (col == "VaiTro")
             {
                 bool isAdmin = val.Contains("Admin");
-                e.CellStyle.ForeColor  = isAdmin ? ThemeColors.BadgePurpleFg : ThemeColors.BadgeBlueFg;
-                e.CellStyle.BackColor  = isAdmin ? ThemeColors.BadgePurpleBg : ThemeColors.BadgeBlueBg;
-                e.CellStyle.Font       = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-                e.CellStyle.Alignment  = DataGridViewContentAlignment.MiddleCenter;
+                e.CellStyle.ForeColor = isAdmin ? ThemeColors.BadgePurpleFg : ThemeColors.BadgeBlueFg;
+                e.CellStyle.BackColor = isAdmin ? ThemeColors.BadgePurpleBg : ThemeColors.BadgeBlueBg;
+                e.CellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+                e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
             else if (col == "TrangThai")
             {
                 bool active = val == "active";
-                e.CellStyle.ForeColor  = active ? ThemeColors.BadgeGreenFg : ThemeColors.BadgeRedFg;
-                e.CellStyle.BackColor  = active ? ThemeColors.BadgeGreenBg : ThemeColors.BadgeRedBg;
-                e.CellStyle.Font       = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-                e.CellStyle.Alignment  = DataGridViewContentAlignment.MiddleCenter;
-                e.Value = active ? "✔ Active" : "✘ Inactive";
+                e.CellStyle.ForeColor = active ? ThemeColors.BadgeGreenFg : ThemeColors.BadgeRedFg;
+                e.CellStyle.BackColor = active ? ThemeColors.BadgeGreenBg : ThemeColors.BadgeRedBg;
+                e.CellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+                e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                e.Value = active ? "✔ Hoạt động" : "✘ Vô hiệu hóa";
                 e.FormattingApplied = true;
             }
         }
@@ -167,7 +175,7 @@ namespace src.Views
         {
             if (e.RowIndex < 0) return;
             string col = dgv.Columns[e.ColumnIndex].Name;
-            if      (col == "Edit")   ShowEditDialog(e.RowIndex);
+            if (col == "Edit") ShowEditDialog(e.RowIndex);
             else if (col == "Delete") DeleteUser(e.RowIndex);
         }
 
@@ -194,11 +202,11 @@ namespace src.Views
             try
             {
                 string username = Find<TextBox>(dlg, "txtUsername").Text.Trim();
-                string hoTen    = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
-                string email    = Find<TextBox>(dlg, "txtEmail").Text.Trim();
+                string hoTen = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
+                string email = Find<TextBox>(dlg, "txtEmail").Text.Trim();
                 string password = Find<TextBox>(dlg, "txtPassword").Text.Trim();
-                string role     = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
-                bool active     = Find<CheckBox>(dlg, "chkActive").Checked;
+                string role = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
+                bool active = Find<CheckBox>(dlg, "chkActive").Checked;
 
                 _userService.CreateUser(username, password, hoTen, email, role, active);
 
@@ -215,11 +223,11 @@ namespace src.Views
         // ── Dialog Sửa ───────────────────────────────────────────────────
         private void ShowEditDialog(int rowIndex)
         {
-            var row  = dgv.Rows[rowIndex];
-            string username = row.Cells["TenDN"].Value?.ToString()  ?? "";
-            string hoTen    = row.Cells["HoTen"].Value?.ToString()  ?? "";
-            string email    = row.Cells["Email"].Value?.ToString()   ?? "";
-            string role     = row.Cells["VaiTro"].Value?.ToString() ?? "";
+            var row = dgv.Rows[rowIndex];
+            string username = row.Cells["TenDN"].Value?.ToString() ?? "";
+            string hoTen = row.Cells["HoTen"].Value?.ToString() ?? "";
+            string email = row.Cells["Email"].Value?.ToString() ?? "";
+            string role = row.Cells["VaiTro"].Value?.ToString() ?? "";
             // raw value lưu là "active"/"inactive" (lowercase)
             bool active = row.Cells["TrangThai"].Value?.ToString() == "active";
 
@@ -228,11 +236,11 @@ namespace src.Views
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
-                string newHoTen   = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
-                string newEmail   = Find<TextBox>(dlg, "txtEmail").Text.Trim();
-                string newPw      = Find<TextBox>(dlg, "txtPassword").Text.Trim();
-                string newRole    = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
-                bool newActive    = Find<CheckBox>(dlg, "chkActive").Checked;
+                string newHoTen = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
+                string newEmail = Find<TextBox>(dlg, "txtEmail").Text.Trim();
+                string newPw = Find<TextBox>(dlg, "txtPassword").Text.Trim();
+                string newRole = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
+                bool newActive = Find<CheckBox>(dlg, "chkActive").Checked;
 
                 _userService.UpdateUser(username, newPw, newHoTen, newEmail, newRole, newActive);
 
@@ -255,7 +263,7 @@ namespace src.Views
         {
             var row = dgv.Rows[rowIndex];
             string username = row.Cells["TenDN"].Value?.ToString() ?? "";
-            
+
             if (username.Equals("admin", StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show("Không thể xóa tài khoản admin!", "Cảnh báo",
@@ -294,11 +302,14 @@ namespace src.Views
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(460, isNew ? 430 : 420),
+                Text = title,
+                Size = new Size(460, isNew ? 430 : 420),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false, MinimizeBox = false,
-                BackColor = Color.White, Font = new Font("Segoe UI", 10F)
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 10F)
             };
 
             int y = 20, lx = 20, tx = 145, inputW = 268;
@@ -307,8 +318,10 @@ namespace src.Views
             void AddLabel(string text, int posY) =>
                 dlg.Controls.Add(new Label
                 {
-                    Text = text, Location = new Point(lx, posY + 3),
-                    AutoSize = true, Font = new Font("Segoe UI", 9.5F),
+                    Text = text,
+                    Location = new Point(lx, posY + 3),
+                    AutoSize = true,
+                    Font = new Font("Segoe UI", 9.5F),
                     ForeColor = ThemeColors.TextSecondary
                 });
 
@@ -316,8 +329,10 @@ namespace src.Views
             AddLabel("Tên đăng nhập *", y);
             var txtUser = new TextBox
             {
-                Name = "txtUsername", Text = username,
-                Location = new Point(tx, y), Size = new Size(inputW, 26),
+                Name = "txtUsername",
+                Text = username,
+                Location = new Point(tx, y),
+                Size = new Size(inputW, 26),
                 ReadOnly = !isNew,
                 BackColor = isNew ? Color.White : Color.FromArgb(245, 247, 250),
                 Font = new Font("Segoe UI", 10F)
@@ -329,8 +344,10 @@ namespace src.Views
             AddLabel("Họ và tên", y);
             var txtHoTen = new TextBox
             {
-                Name = "txtHoTen", Text = hoTen,
-                Location = new Point(tx, y), Size = new Size(inputW, 26),
+                Name = "txtHoTen",
+                Text = hoTen,
+                Location = new Point(tx, y),
+                Size = new Size(inputW, 26),
                 Font = new Font("Segoe UI", 10F)
             };
             dlg.Controls.Add(txtHoTen);
@@ -340,8 +357,10 @@ namespace src.Views
             AddLabel("Email *", y);
             var txtEmail = new TextBox
             {
-                Name = "txtEmail", Text = email,
-                Location = new Point(tx, y), Size = new Size(inputW, 26),
+                Name = "txtEmail",
+                Text = email,
+                Location = new Point(tx, y),
+                Size = new Size(inputW, 26),
                 Font = new Font("Segoe UI", 10F)
             };
             dlg.Controls.Add(txtEmail);
@@ -353,8 +372,10 @@ namespace src.Views
             // TextBox mật khẩu (hiện sẵn hint khi Sửa)
             var txtPass = new TextBox
             {
-                Name = "txtPassword", Text = password,
-                Location = new Point(tx, y), Size = new Size(inputW - 36, 26),
+                Name = "txtPassword",
+                Text = password,
+                Location = new Point(tx, y),
+                Size = new Size(inputW - 36, 26),
                 UseSystemPasswordChar = false,   // hiện rõ để admin biết/copy
                 Font = new Font("Segoe UI", 10F),
                 BackColor = string.IsNullOrEmpty(password)
@@ -371,7 +392,8 @@ namespace src.Views
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand,
-                TabStop = false, Text = ""
+                TabStop = false,
+                Text = ""
             };
             btnEye.FlatAppearance.BorderSize = 0;
             btnEye.FlatAppearance.MouseOverBackColor = Color.Transparent;
@@ -383,7 +405,7 @@ namespace src.Views
                 Color col = passVisible
                     ? Color.FromArgb(45, 75, 205)
                     : Color.FromArgb(160, 165, 175);
-                using var pen   = new Pen(col, 1.8f);
+                using var pen = new Pen(col, 1.8f);
                 using var brush = new SolidBrush(col);
                 // Hình con mắt
                 var eye = new Rectangle(cx - 9, cy - 5, 18, 10);
@@ -396,7 +418,7 @@ namespace src.Views
                     using var slash = new Pen(col, 2f)
                     {
                         StartCap = LineCap.Round,
-                        EndCap   = LineCap.Round
+                        EndCap = LineCap.Round
                     };
                     g.DrawLine(slash, cx - 8, cy + 7, cx + 8, cy - 7);
                 }
@@ -417,7 +439,8 @@ namespace src.Views
                 dlg.Controls.Add(new Label
                 {
                     Text = "💡 Đây là mật khẩu hiện tại. Sửa nếu muốn đổi, để trống nếu giữ nguyên.",
-                    Location = new Point(tx, y + 29), Size = new Size(inputW, 18),
+                    Location = new Point(tx, y + 29),
+                    Size = new Size(inputW, 18),
                     Font = new Font("Segoe UI", 7.5F, FontStyle.Italic),
                     ForeColor = Color.FromArgb(100, 130, 100)
                 });
@@ -428,7 +451,9 @@ namespace src.Views
             AddLabel("Vai trò", y);
             var cboRole = new ComboBox
             {
-                Name = "cboRole", Location = new Point(tx, y), Size = new Size(inputW, 26),
+                Name = "cboRole",
+                Location = new Point(tx, y),
+                Size = new Size(inputW, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 10F)
             };
@@ -440,9 +465,13 @@ namespace src.Views
             // ── Trạng thái ──
             var chkActive = new CheckBox
             {
-                Name = "chkActive", Text = "Kích hoạt tài khoản",
-                Checked = active, Location = new Point(tx, y), AutoSize = true,
-                Font = new Font("Segoe UI", 10F), ForeColor = ThemeColors.TextPrimary
+                Name = "chkActive",
+                Text = "Kích hoạt tài khoản",
+                Checked = active,
+                Location = new Point(tx, y),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F),
+                ForeColor = ThemeColors.TextPrimary
             };
             dlg.Controls.Add(chkActive);
             y += 46;
@@ -450,7 +479,8 @@ namespace src.Views
             // ── Phân cách ──
             dlg.Controls.Add(new Label
             {
-                Location = new Point(20, y), Size = new Size(410, 1),
+                Location = new Point(20, y),
+                Size = new Size(410, 1),
                 BackColor = Color.FromArgb(226, 232, 240)
             });
             y += 12;
@@ -458,9 +488,13 @@ namespace src.Views
             // ── Nút Lưu & Hủy ──
             var btnSave = new Button
             {
-                Text = "💾  Lưu", Size = new Size(130, 38), Location = new Point(tx, y),
-                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand,
+                Text = "💾  Lưu",
+                Size = new Size(130, 38),
+                Location = new Point(tx, y),
+                BackColor = ThemeColors.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 DialogResult = DialogResult.OK
             };
@@ -469,10 +503,15 @@ namespace src.Views
 
             var btnCancel = new Button
             {
-                Text = "Hủy", Size = new Size(90, 38), Location = new Point(tx + 140, y),
-                BackColor = Color.FromArgb(241, 245, 249), ForeColor = ThemeColors.TextSecondary,
-                FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand,
-                Font = new Font("Segoe UI", 10F), DialogResult = DialogResult.Cancel
+                Text = "Hủy",
+                Size = new Size(90, 38),
+                Location = new Point(tx + 140, y),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = ThemeColors.TextSecondary,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 10F),
+                DialogResult = DialogResult.Cancel
             };
             btnCancel.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnCancel);
@@ -480,6 +519,11 @@ namespace src.Views
             dlg.AcceptButton = btnSave;
             dlg.CancelButton = btnCancel;
             return dlg;
+        }
+
+        private void lblTitle_Click(object sender, EventArgs e)
+        {
+
         }
 
         // ── Helper tìm control theo tên ──────────────────────────────────

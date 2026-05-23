@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -69,10 +70,10 @@ namespace src
             // Ẩn menu nếu không phải admin
             if (!_isAdmin)
             {
-                btnUserManage.Visible  = false;
-                btnRoomManage.Visible  = false;
-                btnCatalog.Visible     = false;
-                btnReports.Visible     = false;
+                btnUserManage.Visible = false;
+                btnRoomManage.Visible = false;
+                btnCatalog.Visible = false;
+                btnReports.Visible = false;
             }
 
             // Sự kiện nút logout
@@ -86,17 +87,16 @@ namespace src
             };
 
             // Gắn Click cho tất cả nút menu
-            btnUserManage.Click    += MenuBtn_Click;
-            btnRoomManage.Click    += MenuBtn_Click;
-            btnComputerManage.Click+= MenuBtn_Click;
-            btnCatalog.Click       += MenuBtn_Click;
-            btnScheduleManage.Click+= MenuBtn_Click;
-            btnReports.Click       += MenuBtn_Click;
+            btnUserManage.Click += MenuBtn_Click;
+            btnRoomManage.Click += MenuBtn_Click;
+            btnComputerManage.Click += MenuBtn_Click;
+            btnCatalog.Click += MenuBtn_Click;
+            btnScheduleManage.Click += MenuBtn_Click;
+            btnReports.Click += MenuBtn_Click;
 
-            // Dồn layout sau khi form đã load xong (tránh WinForms reset vị trí)
+            // Dồn layout sau khi form đã load xong
             this.Load += (s, e) =>
             {
-                // Đã xóa Dashboard khỏi sidebar
                 RelayoutMenuButtons();
                 // Admin mở báo cáo, NhanViên mở lịch thực hành
                 NavigateTo(_isAdmin ? "Reports" : "ScheduleManage");
@@ -104,24 +104,22 @@ namespace src
         }
 
         // ── Dồn các nút menu visible lên trên (sau khi ẩn theo role) ──
-        /// <summary>
-        /// Tái bố cục các nút sidebar: nút nào visible thì xếp từ trên xuống,
-        /// cách nhau 52px. Đảm bảo role Nhân viên không có khoảng trống.
-        /// </summary>
         private void RelayoutMenuButtons()
         {
-            Button[] menuBtns = { btnUserManage, btnRoomManage,
-                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
-            int y = 12; // vị trí Y bắt đầu, cách top 12px
+            var menuBtns = pnlSidebarMenu.Controls.OfType<Button>().OrderBy(b => b.Top).ToList();
+            if (menuBtns.Count == 0) return;
+            
+            int y = menuBtns[0].Top; // Bắt đầu bằng toạ độ của nút đầu tiên
             foreach (var b in menuBtns)
             {
                 if (b.Visible)
                 {
-                    b.Location = new Point(12, y);
-                    y += 52; // khoảng cách giữa các nút
+                    b.Top = y;
+                    y += b.Height + 11; // 11 là khoảng cách giữa các nút (vd: 70 - 59 = 11)
                 }
             }
         }
+
 
         // ── Click menu sidebar ────────────────────────────────────────
         private void MenuBtn_Click(object sender, EventArgs e)
@@ -138,7 +136,7 @@ namespace src
         private void SetActiveMenu(Button btn)
         {
             Button[] menuBtns = { btnUserManage, btnRoomManage,
-                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
+                                   btnComputerManage, btnScheduleManage, btnCatalog, btnReports };
 
             // Bước 1: Reset tất cả nút và gỡ handler cũ (tránh chồng chuyện event)
             foreach (var b in menuBtns)
@@ -190,13 +188,13 @@ namespace src
             // Tạo view mới
             _currentView = viewName switch
             {
-                "RoomManage"      => new RoomManageView(),
-                "ComputerManage"  => new ComputerManageView(),
-                "CatalogManage"   => new CatalogManageView(),
-                "ScheduleManage"  => new ScheduleManageView(),
-                "UserManage"      => new UserManageView(),
-                "Reports"         => new ReportsView(),
-                _                 => new RoomManageView()
+                "RoomManage" => new RoomManageView(),
+                "ComputerManage" => new ComputerManageView(),
+                "CatalogManage" => new CatalogManageView(),
+                "ScheduleManage" => new ScheduleManageView(),
+                "UserManage" => new UserManageView(),
+                "Reports" => new ReportsView(),
+                _ => new RoomManageView()
             };
 
             _currentView.Dock = DockStyle.Fill;
@@ -205,7 +203,7 @@ namespace src
 
             // Đồng bộ active menu
             Button[] menuBtns = { btnUserManage, btnRoomManage,
-                                   btnComputerManage, btnCatalog, btnScheduleManage, btnReports };
+                                   btnComputerManage, btnScheduleManage, btnCatalog, btnReports };
             foreach (var b in menuBtns)
             {
                 if (b.Tag?.ToString() == viewName)
@@ -218,9 +216,24 @@ namespace src
         /// <summary>Cập nhật tên hiển thị trên sidebar khi admin sửa hồ sơ của mình.</summary>
         public void UpdateSidebarName(string newHoTen)
         {
-            lblUsername.Text  = newHoTen;
-            lblAvatar.Text    = newHoTen.Length > 0 ? newHoTen[0].ToString().ToUpper() : "?";
+            lblUsername.Text = newHoTen;
+            lblAvatar.Text = newHoTen.Length > 0 ? newHoTen[0].ToString().ToUpper() : "?";
             lblAvatar.Invalidate();
+        }
+
+        private void lblLogo_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnUserManage_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

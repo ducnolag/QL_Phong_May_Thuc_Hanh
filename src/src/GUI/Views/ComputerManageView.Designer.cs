@@ -66,7 +66,7 @@ namespace src.Views
             this.lblSubtitle.Name = "lblSubtitle";
             this.lblSubtitle.Size = new System.Drawing.Size(380, 19);
             this.lblSubtitle.TabIndex = 1;
-            this.lblSubtitle.Text = "Thêm, sửa, xóa máy tính theo từng phòng máy";
+            this.lblSubtitle.Text = "Quản lý thông tin và tình trạng các máy tính trong phòng thực hành";
             // 
             // pnlToolbar - Thanh lọc
             // 

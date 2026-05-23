@@ -71,7 +71,7 @@ namespace src.Views
                         r.TenMon,
                         status,
                         r.NgayThucHanh.ToString("yyyy-MM-dd"),
-                        r.NgayThucHanh.ToString("dddd"),
+                        r.NgayThucHanh.ToString("dddd", new System.Globalization.CultureInfo("vi-VN")),
                         timeStr,
                         r.SoLuongSinhVien,
                         r.TenPhong
@@ -81,10 +81,10 @@ namespace src.Views
             catch
             {
                 totalSchedules = 4; assigned = 3; pending = 1; canceled = 0;
-                schedules.Add((1, "CS101", "Đã xếp", "2026-04-16", "Thursday", "08:00-10:00", 25, "Lab A-301"));
-                schedules.Add((2, "CS202", "Đã xếp", "2026-04-16", "Thursday", "10:00-12:00", 20, "Lab B-205"));
-                schedules.Add((3, "CS303", "Chờ xếp", "2026-04-17", "Friday", "13:00-15:00", 30, "---"));
-                schedules.Add((4, "CS404", "Đã xếp", "2026-04-18", "Saturday", "08:00-10:00", 35, "Lab C-102"));
+                schedules.Add((1, "CS101", "Đã xếp", "2026-04-16", "Thứ Năm", "08:00-10:00", 25, "Lab A-301"));
+                schedules.Add((2, "CS202", "Đã xếp", "2026-04-16", "Thứ Năm", "10:00-12:00", 20, "Lab B-205"));
+                schedules.Add((3, "CS303", "Chờ xếp", "2026-04-17", "Thứ Sáu", "13:00-15:00", 30, "---"));
+                schedules.Add((4, "CS404", "Đã xếp", "2026-04-18", "Thứ Bảy", "08:00-10:00", 35, "Lab C-102"));
             }
 
             // === Summary cards: Tổng lịch | Đã xếp | Chờ xếp | Đã hủy ===
@@ -107,10 +107,10 @@ namespace src.Views
         /// </summary>
         private Guna.UI2.WinForms.Guna2Panel MakeSummaryCard(string title, string value, Color valueColor)
         {
-            var card = new Guna.UI2.WinForms.Guna2Panel 
-            { 
-                Size = new Size(160, 75), 
-                Margin = new Padding(6), 
+            var card = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(160, 75),
+                Margin = new Padding(6),
                 BackColor = Color.Transparent,
                 FillColor = Color.White,
                 BorderRadius = 10,
@@ -120,7 +120,7 @@ namespace src.Views
 
             var lblTitle = new Label { Text = title, Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(14, 10), AutoSize = true, BackColor = Color.Transparent };
             var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 22F, FontStyle.Bold), ForeColor = valueColor, Location = new Point(12, 30), AutoSize = true, BackColor = Color.Transparent };
-            
+
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);
             return card;
@@ -149,8 +149,10 @@ namespace src.Views
 
             var iconLabel = new Label
             {
-                Text = "📅", Font = new Font("Segoe UI", 16F),
-                Location = new Point(16, 18), Size = new Size(44, 44),
+                Text = "📅",
+                Font = new Font("Segoe UI", 16F),
+                Location = new Point(16, 18),
+                Size = new Size(44, 44),
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.FromArgb(30, ThemeColors.PrimaryBlue),
                 ForeColor = ThemeColors.PrimaryBlue
@@ -159,20 +161,27 @@ namespace src.Views
 
             var titleLabel = new Label
             {
-                Text = className, Font = new Font("Segoe UI", 13F, FontStyle.Bold),
-                Location = new Point(72, 14), AutoSize = true,
+                Text = className,
+                Font = new Font("Segoe UI", 13F, FontStyle.Bold),
+                Location = new Point(72, 14),
+                AutoSize = true,
                 ForeColor = ThemeColors.TextPrimary
             };
             card.Controls.Add(titleLabel);
 
             var badgeTextLabel = new Label
             {
-                Text = status, Font = new Font("Segoe UI", 8F, FontStyle.Bold),
-                ForeColor = badgeFg, AutoSize = true, Location = new Point(5, 2), BackColor = Color.Transparent
+                Text = status,
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                ForeColor = badgeFg,
+                AutoSize = true,
+                Location = new Point(5, 2),
+                BackColor = Color.Transparent
             };
             var badge = new Guna.UI2.WinForms.Guna2Panel
             {
-                FillColor = badgeBg, BorderRadius = 6,
+                FillColor = badgeBg,
+                BorderRadius = 6,
                 Location = new Point(72 + titleLabel.PreferredWidth + 10, 18),
                 Size = new Size(badgeTextLabel.PreferredWidth + 10, badgeTextLabel.PreferredHeight + 4)
             };
@@ -188,10 +197,16 @@ namespace src.Views
             // Nút Edit bằng Guna2Button
             var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "✏", Size = new Size(34, 30), Location = new Point(card.Width - 175, 16),
-                FillColor = Color.White, ForeColor = ThemeColors.TextSecondary,
-                Font = new Font("Segoe UI", 11F), Cursor = Cursors.Hand,
-                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)
+                Text = "✏",
+                Size = new Size(34, 30),
+                Location = new Point(card.Width - 175, 16),
+                FillColor = Color.White,
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 11F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240)
             };
             btnEdit.Click += (s, ev) => ShowEditDialog(id);
             card.Controls.Add(btnEdit);
@@ -199,10 +214,16 @@ namespace src.Views
             // Nút Cancel bằng Guna2Button
             var btnCancel = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "Hủy lịch", Size = new Size(80, 30), Location = new Point(card.Width - 145, 16),
-                FillColor = Color.White, ForeColor = ThemeColors.TextSecondary,
-                Font = new Font("Segoe UI", 9F), Cursor = Cursors.Hand,
-                BorderRadius = 6, BorderThickness = 1, BorderColor = Color.FromArgb(226, 232, 240)
+                Text = "Hủy lịch",
+                Size = new Size(80, 30),
+                Location = new Point(card.Width - 145, 16),
+                FillColor = Color.White,
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240)
             };
             btnCancel.Click += (s, ev) => CancelSchedule(id);
             card.Controls.Add(btnCancel);
@@ -223,25 +244,25 @@ namespace src.Views
                 {
                     try
                     {
-                        var dtpDate    = FindControl<DateTimePicker>(dlg, "dtpDate");
-                        var cboLop     = FindControl<ComboBox>(dlg, "cboLop");
-                        var cboMon     = FindControl<ComboBox>(dlg, "cboMon");
-                        var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
-                        var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
-                        var numSV      = FindControl<NumericUpDown>(dlg, "numSV");
-                        var cboRam     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        var dtpDate = FindControl<DateTimePicker>(dlg, "dtpDate");
+                        var cboLop = FindControl<ComboBox>(dlg, "cboLop");
+                        var cboMon = FindControl<ComboBox>(dlg, "cboMon");
+                        var cboCa = FindControl<ComboBox>(dlg, "cboCa");
+                        var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
+                        var numSV = FindControl<NumericUpDown>(dlg, "numSV");
+                        var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                         var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                         var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
-                        DateTime date  = dtpDate.Value;
-                        int soSV       = (int)numSV.Value;
-                        int reqRam     = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
+                        DateTime date = dtpDate.Value;
+                        int soSV = (int)numSV.Value;
+                        int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                         int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                         int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
-                        int? roomId    = GetRoomId(cboRoom.SelectedItem);
+                        int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                         _scheduleService.ValidateAndCreateSchedule(
-                            date, cboLop.Text.Trim(), cboMon.Text.Trim(), 
+                            date, cboLop.Text.Trim(), cboMon.Text.Trim(),
                             (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                         );
 
@@ -280,8 +301,8 @@ namespace src.Views
                     // ── Load dữ liệu cũ vào form ─────────────────────────────
                     dlg.Shown += (s, ev) =>
                     {
-                        FindControl<DateTimePicker>(dlg, "dtpDate").Value  = sch.NgayThucHanh;
-                        FindControl<NumericUpDown>(dlg, "numSV").Value     = sch.SoLuongSinhVien;
+                        FindControl<DateTimePicker>(dlg, "dtpDate").Value = sch.NgayThucHanh;
+                        FindControl<NumericUpDown>(dlg, "numSV").Value = sch.SoLuongSinhVien;
 
                         var cboLopCtrl = FindControl<ComboBox>(dlg, "cboLop");
                         cboLopCtrl.Text = sch.TenLop;
@@ -292,13 +313,13 @@ namespace src.Views
                         var cboCaCtrl = FindControl<ComboBox>(dlg, "cboCa");
                         cboCaCtrl.SelectedValue = sch.MaCa;
 
-                        var cboRamCtrl     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                        var cboRamCtrl = FindControl<ComboBox>(dlg, "cboInputRAM");
                         var cboStorageCtrl = FindControl<ComboBox>(dlg, "cboInputStorage");
                         var cboMonitorCtrl = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
                         cboRamCtrl.SelectedItem = req.RAMToiThieu + " GB";
                         cboStorageCtrl.SelectedItem = req.LuuTruToiThieu + " GB";
-                        
+
                         // We need to fetch ManHinhToiThieu. Assuming req has it now.
                         // Wait, req might not have ManHinhToiThieu strongly typed if DTO isn't updated. 
                         // I will update DTO next. Let's assume it's `req.ManHinhToiThieu`.
@@ -309,7 +330,7 @@ namespace src.Views
                         {
                             var cboRoomCtrl = FindControl<ComboBox>(dlg, "cboRoom");
                             string currentRoomLabel = $"{room.TenPhong}  (sức chứa: {room.SucChua} | đang dùng)";
-                            
+
                             bool roomFound = false;
                             for (int i = 1; i < cboRoomCtrl.Items.Count; i++)
                             {
@@ -331,24 +352,24 @@ namespace src.Views
                     {
                         try
                         {
-                            DateTime date  = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
-                            var cboLop     = FindControl<ComboBox>(dlg, "cboLop");
-                            var cboMon     = FindControl<ComboBox>(dlg, "cboMon");
-                            var cboCa      = FindControl<ComboBox>(dlg, "cboCa");
-                            var cboRoom    = FindControl<ComboBox>(dlg, "cboRoom");
-                            var cboRam     = FindControl<ComboBox>(dlg, "cboInputRAM");
+                            DateTime date = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
+                            var cboLop = FindControl<ComboBox>(dlg, "cboLop");
+                            var cboMon = FindControl<ComboBox>(dlg, "cboMon");
+                            var cboCa = FindControl<ComboBox>(dlg, "cboCa");
+                            var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
+                            var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                             var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                             var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
 
-                            int soSV       = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
-                            int reqRam     = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
+                            int soSV = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
+                            int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                             int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                             int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
 
                             int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                             _scheduleService.ValidateAndUpdateSchedule(
-                                scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(), 
+                                scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(),
                                 (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
                             );
 
@@ -425,9 +446,14 @@ namespace src.Views
         {
             var dlg = new Form
             {
-                Text = title, Size = new Size(460, 640), StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false,
-                BackColor = Color.White, Font = new Font("Segoe UI", 10F)
+                Text = title,
+                Size = new Size(460, 640),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 10F)
             };
 
             int y = 20;
@@ -436,7 +462,9 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Ngày TH:", Location = new Point(20, y + 3), AutoSize = true });
             var dtpDate = new DateTimePicker
             {
-                Name = "dtpDate", Location = new Point(140, y), Size = new Size(290, 26),
+                Name = "dtpDate",
+                Location = new Point(140, y),
+                Size = new Size(290, 26),
                 Format = DateTimePickerFormat.Short
             };
             dlg.Controls.Add(dtpDate);
@@ -446,11 +474,14 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Lớp:", Location = new Point(20, y + 3), AutoSize = true });
             var cboLop = new ComboBox
             {
-                Name = "cboLop", Location = new Point(140, y), Size = new Size(290, 26),
+                Name = "cboLop",
+                Location = new Point(140, y),
+                Size = new Size(290, 26),
                 DropDownStyle = ComboBoxStyle.DropDown,
                 AutoCompleteMode = AutoCompleteMode.SuggestAppend,
                 AutoCompleteSource = AutoCompleteSource.ListItems,
-                IntegralHeight = false, MaxDropDownItems = 5
+                IntegralHeight = false,
+                MaxDropDownItems = 5
             };
             try
             {
@@ -465,11 +496,14 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Môn học:", Location = new Point(20, y + 3), AutoSize = true });
             var cboMon = new ComboBox
             {
-                Name = "cboMon", Location = new Point(140, y), Size = new Size(290, 26),
+                Name = "cboMon",
+                Location = new Point(140, y),
+                Size = new Size(290, 26),
                 DropDownStyle = ComboBoxStyle.DropDown,
                 AutoCompleteMode = AutoCompleteMode.SuggestAppend,
                 AutoCompleteSource = AutoCompleteSource.ListItems,
-                IntegralHeight = false, MaxDropDownItems = 5
+                IntegralHeight = false,
+                MaxDropDownItems = 5
             };
             try
             {
@@ -484,9 +518,12 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Ca học:", Location = new Point(20, y + 3), AutoSize = true });
             var cboCa = new ComboBox
             {
-                Name = "cboCa", Location = new Point(140, y), Size = new Size(290, 26),
+                Name = "cboCa",
+                Location = new Point(140, y),
+                Size = new Size(290, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                IntegralHeight = false, MaxDropDownItems = 5
+                IntegralHeight = false,
+                MaxDropDownItems = 5
             };
             try
             {
@@ -501,8 +538,12 @@ namespace src.Views
             dlg.Controls.Add(new Label { Text = "Số SV:", Location = new Point(20, y + 3), AutoSize = true });
             var numSV = new NumericUpDown
             {
-                Name = "numSV", Value = 30, Minimum = 1, Maximum = 200,
-                Location = new Point(140, y), Size = new Size(120, 26)
+                Name = "numSV",
+                Value = 30,
+                Minimum = 1,
+                Maximum = 200,
+                Location = new Point(140, y),
+                Size = new Size(120, 26)
             };
             dlg.Controls.Add(numSV);
             y += 40;
@@ -534,23 +575,30 @@ namespace src.Views
             // ── Gợi ý phòng tự động ─────────────────────────────────────────
             var pnlRoom = new Panel
             {
-                Location = new Point(14, y), Size = new Size(420, 90),
+                Location = new Point(14, y),
+                Size = new Size(420, 90),
                 BackColor = Color.FromArgb(241, 249, 255),
                 BorderStyle = BorderStyle.FixedSingle
             };
 
             pnlRoom.Controls.Add(new Label
             {
-                Text = "🏢  Gợi ý phòng tự động:", Location = new Point(8, 8), AutoSize = true,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = ThemeColors.PrimaryBlue
+                Text = "🏢  Gợi ý phòng tự động:",
+                Location = new Point(8, 8),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = ThemeColors.PrimaryBlue
             });
 
             var cboRoom = new ComboBox
             {
-                Name = "cboRoom", Location = new Point(8, 32), Size = new Size(280, 26),
+                Name = "cboRoom",
+                Location = new Point(8, 32),
+                Size = new Size(280, 26),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5F),
-                IntegralHeight = false, MaxDropDownItems = 5
+                IntegralHeight = false,
+                MaxDropDownItems = 5
             };
             cboRoom.Items.Add("-- Chưa phân công --");
             cboRoom.SelectedIndex = 0;
@@ -558,15 +606,21 @@ namespace src.Views
 
             var btnSuggest = new Button
             {
-                Text = "🔍 Gợi ý", Location = new Point(298, 31), Size = new Size(112, 28),
-                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Text = "🔍 Gợi ý",
+                Location = new Point(298, 31),
+                Size = new Size(112, 28),
+                BackColor = ThemeColors.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
             btnSuggest.FlatAppearance.BorderSize = 0;
             var lblSuggestNote = new Label
             {
-                Name = "lblSuggestNote", Location = new Point(8, 62), Size = new Size(400, 18),
+                Name = "lblSuggestNote",
+                Location = new Point(8, 62),
+                Size = new Size(400, 18),
                 Font = new Font("Segoe UI", 8F, FontStyle.Italic),
                 ForeColor = Color.FromArgb(80, 120, 160),
                 Text = "Nhấn 'Gợi ý' để tìm phòng trống theo ngày và ca đã chọn."
@@ -583,9 +637,9 @@ namespace src.Views
                 cboRoom.SelectedIndex = 0;
                 try
                 {
-                    object caId    = cboCa.SelectedValue;
+                    object caId = cboCa.SelectedValue;
                     DateTime selDate = dtpDate.Value.Date;
-                    int svCount    = (int)numSV.Value;
+                    int svCount = (int)numSV.Value;
 
                     var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                     var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
@@ -604,7 +658,7 @@ namespace src.Views
                     {
                         roomCount++;
                         int soMayTot = r.MayTot;
-                        int sucChua  = r.SucChua;
+                        int sucChua = r.SucChua;
                         string label = $"Phòng {r.TenPhong} thỏa mãn điều kiện";
                         if (soMayTot >= svCount)
                         {
@@ -664,20 +718,30 @@ namespace src.Views
             var btnSave = new Button
             {
                 Name = "btnSave",
-                Text = "💾  Lưu", Size = new Size(120, 38), Location = new Point(140, y),
-                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand, DialogResult = DialogResult.OK
+                Text = "💾  Lưu",
+                Size = new Size(120, 38),
+                Location = new Point(140, y),
+                BackColor = ThemeColors.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.OK
             };
             btnSave.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnSave);
 
             var btnCancel = new Button
             {
-                Text = "Hủy", Size = new Size(100, 38), Location = new Point(270, y),
-                BackColor = Color.FromArgb(241, 245, 249), ForeColor = ThemeColors.TextSecondary,
-                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10F),
-                Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel
+                Text = "Hủy",
+                Size = new Size(100, 38),
+                Location = new Point(270, y),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = ThemeColors.TextSecondary,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.Cancel
             };
             btnCancel.FlatAppearance.BorderSize = 0;
             dlg.Controls.Add(btnCancel);
@@ -699,6 +763,11 @@ namespace src.Views
         {
             if (item is RoomItem ri) return ri.Id;
             return null;
+        }
+
+        private void lblTitle_Click(object sender, EventArgs e)
+        {
+
         }
 
         private T FindControl<T>(Form form, string name) where T : Control
