@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -82,6 +82,7 @@ namespace src.Views
             };
 
             this.pnlGrid.Controls.Add(pnlPagination);
+            this.dgv.BringToFront();
         }
 
         private void SetupView()
