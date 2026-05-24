@@ -19,6 +19,10 @@ namespace src.Views
         {
             pnlHeader = new System.Windows.Forms.Panel();
             btnAdd = new System.Windows.Forms.Button();
+            dtpFromDate = new System.Windows.Forms.DateTimePicker();
+            lblTuNgay = new System.Windows.Forms.Label();
+            dtpToDate = new System.Windows.Forms.DateTimePicker();
+            lblDenNgay = new System.Windows.Forms.Label();
             lblSubtitle = new System.Windows.Forms.Label();
             lblTitle = new System.Windows.Forms.Label();
             pnlStats = new System.Windows.Forms.FlowLayoutPanel();
@@ -34,6 +38,10 @@ namespace src.Views
             // 
             pnlHeader.BackColor = System.Drawing.Color.Transparent;
             pnlHeader.Controls.Add(btnAdd);
+            pnlHeader.Controls.Add(dtpFromDate);
+            pnlHeader.Controls.Add(lblTuNgay);
+            pnlHeader.Controls.Add(dtpToDate);
+            pnlHeader.Controls.Add(lblDenNgay);
             pnlHeader.Controls.Add(lblSubtitle);
             pnlHeader.Controls.Add(lblTitle);
             pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
@@ -60,6 +68,50 @@ namespace src.Views
             btnAdd.Text = "+ Thêm Lịch";
             btnAdd.UseVisualStyleBackColor = false;
             // 
+            // dtpFromDate
+            // 
+            dtpFromDate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            dtpFromDate.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            dtpFromDate.Location = new System.Drawing.Point(589, 39);
+            dtpFromDate.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            dtpFromDate.Name = "dtpFromDate";
+            dtpFromDate.Size = new System.Drawing.Size(95, 29);
+            dtpFromDate.TabIndex = 3;
+            // 
+            // lblTuNgay
+            // 
+            lblTuNgay.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            lblTuNgay.AutoSize = true;
+            lblTuNgay.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblTuNgay.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            lblTuNgay.Location = new System.Drawing.Point(518, 46);
+            lblTuNgay.Name = "lblTuNgay";
+            lblTuNgay.Size = new System.Drawing.Size(65, 20);
+            lblTuNgay.TabIndex = 4;
+            lblTuNgay.Text = "Từ ngày:";
+            // 
+            // dtpToDate
+            // 
+            dtpToDate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            dtpToDate.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            dtpToDate.Location = new System.Drawing.Point(771, 40);
+            dtpToDate.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            dtpToDate.Name = "dtpToDate";
+            dtpToDate.Size = new System.Drawing.Size(100, 29);
+            dtpToDate.TabIndex = 5;
+            // 
+            // lblDenNgay
+            // 
+            lblDenNgay.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            lblDenNgay.AutoSize = true;
+            lblDenNgay.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblDenNgay.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            lblDenNgay.Location = new System.Drawing.Point(690, 46);
+            lblDenNgay.Name = "lblDenNgay";
+            lblDenNgay.Size = new System.Drawing.Size(75, 20);
+            lblDenNgay.TabIndex = 6;
+            lblDenNgay.Text = "Đến ngày:";
+            // 
             // lblSubtitle
             // 
             lblSubtitle.AutoSize = true;
@@ -67,7 +119,7 @@ namespace src.Views
             lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
             lblSubtitle.Location = new System.Drawing.Point(11, 73);
             lblSubtitle.Name = "lblSubtitle";
-            lblSubtitle.Size = new System.Drawing.Size(370, 23);
+            lblSubtitle.Size = new System.Drawing.Size(407, 23);
             lblSubtitle.TabIndex = 1;
             lblSubtitle.Text = "Quản lý lịch phân công và thời khóa biểu thực hành";
             // 
@@ -100,14 +152,12 @@ namespace src.Views
             pnlScheduleList.AutoScroll = true;
             pnlScheduleList.BackColor = System.Drawing.Color.Transparent;
             pnlScheduleList.Dock = System.Windows.Forms.DockStyle.Fill;
-            pnlScheduleList.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             pnlScheduleList.Location = new System.Drawing.Point(23, 307);
             pnlScheduleList.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             pnlScheduleList.Name = "pnlScheduleList";
             pnlScheduleList.Padding = new System.Windows.Forms.Padding(2, 3, 2, 3);
             pnlScheduleList.Size = new System.Drawing.Size(1097, 547);
             pnlScheduleList.TabIndex = 3;
-            pnlScheduleList.WrapContents = true;
             // 
             // lblListTitle
             // 
@@ -116,7 +166,7 @@ namespace src.Views
             lblListTitle.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
             lblListTitle.Location = new System.Drawing.Point(7, 5);
             lblListTitle.Name = "lblListTitle";
-            lblListTitle.Size = new System.Drawing.Size(169, 30);
+            lblListTitle.Size = new System.Drawing.Size(288, 30);
             lblListTitle.TabIndex = 0;
             lblListTitle.Text = "Tất Cả Các Lịch Thực Hành";
             // 
@@ -127,7 +177,7 @@ namespace src.Views
             lblListSub.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
             lblListSub.Location = new System.Drawing.Point(9, 40);
             lblListSub.Name = "lblListSub";
-            lblListSub.Size = new System.Drawing.Size(253, 20);
+            lblListSub.Size = new System.Drawing.Size(276, 20);
             lblListSub.TabIndex = 1;
             lblListSub.Text = "Xem và quản lý danh sách lịch thực hành";
             // 
@@ -172,9 +222,12 @@ namespace src.Views
         public System.Windows.Forms.Button btnAdd;
         public System.Windows.Forms.FlowLayoutPanel pnlStats;
         public System.Windows.Forms.Panel pnlListHeader;
-        public System.Windows.Forms.Label lblListTitle;
-        public System.Windows.Forms.Label lblListSub;
+        private System.Windows.Forms.Label lblListTitle;
+        private System.Windows.Forms.Label lblListSub;
+        public System.Windows.Forms.DateTimePicker dtpFromDate;
+        public System.Windows.Forms.Label lblTuNgay;
+        public System.Windows.Forms.DateTimePicker dtpToDate;
+        public System.Windows.Forms.Label lblDenNgay;
         public System.Windows.Forms.FlowLayoutPanel pnlScheduleList;
     }
 }
-

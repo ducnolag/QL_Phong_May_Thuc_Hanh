@@ -150,6 +150,43 @@ namespace src.Helpers
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Tốt')");
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Hỏng')");
                 }
+
+                // Add CreatedAt and UpdatedAt to PHONG_MAY if not exists
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'PHONG_MAY') AND name = 'CreatedAt')
+                    BEGIN
+                        ALTER TABLE PHONG_MAY ADD CreatedAt DATETIME DEFAULT GETDATE();
+                        ALTER TABLE PHONG_MAY ADD UpdatedAt DATETIME DEFAULT GETDATE();
+                        EXEC('UPDATE PHONG_MAY SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
+                    END
+                ");
+
+                // Add CreatedAt and UpdatedAt to MAY_TINH if not exists
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'MAY_TINH') AND name = 'CreatedAt')
+                    BEGIN
+                        ALTER TABLE MAY_TINH ADD CreatedAt DATETIME DEFAULT GETDATE();
+                        ALTER TABLE MAY_TINH ADD UpdatedAt DATETIME DEFAULT GETDATE();
+                        EXEC('UPDATE MAY_TINH SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
+                    END
+                ");
+
+                // Add CreatedAt and UpdatedAt to NGUOI_DUNG if not exists
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'NGUOI_DUNG') AND name = 'CreatedAt')
+                    BEGIN
+                        ALTER TABLE NGUOI_DUNG ADD CreatedAt DATETIME DEFAULT GETDATE();
+                        ALTER TABLE NGUOI_DUNG ADD UpdatedAt DATETIME DEFAULT GETDATE();
+                        EXEC('UPDATE NGUOI_DUNG SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
+                    END
+                ");
+
+                // Fix: Backdate initial seed data to 2026-05-01 so historical reports don't show 0
+                ExecuteNonQuery(@"
+                    UPDATE PHONG_MAY SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
+                    UPDATE MAY_TINH SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
+                    UPDATE NGUOI_DUNG SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
+                ");
             }
             catch (Exception ex)
             {

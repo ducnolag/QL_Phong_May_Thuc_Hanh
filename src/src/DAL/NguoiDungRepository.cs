@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
 using Dapper;
 using src.DTO;
@@ -68,7 +68,7 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                string sql = "UPDATE NGUOI_DUNG SET HoTen=@HoTen, Email=@Email, TrangThai=@TrangThai, MaVaiTro=@MaVaiTro";
+                string sql = "UPDATE NGUOI_DUNG SET HoTen=@HoTen, Email=@Email, TrangThai=@TrangThai, MaVaiTro=@MaVaiTro, UpdatedAt=GETDATE()";
                 if (updatePassword)
                 {
                     sql += ", MatKhauDaMaHoa=@MatKhauDaMaHoa, SoDienThoai=@SoDienThoai";

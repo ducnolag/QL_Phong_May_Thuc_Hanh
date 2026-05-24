@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using src.DAL;
@@ -15,14 +15,14 @@ namespace src.BLL
             _repository = new LichThucHanhRepository();
         }
 
-        public (int total, int assigned, int pending, int canceled) GetStatistics()
+        public (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start = null, DateTime? end = null)
         {
-            return _repository.GetStatistics();
+            return _repository.GetStatistics(start, end);
         }
 
-        public IEnumerable<LichThucHanhDTO> GetActiveSchedules()
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start = null, DateTime? end = null)
         {
-            return _repository.GetActiveSchedules();
+            return _repository.GetActiveSchedules(start, end);
         }
 
         public LichThucHanhDTO GetScheduleById(int id)
@@ -53,6 +53,13 @@ namespace src.BLL
         public void ValidateAndCreateSchedule(DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, int? roomId, int creatorId)
         {
             if (date.Date < DateTime.Today) throw new Exception("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.");
+            
+            var ca = _repository.GetAllCaHoc().FirstOrDefault(c => c.MaCa == caId);
+            if (date.Date == DateTime.Today && ca != null && DateTime.Now.TimeOfDay > ca.GioKetThuc)
+            {
+                throw new Exception("Ca học này đã kết thúc trong ngày hôm nay. Không thể thêm lịch!");
+            }
+
             if (string.IsNullOrWhiteSpace(lopName) || string.IsNullOrWhiteSpace(monName)) throw new Exception("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!");
 
             int lopId = _repository.GetLopIdByName(lopName);
@@ -95,6 +102,13 @@ namespace src.BLL
         public void ValidateAndUpdateSchedule(int scheduleId, DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, int? roomId, int updaterId)
         {
             if (date.Date < DateTime.Today) throw new Exception("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.");
+
+            var ca = _repository.GetAllCaHoc().FirstOrDefault(c => c.MaCa == caId);
+            if (date.Date == DateTime.Today && ca != null && DateTime.Now.TimeOfDay > ca.GioKetThuc)
+            {
+                throw new Exception("Ca học này đã kết thúc trong ngày hôm nay. Không thể cập nhật lịch vào ca này!");
+            }
+
             if (string.IsNullOrWhiteSpace(lopName) || string.IsNullOrWhiteSpace(monName)) throw new Exception("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!");
 
             int lopId = _repository.GetLopIdByName(lopName);
@@ -137,13 +151,30 @@ namespace src.BLL
 
         public void CancelSchedule(int id)
         {
+            var sch = _repository.GetScheduleById(id);
+            if (sch != null)
+            {
+                var ca = _repository.GetAllCaHoc().FirstOrDefault(c => c.MaCa == sch.MaCa);
+                if (sch.NgayThucHanh.Date == DateTime.Today && ca != null && DateTime.Now.TimeOfDay > ca.GioKetThuc)
+                {
+                    throw new Exception("Ca học này đã kết thúc trong ngày hôm nay. Không thể hủy lịch!");
+                }
+            }
             _repository.CancelSchedule(id);
         }
 
-        public void DeleteSchedule(int id)
+        public void DeleteSchedule(int scheduleId)
         {
-            _repository.DeleteSchedule(id);
+            var sch = _repository.GetScheduleById(scheduleId);
+            if (sch != null)
+            {
+                var ca = _repository.GetAllCaHoc().FirstOrDefault(c => c.MaCa == sch.MaCa);
+                if (sch.NgayThucHanh.Date == DateTime.Today && ca != null && DateTime.Now.TimeOfDay > ca.GioKetThuc)
+                {
+                    throw new Exception("Ca học này đã kết thúc trong ngày hôm nay. Không thể xóa lịch!");
+                }
+            }
+            _repository.DeleteSchedule(scheduleId);
         }
     }
 }
-

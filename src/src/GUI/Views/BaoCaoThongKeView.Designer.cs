@@ -1,4 +1,4 @@
-﻿namespace src.Views
+namespace src.Views
 {
     partial class BaoCaoThongKeView
     {
@@ -19,10 +19,10 @@
         {
             pnlHeader = new System.Windows.Forms.Panel();
             btnRefresh = new System.Windows.Forms.Button();
-            cboNam = new System.Windows.Forms.ComboBox();
-            lblNam = new System.Windows.Forms.Label();
-            cboThang = new System.Windows.Forms.ComboBox();
-            lblThang = new System.Windows.Forms.Label();
+            dtpToDate = new System.Windows.Forms.DateTimePicker();
+            lblDenNgay = new System.Windows.Forms.Label();
+            dtpFromDate = new System.Windows.Forms.DateTimePicker();
+            lblTuNgay = new System.Windows.Forms.Label();
             lblDesc = new System.Windows.Forms.Label();
             lblTitle = new System.Windows.Forms.Label();
             pnlScroll = new System.Windows.Forms.Panel();
@@ -35,10 +35,10 @@
             // 
             pnlHeader.BackColor = System.Drawing.Color.Transparent;
             pnlHeader.Controls.Add(btnRefresh);
-            pnlHeader.Controls.Add(cboNam);
-            pnlHeader.Controls.Add(lblNam);
-            pnlHeader.Controls.Add(cboThang);
-            pnlHeader.Controls.Add(lblThang);
+            pnlHeader.Controls.Add(dtpToDate);
+            pnlHeader.Controls.Add(lblDenNgay);
+            pnlHeader.Controls.Add(dtpFromDate);
+            pnlHeader.Controls.Add(lblTuNgay);
             pnlHeader.Controls.Add(lblDesc);
             pnlHeader.Controls.Add(lblTitle);
             pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
@@ -64,47 +64,45 @@
             btnRefresh.Text = "🔄 Làm mới";
             btnRefresh.UseVisualStyleBackColor = false;
             // 
-            // cboNam
+            // dtpToDate
             // 
-            cboNam.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cboNam.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            cboNam.Location = new System.Drawing.Point(891, 23);
-            cboNam.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            cboNam.Name = "cboNam";
-            cboNam.Size = new System.Drawing.Size(102, 29);
-            cboNam.TabIndex = 1;
+            dtpToDate.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            dtpToDate.Location = new System.Drawing.Point(891, 23);
+            dtpToDate.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            dtpToDate.Name = "dtpToDate";
+            dtpToDate.Size = new System.Drawing.Size(102, 29);
+            dtpToDate.TabIndex = 1;
             // 
-            // lblNam
+            // lblDenNgay
             // 
-            lblNam.AutoSize = true;
-            lblNam.Font = new System.Drawing.Font("Segoe UI", 9F);
-            lblNam.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            lblNam.Location = new System.Drawing.Point(846, 28);
-            lblNam.Name = "lblNam";
-            lblNam.Size = new System.Drawing.Size(44, 20);
-            lblNam.TabIndex = 2;
-            lblNam.Text = "Năm:";
+            lblDenNgay.AutoSize = true;
+            lblDenNgay.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblDenNgay.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            lblDenNgay.Location = new System.Drawing.Point(810, 27);
+            lblDenNgay.Name = "lblDenNgay";
+            lblDenNgay.Size = new System.Drawing.Size(75, 20);
+            lblDenNgay.TabIndex = 2;
+            lblDenNgay.Text = "Đến ngày:";
             // 
-            // cboThang
+            // dtpFromDate
             // 
-            cboThang.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cboThang.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            cboThang.Location = new System.Drawing.Point(714, 23);
-            cboThang.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            cboThang.Name = "cboThang";
-            cboThang.Size = new System.Drawing.Size(114, 29);
-            cboThang.TabIndex = 3;
+            dtpFromDate.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            dtpFromDate.Location = new System.Drawing.Point(686, 23);
+            dtpFromDate.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            dtpFromDate.Name = "dtpFromDate";
+            dtpFromDate.Size = new System.Drawing.Size(114, 29);
+            dtpFromDate.TabIndex = 3;
             // 
-            // lblThang
+            // lblTuNgay
             // 
-            lblThang.AutoSize = true;
-            lblThang.Font = new System.Drawing.Font("Segoe UI", 9F);
-            lblThang.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            lblThang.Location = new System.Drawing.Point(663, 28);
-            lblThang.Name = "lblThang";
-            lblThang.Size = new System.Drawing.Size(53, 20);
-            lblThang.TabIndex = 4;
-            lblThang.Text = "Tháng:";
+            lblTuNgay.AutoSize = true;
+            lblTuNgay.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblTuNgay.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            lblTuNgay.Location = new System.Drawing.Point(615, 27);
+            lblTuNgay.Name = "lblTuNgay";
+            lblTuNgay.Size = new System.Drawing.Size(65, 20);
+            lblTuNgay.TabIndex = 4;
+            lblTuNgay.Text = "Từ ngày:";
             // 
             // lblDesc
             // 
@@ -173,10 +171,10 @@
         public System.Windows.Forms.Panel pnlHeader;
         public System.Windows.Forms.Label lblTitle;
         public System.Windows.Forms.Label lblDesc;
-        public System.Windows.Forms.Label lblThang;
-        public System.Windows.Forms.ComboBox cboThang;
-        public System.Windows.Forms.Label lblNam;
-        public System.Windows.Forms.ComboBox cboNam;
+        public System.Windows.Forms.Label lblTuNgay;
+        public System.Windows.Forms.DateTimePicker dtpFromDate;
+        public System.Windows.Forms.Label lblDenNgay;
+        public System.Windows.Forms.DateTimePicker dtpToDate;
         public System.Windows.Forms.Button btnRefresh;
         public System.Windows.Forms.Panel pnlScroll;
         public System.Windows.Forms.Panel pnlBody;

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Dapper;
@@ -23,7 +23,7 @@ namespace src.DAL
                 string sql = @"
                     SELECT p.MaPhong, p.TenPhong, p.ViTri, p.SucChua, p.MaTTPhong,
                            t.TenTrangThaiPhong,
-                           (SELECT COUNT(*) FROM MAY_TINH m WHERE m.MaPhong = p.MaPhong) AS SoMay
+                           (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY ttm ON m.MaTTMay = ttm.MaTTMay WHERE m.MaPhong = p.MaPhong AND (ttm.TenTrangThaiMay = N'Tốt' OR m.MaTTMay = 1)) AS SoMay
                     FROM PHONG_MAY p
                     JOIN TRANG_THAI_PHONG t ON p.MaTTPhong = t.MaTTPhong
                     ORDER BY p.TenPhong";
@@ -55,10 +55,15 @@ namespace src.DAL
                 {
                     try
                     {
-                        // 1. Delete associated computers first (FK constraint)
+                        // 1. Delete associated records referencing the room
+                        db.Execute("DELETE FROM PHAN_CONG_PHONG WHERE MaPhong = @roomId", new { roomId }, transaction);
+                        db.Execute("DELETE FROM CAP_NHAT_PHONG WHERE MaPhong = @roomId", new { roomId }, transaction);
+                        
+                        // 2. Delete computers in the room
+                        db.Execute("DELETE FROM CAP_NHAT_MAY WHERE MaMay IN (SELECT MaMay FROM MAY_TINH WHERE MaPhong = @roomId)", new { roomId }, transaction);
                         db.Execute("DELETE FROM MAY_TINH WHERE MaPhong = @roomId", new { roomId }, transaction);
 
-                        // 2. Delete the room
+                        // 3. Delete the room
                         db.Execute("DELETE FROM PHONG_MAY WHERE MaPhong = @roomId", new { roomId }, transaction);
 
                         // If both succeed, commit the transaction

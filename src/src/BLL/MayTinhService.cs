@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
 
@@ -44,6 +44,13 @@ namespace src.BLL
 
         public (bool IsSuccess, string Message) DeleteComputer(int maMay)
         {
+            var computers = _MayTinhRepository.GetAllComputers();
+            var computer = computers.Find(c => c.MaMay == maMay);
+            if (computer != null && _MayTinhRepository.IsRoomInUseNow(computer.MaPhong))
+            {
+                return (false, "Phòng máy này đang có ca học, không thể xóa máy tính ngay lúc này!");
+            }
+
             bool success = _MayTinhRepository.DeleteComputer(maMay);
             if (success)
                 return (true, "Đã xóa máy tính thành công!");

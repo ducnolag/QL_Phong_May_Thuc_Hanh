@@ -31,6 +31,8 @@ namespace src.Views
         private Panel _pnlCards, _pnlChartRooms, _pnlChartMay, _pnlMayTable, _pnlLichTable;
         private readonly IBaoCaoThongKeService _service;
 
+        // variables
+
         public BaoCaoThongKeView()
         {
             InitializeComponent();
@@ -39,22 +41,28 @@ namespace src.Views
             BackColor      = Color.FromArgb(245, 247, 250);
             Dock           = DockStyle.Fill;
 
-            // Set year combo box items
-            int y = DateTime.Now.Year;
-            for (int i = y - 2; i <= y + 1; i++) cboNam.Items.Add(i.ToString());
-            cboNam.SelectedItem = y.ToString();
-
-            cboThang.Items.AddRange(new[] { "Tất cả tháng", "T.1","T.2","T.3","T.4","T.5","T.6","T.7","T.8","T.9","T.10","T.11","T.12" });
-            cboThang.SelectedIndex = 0;
+            BuildDynamicLayout();
+            InitFilters();
 
             btnRefresh.Click += (s, e) => Reload();
 
-            // Khi scroll resize → cập nhật width của body và tất cả children
             pnlScroll.Resize += (s, e) => RelayoutBody(pnlScroll, pnlBody);
             this.Load += (s, e) => RelayoutBody(pnlScroll, pnlBody);
 
-            BuildDynamicLayout();
             Reload();
+        }
+
+        private void InitFilters()
+        {
+            dtpFromDate.Format = DateTimePickerFormat.Short;
+            dtpToDate.Format = DateTimePickerFormat.Short;
+            
+            // Mặc định chọn đầu tháng đến cuối tháng
+            dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+
+            dtpFromDate.ValueChanged += (s, e) => Reload();
+            dtpToDate.ValueChanged += (s, e) => Reload();
         }
 
         // ────────────────────────────────────────────────────────────────────
@@ -139,14 +147,20 @@ namespace src.Views
             RenderLichTable();
         }
 
+        private void GetDateRange(out DateTime? startDate, out DateTime? endDate)
+        {
+            startDate = dtpFromDate.Value.Date;
+            endDate = dtpToDate.Value.Date;
+        }
+
         private void LoadStats()
         {
-            int th = cboThang.SelectedIndex > 0 ? cboThang.SelectedIndex : 0;
-            int nm = cboNam.SelectedIndex > 0 ? int.Parse(cboNam.SelectedItem.ToString()) : 0;
+            DateTime? startDate, endDate;
+            GetDateRange(out startDate, out endDate);
 
             try
             {
-                var dto = _service.GetThongKeTongQuan(th, nm);
+                var dto = _service.GetThongKeTongQuan(startDate, endDate);
                 
                 _totalRooms  = dto.TotalRooms;
                 _activeRooms = dto.ActiveRooms;
@@ -201,7 +215,7 @@ namespace src.Views
             });
             _pnlChartRooms.Controls.Add(new Label
             {
-                Text = $"Cập nhật: {DateTime.Now:dd/MM/yyyy}", AutoSize = true,
+                Text = $"Trạng thái hiện tại", AutoSize = true,
                 Font = new Font("Segoe UI", 8.5F), ForeColor = ThemeColors.TextSecondary,
                 Location = new Point(16, 32)
             });
@@ -292,14 +306,12 @@ namespace src.Views
             _pnlMayTable.Controls.Add(dgv);
         }
 
-        // ── Bảng lịch thực hành ──────────────────────────────────────────────
         private void RenderLichTable()
         {
 
             _pnlLichTable.Controls.Clear();
 
-            string period = cboThang?.SelectedIndex > 0 || (cboNam?.SelectedItem?.ToString() != "Tất cả năm")
-                ? $" ({cboThang?.SelectedItem} {cboNam?.SelectedItem})".Trim() : "";
+            string period = $" ({dtpFromDate.Value:dd/MM/yyyy} - {dtpToDate.Value:dd/MM/yyyy})";
 
             _pnlLichTable.Controls.Add(new Label
             {
@@ -331,14 +343,10 @@ namespace src.Views
 
             try
             {
-                int th = cboThang?.SelectedIndex > 0 ? cboThang.SelectedIndex : 0;
-                int nm = 0;
-                if (cboNam?.SelectedItem?.ToString() != "Tất cả năm" && cboNam?.SelectedItem != null)
-                {
-                    int.TryParse(cboNam.SelectedItem.ToString(), out nm);
-                }
+                DateTime? startDate, endDate;
+                GetDateRange(out startDate, out endDate);
 
-                var list = _service.GetThongKeLich(th, nm);
+                var list = _service.GetThongKeLich(startDate, endDate);
 
                 foreach (var item in list)
                 {

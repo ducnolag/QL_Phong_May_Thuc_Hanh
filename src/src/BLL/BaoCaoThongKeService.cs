@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -6,9 +7,9 @@ namespace src.BLL
 {
     public interface IBaoCaoThongKeService
     {
-        ThongKeTongQuanDTO GetThongKeTongQuan(int thang, int nam);
+        ThongKeTongQuanDTO GetThongKeTongQuan(DateTime? startDate, DateTime? endDate);
         List<ThongKeMayTheoPhongDTO> GetThongKeMayTheoPhong();
-        List<ThongKeLichDTO> GetThongKeLich(int thang, int nam);
+        List<ThongKeLichDTO> GetThongKeLich(DateTime? startDate, DateTime? endDate);
     }
 
     public class BaoCaoThongKeService : IBaoCaoThongKeService
@@ -20,9 +21,9 @@ namespace src.BLL
             _repo = new BaoCaoThongKeRepository();
         }
 
-        public ThongKeTongQuanDTO GetThongKeTongQuan(int thang, int nam)
+        public ThongKeTongQuanDTO GetThongKeTongQuan(DateTime? startDate, DateTime? endDate)
         {
-            return _repo.GetThongKeTongQuan(thang, nam);
+            return _repo.GetThongKeTongQuan(startDate, endDate);
         }
 
         public List<ThongKeMayTheoPhongDTO> GetThongKeMayTheoPhong()
@@ -30,9 +31,9 @@ namespace src.BLL
             return _repo.GetThongKeMayTheoPhong();
         }
 
-        public List<ThongKeLichDTO> GetThongKeLich(int thang, int nam)
+        public List<ThongKeLichDTO> GetThongKeLich(DateTime? startDate, DateTime? endDate)
         {
-            return _repo.GetThongKeLich(thang, nam);
+            return _repo.GetThongKeLich(startDate, endDate);
         }
     }
 }

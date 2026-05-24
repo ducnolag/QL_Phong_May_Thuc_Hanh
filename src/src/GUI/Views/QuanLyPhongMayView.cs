@@ -255,8 +255,8 @@ namespace src.Views
                 TextRenderer.DrawText(g, $"{capacity} máy", new Font("Segoe UI", 9F, FontStyle.Bold),
                     new Point(card.Width / 2, infoY), ThemeColors.TextPrimary);
 
-                TextRenderer.DrawText(g, "Đã cài đặt", new Font("Segoe UI", 9F),
-                    new Point(16, infoY + 26), ThemeColors.TextSecondary);
+                TextRenderer.DrawText(g, "Số máy sẵn sàng", new Font("Segoe UI", 9F),
+                    new Rectangle(16, infoY + 26, 150, 20), ThemeColors.TextSecondary, TextFormatFlags.Left);
                 TextRenderer.DrawText(g, $"💻 {computers}", new Font("Segoe UI", 9F, FontStyle.Bold),
                     new Point(card.Width / 2, infoY + 26), ThemeColors.TextPrimary);
 
@@ -425,7 +425,7 @@ namespace src.Views
                             new SqlParameter("@s", status));
 
                         DatabaseHelper.ExecuteNonQuery(
-                            @"UPDATE PHONG_MAY SET TenPhong=@name, ViTri=@loc, SucChua=@cap, MaTTPhong=@status
+                            @"UPDATE PHONG_MAY SET TenPhong=@name, ViTri=@loc, SucChua=@cap, MaTTPhong=@status, UpdatedAt=GETDATE()
                               WHERE MaPhong=@id",
                             new SqlParameter("@name", name),
                             new SqlParameter("@loc", location),
