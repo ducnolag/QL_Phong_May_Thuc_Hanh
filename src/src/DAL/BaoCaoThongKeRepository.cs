@@ -23,24 +23,37 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 string dtCond = "";
-                string dtCond2 = "";
                 if (startDate.HasValue && endDate.HasValue)
                 {
                     dtCond = " AND l.NgayThucHanh >= @startDate AND l.NgayThucHanh <= @endDate ";
-                    dtCond2 = " AND CreatedAt <= @endDate ";
                 }
+                
+                // Ensure today's snapshot is up to date before querying
+                db.Execute(@"
+                    DECLARE @Today DATE = CAST(GETDATE() AS DATE);
+                    DELETE FROM CHOT_SO_LIEU WHERE NgayChot = @Today;
+                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
+                    SELECT 
+                        @Today,
+                        (SELECT COUNT(*) FROM PHONG_MAY),
+                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'),
+                        (SELECT COUNT(*) FROM MAY_TINH),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'),
+                        (SELECT COUNT(*) FROM NGUOI_DUNG);
+                ");
 
                 string sql = $@"
                     SELECT 
-                        (SELECT COUNT(*) FROM PHONG_MAY WHERE 1=1 {dtCond2}) as TotalRooms,
-                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động' {dtCond2.Replace("CreatedAt", "p.CreatedAt")}) as ActiveRooms,
-                        (SELECT COUNT(*) FROM MAY_TINH WHERE 1=1 {dtCond2}) as TotalMay,
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt' {dtCond2.Replace("CreatedAt", "m.CreatedAt")}) as MayTot,
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng' {dtCond2.Replace("CreatedAt", "m.CreatedAt")}) as MayHong,
+                        ISNULL((SELECT TOP 1 TotalRooms FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalRooms,
+                        ISNULL((SELECT TOP 1 ActiveRooms FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as ActiveRooms,
+                        ISNULL((SELECT TOP 1 TotalMay FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalMay,
+                        ISNULL((SELECT TOP 1 MayTot FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as MayTot,
+                        ISNULL((SELECT TOP 1 MayHong FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as MayHong,
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1 {dtCond}) as TotalLich,
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) {dtCond}) as LichDaXep,
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy' {dtCond}) as LichDaHuy,
-                        (SELECT COUNT(*) FROM NGUOI_DUNG WHERE 1=1 {dtCond2}) as TotalUsers
+                        ISNULL((SELECT TOP 1 TotalUsers FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalUsers
                 ";
 
                 var result = db.QueryFirstOrDefault(sql, new { startDate = startDate?.Date, endDate = endDate?.Date });

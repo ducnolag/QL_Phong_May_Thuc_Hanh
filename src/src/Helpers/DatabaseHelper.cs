@@ -181,11 +181,73 @@ namespace src.Helpers
                     END
                 ");
 
+                // Create CHOT_SO_LIEU table if it doesn't exist
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'CHOT_SO_LIEU') AND type in (N'U'))
+                    BEGIN
+                        CREATE TABLE CHOT_SO_LIEU (
+                            NgayChot DATE PRIMARY KEY,
+                            TotalRooms INT,
+                            ActiveRooms INT,
+                            TotalMay INT,
+                            MayTot INT,
+                            MayHong INT,
+                            TotalUsers INT
+                        )
+                    END
+                ");
+
+                // Snapshot today's data and backfill historical data
+                ExecuteNonQuery(@"
+                    DECLARE @Today DATE = CAST(GETDATE() AS DATE);
+                    
+                    -- Delete today's snapshot if exists to recalculate
+                    DELETE FROM CHOT_SO_LIEU WHERE NgayChot = @Today;
+                    
+                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
+                    SELECT 
+                        @Today,
+                        (SELECT COUNT(*) FROM PHONG_MAY),
+                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'),
+                        (SELECT COUNT(*) FROM MAY_TINH),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'),
+                        (SELECT COUNT(*) FROM NGUOI_DUNG);
+                        
+                    -- Backfill missing historical dates
+                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
+                    SELECT DISTINCT d, 0, 0, 0, 0, 0, 0
+                    FROM (
+                        SELECT CAST(CreatedAt AS DATE) as d FROM NGUOI_DUNG
+                        UNION SELECT CAST(CreatedAt AS DATE) FROM PHONG_MAY
+                        UNION SELECT CAST(CreatedAt AS DATE) FROM MAY_TINH
+                    ) dates
+                    WHERE d < @Today AND d NOT IN (SELECT NgayChot FROM CHOT_SO_LIEU);
+                    
+                    -- Update running totals for the backfilled historical dates (only newly inserted ones which have 0s)
+                    UPDATE C
+                    SET 
+                        TotalRooms = (SELECT COUNT(*) FROM PHONG_MAY WHERE CAST(CreatedAt AS DATE) <= C.NgayChot),
+                        ActiveRooms = (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động' AND CAST(p.CreatedAt AS DATE) <= C.NgayChot),
+                        TotalMay = (SELECT COUNT(*) FROM MAY_TINH WHERE CAST(CreatedAt AS DATE) <= C.NgayChot),
+                        MayTot = (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt' AND CAST(m.CreatedAt AS DATE) <= C.NgayChot),
+                        MayHong = (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng' AND CAST(m.CreatedAt AS DATE) <= C.NgayChot),
+                        TotalUsers = (SELECT COUNT(*) FROM NGUOI_DUNG WHERE CAST(CreatedAt AS DATE) <= C.NgayChot)
+                    FROM CHOT_SO_LIEU C
+                    WHERE NgayChot < @Today AND TotalUsers = 0 AND TotalRooms = 0;
+                ");
+
                 // Fix: Backdate initial seed data to 2026-05-01 so historical reports don't show 0
                 ExecuteNonQuery(@"
-                    UPDATE PHONG_MAY SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
-                    UPDATE MAY_TINH SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
-                    UPDATE NGUOI_DUNG SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE);
+                    UPDATE PHONG_MAY SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
+                    UPDATE MAY_TINH SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
+                    UPDATE NGUOI_DUNG SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
+                    
+                    -- Always keep Admin created in 2020 so there is always at least 1 user in the past
+                    UPDATE NGUOI_DUNG SET CreatedAt = '2020-01-01' WHERE TenDangNhap = 'admin';
+                    
+                    -- Remove accidentally stored unencrypted passwords
+                    UPDATE NGUOI_DUNG SET SoDienThoai = '' WHERE SoDienThoai NOT LIKE '0%';
                 ");
             }
             catch (Exception ex)

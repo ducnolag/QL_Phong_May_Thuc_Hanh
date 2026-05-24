@@ -20,9 +20,9 @@ namespace src.BLL
             return _repository.GetStatistics(start, end);
         }
 
-        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start = null, DateTime? end = null)
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start = null, DateTime? end = null, bool includePast = false)
         {
-            return _repository.GetActiveSchedules(start, end);
+            return _repository.GetActiveSchedules(start, end, includePast);
         }
 
         public LichThucHanhDTO GetScheduleById(int id)

@@ -60,8 +60,13 @@ namespace src.Views
             // Mặc định chọn đầu tháng đến cuối tháng
             dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            dtpToDate.MinDate = dtpFromDate.Value;
 
-            dtpFromDate.ValueChanged += (s, e) => Reload();
+            dtpFromDate.ValueChanged += (s, e) => {
+                if (dtpToDate.Value < dtpFromDate.Value) dtpToDate.Value = dtpFromDate.Value;
+                dtpToDate.MinDate = dtpFromDate.Value;
+                Reload();
+            };
             dtpToDate.ValueChanged += (s, e) => Reload();
         }
 
@@ -150,7 +155,7 @@ namespace src.Views
         private void GetDateRange(out DateTime? startDate, out DateTime? endDate)
         {
             startDate = dtpFromDate.Value.Date;
-            endDate = dtpToDate.Value.Date;
+            endDate = dtpToDate.Value.Date.AddDays(1).AddSeconds(-1);
         }
 
         private void LoadStats()

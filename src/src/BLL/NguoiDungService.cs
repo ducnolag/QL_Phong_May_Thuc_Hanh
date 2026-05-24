@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -81,7 +81,7 @@ namespace src.BLL
                 MatKhauDaMaHoa = hashed,
                 HoTen = string.IsNullOrEmpty(hoTen) ? username : hoTen,
                 Email = email,
-                SoDienThoai = password, // Using SoDienThoai as hint (as original code did)
+                SoDienThoai = "", // Do not store unencrypted password here
                 TrangThai = active,
                 MaVaiTro = roleId
             };
@@ -106,7 +106,7 @@ namespace src.BLL
             if (updatePassword)
             {
                 user.MatKhauDaMaHoa = DatabaseHelper.HashPassword(newPassword);
-                user.SoDienThoai = newPassword;
+                user.SoDienThoai = ""; // Do not store unencrypted password here
             }
 
             _NguoiDungRepository.UpdateUser(user, updatePassword);

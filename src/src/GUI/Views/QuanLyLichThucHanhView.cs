@@ -64,9 +64,19 @@ namespace src.Views
             // Mặc định chọn đầu tháng đến cuối tháng
             dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            dtpToDate.MinDate = dtpFromDate.Value;
 
-            dtpFromDate.ValueChanged += (s, e) => LoadData();
+            dtpFromDate.ValueChanged += (s, e) => {
+                if (dtpToDate.Value < dtpFromDate.Value) dtpToDate.Value = dtpFromDate.Value;
+                dtpToDate.MinDate = dtpFromDate.Value;
+                LoadData();
+            };
             dtpToDate.ValueChanged += (s, e) => LoadData();
+        }
+
+        private void chkXemLichCu_CheckedChanged(object sender, EventArgs e)
+        {
+            LoadData();
         }
 
         /// <summary>
@@ -83,7 +93,7 @@ namespace src.Views
             try
             {
                 DateTime startDate = dtpFromDate.Value.Date;
-                DateTime endDate = dtpToDate.Value.Date;
+                DateTime endDate = dtpToDate.Value.Date.AddDays(1).AddSeconds(-1);
 
                 var stats = _LichThucHanhService.GetStatistics(startDate, endDate);
                 totalSchedules = stats.total;
@@ -91,14 +101,15 @@ namespace src.Views
                 pending = stats.pending;
                 canceled = stats.canceled;
 
-                var dt = _LichThucHanhService.GetActiveSchedules(startDate, endDate);
+                bool includePast = chkXemLichCu.Checked;
+                var dt = _LichThucHanhService.GetActiveSchedules(startDate, endDate, includePast);
 
                 foreach (var r in dt)
                 {
                     // Đã được lọc bằng startDate và endDate từ CSDL nên không cần lọc lại ở đây
 
 
-                    string status = r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp";
+                    string status = r.TrangThaiLich == "Đã hủy" ? "Đã hủy" : (r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp");
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
                     schedules.Add((
                         r.MaLich,

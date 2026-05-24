@@ -19,6 +19,7 @@ namespace src.Views
         {
             pnlHeader = new System.Windows.Forms.Panel();
             btnAdd = new System.Windows.Forms.Button();
+            chkXemLichCu = new System.Windows.Forms.CheckBox();
             dtpFromDate = new System.Windows.Forms.DateTimePicker();
             lblTuNgay = new System.Windows.Forms.Label();
             dtpToDate = new System.Windows.Forms.DateTimePicker();
@@ -68,14 +69,28 @@ namespace src.Views
             btnAdd.Text = "+ Thêm Lịch";
             btnAdd.UseVisualStyleBackColor = false;
             // 
+            // chkXemLichCu
+            // 
+            chkXemLichCu.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            chkXemLichCu.AutoSize = true;
+            chkXemLichCu.Cursor = System.Windows.Forms.Cursors.Hand;
+            chkXemLichCu.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            chkXemLichCu.Location = new System.Drawing.Point(339, 23);
+            chkXemLichCu.Name = "chkXemLichCu";
+            chkXemLichCu.Size = new System.Drawing.Size(111, 25);
+            chkXemLichCu.TabIndex = 8;
+            chkXemLichCu.Text = "Xem lịch cũ";
+            chkXemLichCu.UseVisualStyleBackColor = true;
+            chkXemLichCu.CheckedChanged += chkXemLichCu_CheckedChanged;
+            // 
             // dtpFromDate
             // 
             dtpFromDate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             dtpFromDate.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            dtpFromDate.Location = new System.Drawing.Point(589, 39);
+            dtpFromDate.Location = new System.Drawing.Point(582, 39);
             dtpFromDate.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             dtpFromDate.Name = "dtpFromDate";
-            dtpFromDate.Size = new System.Drawing.Size(95, 29);
+            dtpFromDate.Size = new System.Drawing.Size(102, 29);
             dtpFromDate.TabIndex = 3;
             // 
             // lblTuNgay
@@ -84,7 +99,7 @@ namespace src.Views
             lblTuNgay.AutoSize = true;
             lblTuNgay.Font = new System.Drawing.Font("Segoe UI", 9F);
             lblTuNgay.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            lblTuNgay.Location = new System.Drawing.Point(518, 46);
+            lblTuNgay.Location = new System.Drawing.Point(511, 46);
             lblTuNgay.Name = "lblTuNgay";
             lblTuNgay.Size = new System.Drawing.Size(65, 20);
             lblTuNgay.TabIndex = 4;
@@ -185,6 +200,7 @@ namespace src.Views
             // 
             pnlListHeader.BackColor = System.Drawing.Color.Transparent;
             pnlListHeader.Controls.Add(lblListSub);
+            pnlListHeader.Controls.Add(chkXemLichCu);
             pnlListHeader.Controls.Add(lblListTitle);
             pnlListHeader.Dock = System.Windows.Forms.DockStyle.Top;
             pnlListHeader.Location = new System.Drawing.Point(23, 240);
@@ -225,6 +241,7 @@ namespace src.Views
         private System.Windows.Forms.Label lblListTitle;
         private System.Windows.Forms.Label lblListSub;
         public System.Windows.Forms.DateTimePicker dtpFromDate;
+        public System.Windows.Forms.CheckBox chkXemLichCu;
         public System.Windows.Forms.Label lblTuNgay;
         public System.Windows.Forms.DateTimePicker dtpToDate;
         public System.Windows.Forms.Label lblDenNgay;

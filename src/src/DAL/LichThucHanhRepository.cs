@@ -11,7 +11,7 @@ namespace src.DAL
     public interface ILichThucHanhRepository
     {
         (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end);
-        IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end);
+        IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false);
         LichThucHanhDTO GetScheduleById(int id);
         (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id);
         (int MaPhong, string TenPhong, int SucChua) GetAssignedRoom(int scheduleId);
@@ -63,7 +63,7 @@ namespace src.DAL
             }
         }
 
-        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end)
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -81,9 +81,8 @@ namespace src.DAL
                                JOIN MON_HOC mh ON l.MaMon = mh.MaMon
                                LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                                LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
-                               WHERE l.TrangThaiLich != N'Đã hủy' AND {dtCond}
-                                 AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) 
-                                      OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))
+                               WHERE {dtCond}
+                                 {(!includePast ? "AND l.TrangThaiLich != N'Đã hủy' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))" : "")}
                                ORDER BY l.NgayThucHanh DESC, c.GioBatDau";
                 return db.Query<LichThucHanhDTO>(sql, new { start, end });
             }
