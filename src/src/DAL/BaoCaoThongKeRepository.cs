@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -9,35 +10,53 @@ namespace src.DAL
 {
     public interface IBaoCaoThongKeRepository
     {
-        ThongKeTongQuanDTO GetThongKeTongQuan(int thang, int nam);
+        ThongKeTongQuanDTO GetThongKeTongQuan(DateTime? startDate, DateTime? endDate);
         List<ThongKeMayTheoPhongDTO> GetThongKeMayTheoPhong();
-        List<ThongKeLichDTO> GetThongKeLich(int thang, int nam);
+        List<ThongKeLichDTO> GetThongKeLich(DateTime? startDate, DateTime? endDate);
     }
 
     public class BaoCaoThongKeRepository : IBaoCaoThongKeRepository
     {
-        public ThongKeTongQuanDTO GetThongKeTongQuan(int thang, int nam)
+        public ThongKeTongQuanDTO GetThongKeTongQuan(DateTime? startDate, DateTime? endDate)
         {
             var dto = new ThongKeTongQuanDTO();
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                string thC = thang > 0 ? " AND MONTH(l.NgayThucHanh) = @thang" : "";
-                string nmC = nam > 0 ? " AND YEAR(l.NgayThucHanh) = @nam" : "";
+                string dtCond = "";
+                if (startDate.HasValue && endDate.HasValue)
+                {
+                    dtCond = " AND l.NgayThucHanh >= @startDate AND l.NgayThucHanh <= @endDate ";
+                }
+                
+                // Ensure today's snapshot is up to date before querying
+                db.Execute(@"
+                    DECLARE @Today DATE = CAST(GETDATE() AS DATE);
+                    DELETE FROM CHOT_SO_LIEU WHERE NgayChot = @Today;
+                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
+                    SELECT 
+                        @Today,
+                        (SELECT COUNT(*) FROM PHONG_MAY),
+                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'),
+                        (SELECT COUNT(*) FROM MAY_TINH),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'),
+                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'),
+                        (SELECT COUNT(*) FROM NGUOI_DUNG);
+                ");
 
                 string sql = $@"
                     SELECT 
-                        (SELECT COUNT(*) FROM PHONG_MAY) as TotalRooms,
-                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động') as ActiveRooms,
-                        (SELECT COUNT(*) FROM MAY_TINH) as TotalMay,
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt') as MayTot,
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng') as MayHong,
-                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1 {thC} {nmC}) as TotalLich,
-                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) {thC} {nmC}) as LichDaXep,
-                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy' {thC} {nmC}) as LichDaHuy,
-                        (SELECT COUNT(*) FROM NGUOI_DUNG) as TotalUsers
+                        ISNULL((SELECT TOP 1 TotalRooms FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalRooms,
+                        ISNULL((SELECT TOP 1 ActiveRooms FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as ActiveRooms,
+                        ISNULL((SELECT TOP 1 TotalMay FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalMay,
+                        ISNULL((SELECT TOP 1 MayTot FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as MayTot,
+                        ISNULL((SELECT TOP 1 MayHong FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as MayHong,
+                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1 {dtCond}) as TotalLich,
+                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) {dtCond}) as LichDaXep,
+                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy' {dtCond}) as LichDaHuy,
+                        ISNULL((SELECT TOP 1 TotalUsers FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalUsers
                 ";
 
-                var result = db.QueryFirstOrDefault(sql, new { thang, nam });
+                var result = db.QueryFirstOrDefault(sql, new { startDate = startDate?.Date, endDate = endDate?.Date });
                 
                 if (result != null)
                 {
@@ -80,12 +99,15 @@ namespace src.DAL
             }
         }
 
-        public List<ThongKeLichDTO> GetThongKeLich(int thang, int nam)
+        public List<ThongKeLichDTO> GetThongKeLich(DateTime? startDate, DateTime? endDate)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                string thC = thang > 0 ? " AND MONTH(l.NgayThucHanh) = @thang" : "";
-                string nmC = nam > 0 ? " AND YEAR(l.NgayThucHanh) = @nam" : "";
+                string dtCond = "";
+                if (startDate.HasValue && endDate.HasValue)
+                {
+                    dtCond = " AND l.NgayThucHanh >= @startDate AND l.NgayThucHanh <= @endDate ";
+                }
 
                 string sql = $@"
                     SELECT TOP 30 
@@ -100,10 +122,10 @@ namespace src.DAL
                     JOIN CA_HOC c ON l.MaCa = c.MaCa
                     LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                     LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
-                    WHERE 1=1 {thC} {nmC} 
+                    WHERE 1=1 {dtCond} 
                     ORDER BY l.NgayThucHanh DESC";
 
-                return db.Query<ThongKeLichDTO>(sql, new { thang, nam }).ToList();
+                return db.Query<ThongKeLichDTO>(sql, new { startDate = startDate?.Date, endDate = endDate?.Date }).ToList();
             }
         }
     }

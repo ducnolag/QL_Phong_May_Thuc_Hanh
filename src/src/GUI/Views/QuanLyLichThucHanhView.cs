@@ -52,6 +52,30 @@ namespace src.Views
                 pnlScheduleList.ResumeLayout();
             };
 
+            InitFilters();
+            LoadData();
+        }
+
+        private void InitFilters()
+        {
+            dtpFromDate.Format = DateTimePickerFormat.Short;
+            dtpToDate.Format = DateTimePickerFormat.Short;
+
+            // Mặc định chọn đầu tháng đến cuối tháng
+            dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            dtpToDate.MinDate = dtpFromDate.Value;
+
+            dtpFromDate.ValueChanged += (s, e) => {
+                if (dtpToDate.Value < dtpFromDate.Value) dtpToDate.Value = dtpFromDate.Value;
+                dtpToDate.MinDate = dtpFromDate.Value;
+                LoadData();
+            };
+            dtpToDate.ValueChanged += (s, e) => LoadData();
+        }
+
+        private void chkXemLichCu_CheckedChanged(object sender, EventArgs e)
+        {
             LoadData();
         }
 
@@ -68,16 +92,24 @@ namespace src.Views
 
             try
             {
-                var stats = _LichThucHanhService.GetStatistics();
+                DateTime startDate = dtpFromDate.Value.Date;
+                DateTime endDate = dtpToDate.Value.Date.AddDays(1).AddSeconds(-1);
+
+                var stats = _LichThucHanhService.GetStatistics(startDate, endDate);
                 totalSchedules = stats.total;
                 assigned = stats.assigned;
                 pending = stats.pending;
                 canceled = stats.canceled;
 
-                var dt = _LichThucHanhService.GetActiveSchedules();
+                bool includePast = chkXemLichCu.Checked;
+                var dt = _LichThucHanhService.GetActiveSchedules(startDate, endDate, includePast);
+
                 foreach (var r in dt)
                 {
-                    string status = r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp";
+                    // Đã được lọc bằng startDate và endDate từ CSDL nên không cần lọc lại ở đây
+
+
+                    string status = r.TrangThaiLich == "Đã hủy" ? "Đã hủy" : (r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp");
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
                     schedules.Add((
                         r.MaLich,
@@ -761,6 +793,9 @@ namespace src.Views
 
             dlg.AcceptButton = btnSave;
             dlg.CancelButton = btnCancel;
+
+            dlg.Shown += (s, e) => btnSuggest.PerformClick();
+
             return dlg;
         }
 

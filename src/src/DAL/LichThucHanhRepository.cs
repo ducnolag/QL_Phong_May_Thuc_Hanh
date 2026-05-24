@@ -10,8 +10,8 @@ namespace src.DAL
 {
     public interface ILichThucHanhRepository
     {
-        (int total, int assigned, int pending, int canceled) GetStatistics();
-        IEnumerable<LichThucHanhDTO> GetActiveSchedules();
+        (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end);
+        IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false);
         LichThucHanhDTO GetScheduleById(int id);
         (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id);
         (int MaPhong, string TenPhong, int SucChua) GetAssignedRoom(int scheduleId);
@@ -45,24 +45,35 @@ namespace src.DAL
 
     public class LichThucHanhRepository : ILichThucHanhRepository
     {
-        public (int total, int assigned, int pending, int canceled) GetStatistics()
+        public (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                string monthFilter = "MONTH(NgayThucHanh) = MONTH(GETDATE()) AND YEAR(NgayThucHanh) = YEAR(GETDATE())";
-                int total = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {monthFilter}");
-                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {monthFilter}");
-                int pending = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich NOT IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {monthFilter}");
-                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {monthFilter}");
+                string dtCond = "1=1";
+                if (start.HasValue && end.HasValue)
+                {
+                    dtCond = "NgayThucHanh >= @start AND NgayThucHanh <= @end";
+                }
+
+                int total = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {dtCond}", new { start, end });
+                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
+                int pending = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich NOT IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
+                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {dtCond}", new { start, end });
                 return (total, assigned, pending, canceled);
             }
         }
 
-        public IEnumerable<LichThucHanhDTO> GetActiveSchedules()
+        public IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                string sql = @"SELECT l.MaLich, mh.TenMon, l.TrangThaiLich, l.NgayThucHanh, 
+                string dtCond = "1=1";
+                if (start.HasValue && end.HasValue)
+                {
+                    dtCond = "l.NgayThucHanh >= @start AND l.NgayThucHanh <= @end";
+                }
+
+                string sql = $@"SELECT l.MaLich, mh.TenMon, l.TrangThaiLich, l.NgayThucHanh, 
                                       c.TenCa, c.GioBatDau, c.GioKetThuc,
                                       l.SoLuongSinhVien, ISNULL(p.TenPhong, '---') AS TenPhong
                                FROM LICH_THUC_HANH l
@@ -70,10 +81,10 @@ namespace src.DAL
                                JOIN MON_HOC mh ON l.MaMon = mh.MaMon
                                LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                                LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
-                               WHERE l.TrangThaiLich != N'Đã hủy'
-                                 AND l.NgayThucHanh >= CAST(GETDATE() AS DATE)
+                               WHERE {dtCond}
+                                 {(!includePast ? "AND l.TrangThaiLich != N'Đã hủy' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))" : "")}
                                ORDER BY l.NgayThucHanh DESC, c.GioBatDau";
-                return db.Query<LichThucHanhDTO>(sql);
+                return db.Query<LichThucHanhDTO>(sql, new { start, end });
             }
         }
 
