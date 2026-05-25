@@ -256,10 +256,10 @@ namespace src.Views
             card.Controls.Add(badge);
 
             int infoY = 44;
-            card.Controls.Add(new Label { Text = $"📅  {date} ({dayName})", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"⏰  {time}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 20), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"👥  {students} sinh viên", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"🏢  {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Ngày thực hành: {date} ({dayName})", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Ca học: {time}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 20), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Số sinh viên: {students}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Phòng: {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
 
             if (!isOld)
             {
@@ -376,13 +376,44 @@ namespace src.Views
                     dlg.Shown += (s, ev) =>
                     {
                         FindControl<DateTimePicker>(dlg, "dtpDate").Value = sch.NgayThucHanh;
-                        FindControl<NumericUpDown>(dlg, "numSV").Value = sch.SoLuongSinhVien;
 
                         var cboLopCtrl = FindControl<ComboBox>(dlg, "cboLop");
-                        cboLopCtrl.Text = sch.TenLop;
+                        int idxLop = cboLopCtrl.FindStringExact(sch.TenLop);
+                        
+                        var numSV = FindControl<NumericUpDown>(dlg, "numSV");
+                        
+                        if (idxLop >= 0) 
+                        {
+                            if (cboLopCtrl.SelectedIndex != idxLop) cboLopCtrl.SelectedIndex = idxLop;
+                            
+                            // Explicitly trigger the SiSo update
+                            if (cboLopCtrl.DataSource is System.Collections.IList ds && idxLop < ds.Count && ds[idxLop] is src.DTO.LopHocDTO lop)
+                            {
+                                if (lop.SiSo > 0 && lop.SiSo <= numSV.Maximum && lop.SiSo >= numSV.Minimum)
+                                {
+                                    numSV.Value = lop.SiSo;
+                                }
+                            }
+                        }
+                        else 
+                        {
+                            cboLopCtrl.Text = sch.TenLop;
+                        }
+                        
+                        // If it's an old schedule with default 30, but class has a specific SiSo, prioritize class SiSo
+                        if (sch.SoLuongSinhVien != 30) 
+                        {
+                            numSV.Value = sch.SoLuongSinhVien;
+                        }
+                        else if (idxLop < 0) 
+                        {
+                            numSV.Value = sch.SoLuongSinhVien;
+                        }
 
                         var cboMonCtrl = FindControl<ComboBox>(dlg, "cboMon");
-                        cboMonCtrl.Text = sch.TenMon;
+                        int idxMon = cboMonCtrl.FindStringExact(sch.TenMon);
+                        if (idxMon >= 0) cboMonCtrl.SelectedIndex = idxMon;
+                        else cboMonCtrl.Text = sch.TenMon;
 
                         var cboCaCtrl = FindControl<ComboBox>(dlg, "cboCa");
                         cboCaCtrl.SelectedValue = sch.MaCa;
@@ -536,7 +567,7 @@ namespace src.Views
             int y = 20;
 
             // Ngày thực hành
-            dlg.Controls.Add(new Label { Text = "Ngày TH:", Location = new Point(20, y + 3), AutoSize = true });
+            dlg.Controls.Add(new Label { Text = "Ngày thực hành:", Location = new Point(20, y + 3), AutoSize = true });
             var dtpDate = new DateTimePicker
             {
                 Name = "dtpDate",
@@ -611,8 +642,8 @@ namespace src.Views
             dlg.Controls.Add(cboCa);
             y += 40;
 
-            // Số SV
-            dlg.Controls.Add(new Label { Text = "Số SV:", Location = new Point(20, y + 3), AutoSize = true });
+            // Số sinh viên
+            dlg.Controls.Add(new Label { Text = "Số sinh viên:", Location = new Point(20, y + 3), AutoSize = true });
             var numSV = new NumericUpDown
             {
                 Name = "numSV",
@@ -623,6 +654,36 @@ namespace src.Views
                 Size = new Size(120, 26)
             };
             dlg.Controls.Add(numSV);
+
+            Action updateSiSo = () =>
+            {
+                if (cboLop.SelectedItem is src.DTO.LopHocDTO lop)
+                {
+                    if (lop.SiSo > 0 && lop.SiSo <= numSV.Maximum && lop.SiSo >= numSV.Minimum)
+                    {
+                        numSV.Value = lop.SiSo;
+                    }
+                }
+            };
+
+            // Auto-fill numSV based on cboLop
+            cboLop.SelectedIndexChanged += (s, ev) => updateSiSo();
+
+            // Trigger initially
+            if (cboLop.DataSource is System.Collections.Generic.IEnumerable<src.DTO.LopHocDTO> dList)
+            {
+                var firstLop = System.Linq.Enumerable.FirstOrDefault(dList);
+                if (firstLop != null && firstLop.SiSo > 0 && firstLop.SiSo <= numSV.Maximum && firstLop.SiSo >= numSV.Minimum)
+                {
+                    numSV.Value = firstLop.SiSo;
+                }
+            }
+            else if (cboLop.Items.Count > 0)
+            {
+                cboLop.SelectedIndex = 0;
+                updateSiSo();
+            }
+
             y += 40;
 
             // RAM Tối thiểu

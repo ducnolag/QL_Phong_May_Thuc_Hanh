@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -32,7 +32,8 @@ namespace src.Views
         private void SetupGridLop()
         {
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "PK", Visible = false });
-            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Tên", ReadOnly = true, FillWeight = 80 });
+            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Tên", ReadOnly = true, FillWeight = 60 });
+            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "SiSo", HeaderText = "Sĩ số", ReadOnly = true, FillWeight = 20 });
             AddActionColumns(dgvLopHoc);
         }
 
@@ -77,7 +78,7 @@ namespace src.Views
             try
             {
                 var dt = _LopMonService.GetAllLopHoc();
-                foreach (var r in dt) dgvLopHoc.Rows.Add(r.MaLop, r.TenLop);
+                foreach (var r in dt) dgvLopHoc.Rows.Add(r.MaLop, r.TenLop, r.SiSo);
             }
             catch { }
         }
@@ -101,9 +102,9 @@ namespace src.Views
 
             // Add
             btnAddLop.Click += (s, e) => {
-                string name = ShowInputDialog("Thêm Lớp học", "Tên lớp:", "");
-                if (name == null) return;
-                try { _LopMonService.CreateLopHoc(name); LoadLopHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
+                var result = ShowLopInputDialog("Thêm Lớp học", "", 30);
+                if (result == null) return;
+                try { _LopMonService.CreateLopHoc(result.Value.name, result.Value.siso); LoadLopHoc(); } catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
             };
             btnAddMon.Click += (s, e) => {
                 string name = ShowInputDialog("Thêm Môn học", "Tên môn:", "");
@@ -112,7 +113,7 @@ namespace src.Views
             };
 
             // Grid clicks
-            dgvLopHoc.CellClick += (s, e) => HandleGridClick(e, dgvLopHoc, "lớp học", true, LoadLopHoc);
+            dgvLopHoc.CellClick += (s, e) => HandleGridLopClick(e);
             dgvMonHoc.CellClick += (s, e) => HandleGridClick(e, dgvMonHoc, "môn học", false, LoadMonHoc);
         }
 
@@ -123,6 +124,39 @@ namespace src.Views
             {
                 if (row.IsNewRow) continue;
                 row.Visible = string.IsNullOrEmpty(kw) || row.Cells["Ten"].Value?.ToString().ToLower().Contains(kw) == true;
+            }
+        }
+
+        private void HandleGridLopClick(DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            var row = dgvLopHoc.Rows[e.RowIndex];
+            string col = dgvLopHoc.Columns[e.ColumnIndex].Name;
+            int pk = Convert.ToInt32(row.Cells["PK"].Value);
+            string ten = row.Cells["Ten"].Value?.ToString() ?? "";
+            int siso = Convert.ToInt32(row.Cells["SiSo"].Value ?? 30);
+
+            try
+            {
+                if (col == "Edit")
+                {
+                    var newLop = ShowLopInputDialog($"Sửa lớp học", ten, siso);
+                    if (newLop == null) return;
+                    _LopMonService.UpdateLopHoc(pk, newLop.Value.name, newLop.Value.siso);
+                    LoadLopHoc();
+                }
+                else if (col == "Delete")
+                {
+                    if (MessageBox.Show($"Xóa '{ten}'?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        _LopMonService.DeleteLopHoc(pk);
+                        LoadLopHoc();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -140,7 +174,7 @@ namespace src.Views
                 {
                     string newName = ShowInputDialog($"Sửa {label}", "Tên:", ten);
                     if (newName == null) return;
-                    if (isLop) _LopMonService.UpdateLopHoc(pk, newName);
+                    if (isLop) _LopMonService.UpdateLopHoc(pk, newName, 30);
                     else _LopMonService.UpdateMonHoc(pk, newName);
                     reload();
                 }
@@ -190,6 +224,43 @@ namespace src.Views
             dlg.AcceptButton = btnOk; dlg.CancelButton = btnCancel;
             btnOk.Click += (s, e) => { if (string.IsNullOrWhiteSpace(txt.Text)) { MessageBox.Show("Vui lòng nhập tên!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); dlg.DialogResult = DialogResult.None; } };
             return dlg.ShowDialog() == DialogResult.OK ? txt.Text.Trim() : null;
+        }
+
+        private (string name, int siso)? ShowLopInputDialog(string title, string defaultVal, int defaultSiso)
+        {
+            var dlg = new Form
+            {
+                Text = title, Size = new Size(380, 220), StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false,
+                BackColor = Color.White, Font = new Font("Segoe UI", 10F)
+            };
+            dlg.Controls.Add(new Label { Text = "Tên lớp:", Location = new Point(20, 20), AutoSize = true });
+            var txt = new TextBox { Text = defaultVal, Location = new Point(20, 44), Size = new Size(330, 28) };
+            dlg.Controls.Add(txt);
+
+            dlg.Controls.Add(new Label { Text = "Sĩ số:", Location = new Point(20, 80), AutoSize = true });
+            var num = new NumericUpDown { Value = defaultSiso, Minimum = 1, Maximum = 200, Location = new Point(20, 104), Size = new Size(150, 28) };
+            dlg.Controls.Add(num);
+
+            var btnOk = new Button
+            {
+                Text = "💾  Lưu", Location = new Point(130, 142), Size = new Size(100, 34),
+                BackColor = ThemeColors.PrimaryBlue, ForeColor = Color.White, FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), DialogResult = DialogResult.OK, Cursor = Cursors.Hand
+            };
+            btnOk.FlatAppearance.BorderSize = 0;
+            dlg.Controls.Add(btnOk);
+            var btnCancel = new Button
+            {
+                Text = "Hủy", Location = new Point(242, 142), Size = new Size(90, 34),
+                BackColor = Color.FromArgb(241, 245, 249), ForeColor = ThemeColors.TextSecondary,
+                FlatStyle = FlatStyle.Flat, DialogResult = DialogResult.Cancel, Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+            dlg.Controls.Add(btnCancel);
+            dlg.AcceptButton = btnOk; dlg.CancelButton = btnCancel;
+            btnOk.Click += (s, e) => { if (string.IsNullOrWhiteSpace(txt.Text)) { MessageBox.Show("Vui lòng nhập tên!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); dlg.DialogResult = DialogResult.None; } };
+            return dlg.ShowDialog() == DialogResult.OK ? (txt.Text.Trim(), (int)num.Value) : null;
         }
 
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using src.DAL;
 using src.DTO;
@@ -18,10 +18,11 @@ namespace src.BLL
         public IEnumerable<LopHocDTO> GetAllLopHoc() => _repository.GetAllLopHoc().ToList();
         public IEnumerable<MonHocDTO> GetAllMonHoc() => _repository.GetAllMonHoc().ToList();
 
-        public void CreateLopHoc(string name)
+        public void CreateLopHoc(string name, int siSo)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
-            _repository.CreateLopHoc(name);
+            if (siSo <= 0) throw new Exception("Sĩ số phải lớn hơn 0.");
+            _repository.CreateLopHoc(name, siSo);
         }
 
         public void CreateMonHoc(string name)
@@ -30,10 +31,11 @@ namespace src.BLL
             _repository.CreateMonHoc(name);
         }
 
-        public void UpdateLopHoc(int id, string name)
+        public void UpdateLopHoc(int id, string name, int siSo)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
-            _repository.UpdateLopHoc(id, name);
+            if (siSo <= 0) throw new Exception("Sĩ số phải lớn hơn 0.");
+            _repository.UpdateLopHoc(id, name, siSo);
         }
 
         public void UpdateMonHoc(int id, string name)
