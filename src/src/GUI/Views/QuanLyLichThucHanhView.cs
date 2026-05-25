@@ -72,6 +72,16 @@ namespace src.Views
                 LoadData();
             };
             dtpToDate.ValueChanged += (s, e) => LoadData();
+
+            cboRoomFilter.Items.Add("Tất cả phòng");
+            try {
+                var rooms = new src.BLL.PhongMayService().GetAllRooms();
+                foreach (var r in rooms) cboRoomFilter.Items.Add(r.TenPhong);
+            } catch {}
+            cboRoomFilter.SelectedIndex = 0;
+
+            txtSearch.TextChanged += (s, e) => LoadData();
+            cboRoomFilter.SelectedIndexChanged += (s, e) => LoadData();
         }
 
         private void chkXemLichCu_CheckedChanged(object sender, EventArgs e)
@@ -139,11 +149,18 @@ namespace src.Views
             pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.AccentRed));
 
             // === Schedule cards (chỉ hiển thị lịch chưa hủy) ===
+            string searchTxt = txtSearch?.Text.ToLower() ?? "";
+            string roomFilter = cboRoomFilter?.SelectedItem?.ToString() ?? "Tất cả phòng";
+            bool isOld = chkXemLichCu.Checked;
+
             foreach (var sch in schedules)
             {
+                if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt)) continue;
+                if (roomFilter != "Tất cả phòng" && sch.room != roomFilter) continue;
+
                 pnlScheduleList.Controls.Add(MakeScheduleCard(
                     sch.id, sch.className, sch.status, sch.date, sch.dayName,
-                    sch.time, sch.students, sch.room));
+                    sch.time, sch.students, sch.room, isOld));
             }
         }
 
@@ -175,7 +192,7 @@ namespace src.Views
         /// Tạo card lịch thực hành bằng Guna2Panel
         /// </summary>
         private Guna.UI2.WinForms.Guna2Panel MakeScheduleCard(int id, string className, string status, string date,
-            string dayName, string time, int students, string room)
+            string dayName, string time, int students, string room, bool isOld = false)
         {
             var card = new Guna.UI2.WinForms.Guna2Panel
             {
@@ -239,41 +256,44 @@ namespace src.Views
             card.Controls.Add(new Label { Text = $"👥  {students} sinh viên", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
             card.Controls.Add(new Label { Text = $"🏢  {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
 
-            // Nút Edit bằng Guna2Button
-            var btnEdit = new Guna.UI2.WinForms.Guna2Button
+            if (!isOld)
             {
-                Text = "✏",
-                Size = new Size(34, 30),
-                Location = new Point(card.Width - 130, 16),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                FillColor = Color.White,
-                ForeColor = ThemeColors.TextSecondary,
-                Font = new Font("Segoe UI", 11F),
-                Cursor = Cursors.Hand,
-                BorderRadius = 6,
-                BorderThickness = 1,
-                BorderColor = Color.FromArgb(226, 232, 240)
-            };
-            btnEdit.Click += (s, ev) => ShowEditDialog(id);
-            card.Controls.Add(btnEdit);
+                // Nút Edit bằng Guna2Button
+                var btnEdit = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "✏",
+                    Size = new Size(34, 30),
+                    Location = new Point(card.Width - 130, 16),
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    FillColor = Color.White,
+                    ForeColor = ThemeColors.TextSecondary,
+                    Font = new Font("Segoe UI", 11F),
+                    Cursor = Cursors.Hand,
+                    BorderRadius = 6,
+                    BorderThickness = 1,
+                    BorderColor = Color.FromArgb(226, 232, 240)
+                };
+                btnEdit.Click += (s, ev) => ShowEditDialog(id);
+                card.Controls.Add(btnEdit);
 
-            // Nút Cancel bằng Guna2Button
-            var btnCancel = new Guna.UI2.WinForms.Guna2Button
-            {
-                Text = "Hủy lịch",
-                Size = new Size(80, 30),
-                Location = new Point(card.Width - 90, 16),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                FillColor = Color.White,
-                ForeColor = ThemeColors.TextSecondary,
-                Font = new Font("Segoe UI", 9F),
-                Cursor = Cursors.Hand,
-                BorderRadius = 6,
-                BorderThickness = 1,
-                BorderColor = Color.FromArgb(226, 232, 240)
-            };
-            btnCancel.Click += (s, ev) => CancelSchedule(id);
-            card.Controls.Add(btnCancel);
+                // Nút Cancel bằng Guna2Button
+                var btnCancel = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "Hủy lịch",
+                    Size = new Size(80, 30),
+                    Location = new Point(card.Width - 90, 16),
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    FillColor = Color.White,
+                    ForeColor = ThemeColors.TextSecondary,
+                    Font = new Font("Segoe UI", 9F),
+                    Cursor = Cursors.Hand,
+                    BorderRadius = 6,
+                    BorderThickness = 1,
+                    BorderColor = Color.FromArgb(226, 232, 240)
+                };
+                btnCancel.Click += (s, ev) => CancelSchedule(id);
+                card.Controls.Add(btnCancel);
+            }
 
             return card;
         }

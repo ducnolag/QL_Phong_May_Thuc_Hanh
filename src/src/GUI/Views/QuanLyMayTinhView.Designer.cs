@@ -1,4 +1,4 @@
-﻿namespace src.Views
+namespace src.Views
 {
     partial class QuanLyMayTinhView
     {
@@ -102,6 +102,8 @@
             this.cboRoom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboRoom.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboRoom.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.cboRoom.IntegralHeight = false;
+            this.cboRoom.MaxDropDownItems = 5;
             this.cboRoom.Items.AddRange(new object[] { "Tất cả phòng" });
             this.cboRoom.Location = new System.Drawing.Point(230, 16);
             this.cboRoom.Name = "cboRoom";
