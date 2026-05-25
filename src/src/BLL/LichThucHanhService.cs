@@ -30,7 +30,7 @@ namespace src.BLL
             return _repository.GetScheduleById(id);
         }
 
-        public (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id)
+        public (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu, string CPUToiThieu) GetScheduleRequirements(int id)
         {
             return _repository.GetScheduleRequirements(id);
         }
@@ -40,9 +40,9 @@ namespace src.BLL
             return _repository.GetAssignedRoom(scheduleId);
         }
 
-        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, DateTime date, int caId, int currentScheduleId = 0)
+        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, DateTime date, int caId, int currentScheduleId = 0)
         {
-            return _repository.GetRoomsForAssignment(soSV, reqRam, reqStorage, reqMonitor, date, caId, currentScheduleId);
+            return _repository.GetRoomsForAssignment(soSV, reqRam, reqStorage, reqMonitor, reqCpu, date, caId, currentScheduleId);
         }
 
         public IEnumerable<CaHocDTO> GetAllCaHoc()
@@ -50,7 +50,7 @@ namespace src.BLL
             return _repository.GetAllCaHoc().ToList();
         }
 
-        public void ValidateAndCreateSchedule(DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, int? roomId, int creatorId)
+        public void ValidateAndCreateSchedule(DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId, int creatorId)
         {
             if (date.Date < DateTime.Today) throw new Exception("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.");
             
@@ -74,10 +74,10 @@ namespace src.BLL
 
             if (roomId.HasValue && roomId.Value > 0)
             {
-                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor);
+                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor, reqCpu);
                 if (mayDatYeuCau < soSV)
                 {
-                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\"), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
+                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\", CPU: {reqCpu}), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
                 }
 
                 if (_repository.CheckRoomConflict(roomId.Value, date, caId) > 0)
@@ -96,10 +96,10 @@ namespace src.BLL
                 NguoiTao = creatorId
             };
 
-            _repository.CreateSchedule(schedule, reqRam, reqStorage, reqMonitor, roomId > 0 ? roomId : null);
+            _repository.CreateSchedule(schedule, reqRam, reqStorage, reqMonitor, reqCpu, roomId > 0 ? roomId : null);
         }
 
-        public void ValidateAndUpdateSchedule(int scheduleId, DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, int? roomId, int updaterId)
+        public void ValidateAndUpdateSchedule(int scheduleId, DateTime date, string lopName, string monName, int caId, int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId, int updaterId)
         {
             if (date.Date < DateTime.Today) throw new Exception("Không thể đặt lịch vào ngày trong quá khứ! Vui lòng chọn lại ngày.");
 
@@ -123,10 +123,10 @@ namespace src.BLL
 
             if (roomId.HasValue && roomId.Value > 0)
             {
-                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor);
+                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor, reqCpu);
                 if (mayDatYeuCau < soSV)
                 {
-                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\"), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
+                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\", CPU: {reqCpu}), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
                 }
 
                 if (_repository.CheckRoomConflict(roomId.Value, date, caId, scheduleId) > 0)
@@ -146,7 +146,7 @@ namespace src.BLL
                 NguoiTao = updaterId // In update, this might not strictly overwrite creator, but serves as context for PHAN_CONG_PHONG
             };
 
-            _repository.UpdateSchedule(schedule, reqRam, reqStorage, reqMonitor, roomId > 0 ? roomId : null);
+            _repository.UpdateSchedule(schedule, reqRam, reqStorage, reqMonitor, reqCpu, roomId > 0 ? roomId : null);
         }
 
         public void CancelSchedule(int id)

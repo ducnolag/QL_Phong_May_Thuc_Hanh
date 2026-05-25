@@ -151,12 +151,17 @@ namespace src.Views
             // === Schedule cards (chỉ hiển thị lịch chưa hủy) ===
             string searchTxt = txtSearch?.Text.ToLower() ?? "";
             string roomFilter = cboRoomFilter?.SelectedItem?.ToString() ?? "Tất cả phòng";
-            bool isOld = chkXemLichCu.Checked;
 
             foreach (var sch in schedules)
             {
-                if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt)) continue;
+                if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt) && !sch.room.ToLower().Contains(searchTxt)) continue;
                 if (roomFilter != "Tất cả phòng" && sch.room != roomFilter) continue;
+
+                bool isOld = false;
+                if (DateTime.TryParseExact(sch.date, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+                {
+                    isOld = parsedDate < DateTime.Now.Date;
+                }
 
                 pnlScheduleList.Controls.Add(MakeScheduleCard(
                     sch.id, sch.className, sch.status, sch.date, sch.dayName,
@@ -320,17 +325,19 @@ namespace src.Views
                         var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                         var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                         var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                        var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
 
                         DateTime date = dtpDate.Value;
                         int soSV = (int)numSV.Value;
                         int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                         int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                         int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                        string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
                         int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                         _LichThucHanhService.ValidateAndCreateSchedule(
                             date, cboLop.Text.Trim(), cboMon.Text.Trim(),
-                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
+                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, reqCpu, roomId, AppSession.MaNguoiDung
                         );
 
                         MessageBox.Show("Đã tạo lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -387,11 +394,12 @@ namespace src.Views
                         cboRamCtrl.SelectedItem = req.RAMToiThieu + " GB";
                         cboStorageCtrl.SelectedItem = req.LuuTruToiThieu + " GB";
 
-                        // We need to fetch ManHinhToiThieu. Assuming req has it now.
-                        // Wait, req might not have ManHinhToiThieu strongly typed if DTO isn't updated. 
-                        // I will update DTO next. Let's assume it's `req.ManHinhToiThieu`.
                         cboMonitorCtrl.SelectedItem = req.ManHinhToiThieu + "\"";
                         if (cboMonitorCtrl.SelectedIndex < 0) cboMonitorCtrl.SelectedIndex = 2;
+
+                        var cboCpuCtrl = FindControl<ComboBox>(dlg, "cboReqCpu");
+                        cboCpuCtrl.SelectedItem = req.CPUToiThieu;
+                        if (cboCpuCtrl.SelectedIndex < 0) cboCpuCtrl.SelectedIndex = 1;
 
                         if (room.MaPhong > 0)
                         {
@@ -427,17 +435,19 @@ namespace src.Views
                             var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                             var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                             var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                            var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
 
                             int soSV = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
                             int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                             int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                             int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                            string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
 
                             int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                             _LichThucHanhService.ValidateAndUpdateSchedule(
                                 scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(),
-                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
+                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, reqCpu, roomId, AppSession.MaNguoiDung
                             );
 
                             MessageBox.Show("Đã cập nhật lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -514,7 +524,7 @@ namespace src.Views
             var dlg = new Form
             {
                 Text = title,
-                Size = new Size(460, 640),
+                Size = new Size(460, 680),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
@@ -637,6 +647,14 @@ namespace src.Views
             cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
             cboInputMonitor.SelectedItem = "24\"";
             dlg.Controls.Add(cboInputMonitor);
+            y += 40;
+
+            // CPU Tối thiểu
+            dlg.Controls.Add(new Label { Text = "CPU tối thiểu:", Location = new Point(20, y + 3), AutoSize = true });
+            var cboReqCpu = new ComboBox { Name = "cboReqCpu", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(140, y), Size = new Size(180, 26) };
+            cboReqCpu.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
+            cboReqCpu.SelectedItem = "Intel Core i5";
+            dlg.Controls.Add(cboReqCpu);
             y += 45;
 
             // ── Gợi ý phòng tự động ─────────────────────────────────────────
@@ -711,13 +729,15 @@ namespace src.Views
                     var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                     var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                     var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                    var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
 
                     int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                     int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                     int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                    string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
                     int found = 0;
                     // Tìm phòng trống (chưa bị chiếm) có đủ sức chứa và đếm số lượng máy đạt cấu hình yêu cầu
-                    var dtRooms = _LichThucHanhService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, selDate, (int)caId, currentScheduleId);
+                    var dtRooms = _LichThucHanhService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, reqCpu, selDate, (int)caId, currentScheduleId);
                     int roomCount = 0;
                     foreach (var r in dtRooms)
                     {
@@ -778,6 +798,7 @@ namespace src.Views
             cboInputRam.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
             cboInputStorage.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
             cboInputMonitor.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+            cboReqCpu.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
 
             // Buttons
             var btnSave = new Button

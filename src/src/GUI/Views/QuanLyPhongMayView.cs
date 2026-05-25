@@ -331,7 +331,7 @@ namespace src.Views
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
 
-                        string cpu = FindControl<TextBox>(dlg, "txtCPU")?.Text.Trim() ?? "Intel Core i5";
+                        string cpu = FindControl<ComboBox>(dlg, "cboCPU")?.SelectedItem?.ToString() ?? "Intel Core i5";
                         int ram = 8;
                         int storage = 256;
                         int monitor = 24;
@@ -508,8 +508,10 @@ namespace src.Views
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "CPU:", Location = new Point(20, y + 3), AutoSize = true });
-                var txtCPU = new TextBox { Name = "txtCPU", Text = "Intel Core i5", Location = new Point(130, y), Size = new Size(250, 26) };
-                dlg.Controls.Add(txtCPU);
+                var cboCPU = new ComboBox { Name = "cboCPU", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(130, y), Size = new Size(250, 26) };
+                cboCPU.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
+                cboCPU.SelectedItem = "Intel Core i5";
+                dlg.Controls.Add(cboCPU);
                 y += 40;
 
                 dlg.Controls.Add(new Label { Text = "RAM (GB):", Location = new Point(20, y + 3), AutoSize = true });
