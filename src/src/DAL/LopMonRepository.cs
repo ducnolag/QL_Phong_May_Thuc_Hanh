@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
 using Dapper;
 using src.DTO;
@@ -10,9 +10,9 @@ namespace src.DAL
     {
         IEnumerable<LopHocDTO> GetAllLopHoc();
         IEnumerable<MonHocDTO> GetAllMonHoc();
-        void CreateLopHoc(string tenLop);
+        void CreateLopHoc(string tenLop, int siSo);
         void CreateMonHoc(string tenMon);
-        void UpdateLopHoc(int maLop, string tenLop);
+        void UpdateLopHoc(int maLop, string tenLop, int siSo);
         void UpdateMonHoc(int maMon, string tenMon);
         void DeleteLopHoc(int maLop);
         void DeleteMonHoc(int maMon);
@@ -24,7 +24,7 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                return db.Query<LopHocDTO>("SELECT MaLop, TenLop FROM LOP_HOC ORDER BY TenLop");
+                return db.Query<LopHocDTO>("SELECT MaLop, TenLop, SiSo FROM LOP_HOC ORDER BY TenLop");
             }
         }
 
@@ -36,11 +36,11 @@ namespace src.DAL
             }
         }
 
-        public void CreateLopHoc(string tenLop)
+        public void CreateLopHoc(string tenLop, int siSo)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO LOP_HOC (TenLop, SiSo) VALUES (@tenLop, 30)", new { tenLop });
+                db.Execute("INSERT INTO LOP_HOC (TenLop, SiSo) VALUES (@tenLop, @siSo)", new { tenLop, siSo });
             }
         }
 
@@ -52,11 +52,11 @@ namespace src.DAL
             }
         }
 
-        public void UpdateLopHoc(int maLop, string tenLop)
+        public void UpdateLopHoc(int maLop, string tenLop, int siSo)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop WHERE MaLop=@maLop", new { tenLop, maLop });
+                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo WHERE MaLop=@maLop", new { tenLop, siSo, maLop });
             }
         }
 
