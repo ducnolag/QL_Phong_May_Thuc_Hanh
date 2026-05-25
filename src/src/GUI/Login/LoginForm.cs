@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Drawing;
@@ -103,7 +103,6 @@ namespace src.Login
                     ShowError(result.ErrorMessage);
                     if (result.ErrorMessage.Contains("Mật khẩu"))
                     {
-                        txtPassword.Clear();
                         txtPassword.Focus();
                     }
                     return;

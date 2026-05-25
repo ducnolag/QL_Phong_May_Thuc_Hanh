@@ -38,7 +38,7 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 string sql = @"SELECT nd.MaNguoiDung, nd.TenDangNhap, nd.HoTen, nd.Email,
-                                      vt.TenVaiTro, nd.TrangThai, nd.CreatedAt
+                                      vt.TenVaiTro, nd.TrangThai, nd.CreatedAt, nd.SoDienThoai
                                FROM NGUOI_DUNG nd
                                JOIN VAI_TRO vt ON nd.MaVaiTro = vt.MaVaiTro
                                ORDER BY nd.MaNguoiDung";
@@ -68,10 +68,10 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                string sql = "UPDATE NGUOI_DUNG SET HoTen=@HoTen, Email=@Email, TrangThai=@TrangThai, MaVaiTro=@MaVaiTro, UpdatedAt=GETDATE()";
+                string sql = "UPDATE NGUOI_DUNG SET HoTen=@HoTen, Email=@Email, SoDienThoai=@SoDienThoai, TrangThai=@TrangThai";
                 if (updatePassword)
                 {
-                    sql += ", MatKhauDaMaHoa=@MatKhauDaMaHoa, SoDienThoai=@SoDienThoai";
+                    sql += ", MatKhauDaMaHoa=@MatKhauDaMaHoa";
                 }
                 sql += " WHERE TenDangNhap=@TenDangNhap";
                 db.Execute(sql, user);
