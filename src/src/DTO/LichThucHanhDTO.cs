@@ -23,5 +23,7 @@ namespace src.DTO
         
         public int RAMToiThieu { get; set; }
         public int LuuTruToiThieu { get; set; }
+        public int ManHinhToiThieu { get; set; }
+        public string CPUToiThieu { get; set; }
     }
 }

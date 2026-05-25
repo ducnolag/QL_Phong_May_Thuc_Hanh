@@ -102,6 +102,7 @@ namespace src.Views
             catch { /* giữ mặc định */ }
 
             cboRoom.SelectedIndex = 0;
+            cboCpuFilter.SelectedIndex = 0;
             cboMonitor.SelectedIndex = 0;
             cboStorage.SelectedIndex = 0;
             cboRAM.SelectedIndex = 0;
@@ -110,6 +111,7 @@ namespace src.Views
             // Sự kiện lọc
             txtSearch.TextChanged += (s, e) => FilterRows();
             cboRoom.SelectedIndexChanged += (s, e) => FilterRows();
+            cboCpuFilter.SelectedIndexChanged += (s, e) => FilterRows();
             cboMonitor.SelectedIndexChanged += (s, e) => FilterRows();
             cboStorage.SelectedIndexChanged += (s, e) => FilterRows();
             cboRAM.SelectedIndexChanged += (s, e) => FilterRows();
@@ -264,6 +266,7 @@ namespace src.Views
         {
             string kw = txtSearch.Text?.Trim().ToLower() ?? "";
             string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+            string cpuF = cboCpuFilter.SelectedItem?.ToString() ?? "";
             string monF = cboMonitor.SelectedItem?.ToString() ?? "";
             string storF = cboStorage.SelectedItem?.ToString() ?? "";
             string ramF = cboRAM.SelectedItem?.ToString() ?? "";
@@ -288,6 +291,9 @@ namespace src.Views
                 }
                 if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                     if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+
+                if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
+                    if (row.Cells["CPU"].Value?.ToString() != cpuF) show = false;
 
                 if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
                 {
@@ -323,6 +329,7 @@ namespace src.Views
                 filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
                 string kw = txtSearch.Text?.Trim().ToLower() ?? "";
                 string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+                string cpuF = cboCpuFilter.SelectedItem?.ToString() ?? "";
                 string monF = cboMonitor.SelectedItem?.ToString() ?? "";
                 string ramF = cboRAM.SelectedItem?.ToString() ?? "";
                 string statusF = cboStatus.SelectedItem?.ToString() ?? "";
@@ -340,6 +347,8 @@ namespace src.Views
                     }
                     if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                         if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+                    if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
+                        if (row.Cells["CPU"].Value?.ToString() != cpuF) show = false;
                     if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
                     {
                         string monVal = monF.Replace("\"", "");
@@ -391,7 +400,7 @@ namespace src.Views
             try
             {
                 string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                string cpu = Find<ComboBox>(dlg, "cboCPU").SelectedItem?.ToString() ?? "Intel Core i5";
                 int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
                 int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
                 int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
@@ -451,7 +460,7 @@ namespace src.Views
                 if (dlg.ShowDialog() != DialogResult.OK) return;
 
                 string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                string cpu = Find<ComboBox>(dlg, "cboCPU").SelectedItem?.ToString() ?? "Intel Core i5";
                 int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
                 int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
                 int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
@@ -542,8 +551,11 @@ namespace src.Views
             var txtTen = new TextBox { Name = "txtTenMay", Text = tenMay };
             AddRow("Mã máy *:", txtTen);
 
-            var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
-            AddRow("CPU *:", txtCpu);
+            var cboCpu = new ComboBox { Name = "cboCPU", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboCpu.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
+            cboCpu.SelectedItem = cpu;
+            if (cboCpu.SelectedIndex < 0) cboCpu.SelectedIndex = 1; // i5 default
+            AddRow("CPU *:", cboCpu);
 
             var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
             cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
@@ -590,7 +602,7 @@ namespace src.Views
             if (!AppSession.IsAdmin)
             {
                 txtTen.Enabled = false;
-                txtCpu.Enabled = false;
+                cboCpu.Enabled = false;
                 cboInputRam.Enabled = false;
                 cboInputStorage.Enabled = false;
                 cboInputMonitor.Enabled = false;
@@ -635,7 +647,7 @@ namespace src.Views
                 if (dlg.DialogResult == DialogResult.OK)
                 {
                     string mMay = txtTen.Text.Trim();
-                    string mCpu = txtCpu.Text.Trim();
+                    string mCpu = cboCpu.SelectedItem?.ToString() ?? "";
 
                     if (string.IsNullOrEmpty(mMay) || string.IsNullOrEmpty(mCpu))
                     {
@@ -649,7 +661,7 @@ namespace src.Views
                     {
                         count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten", new SqlParameter("@ten", mMay)));
                     }
-                    else
+                    else if (!mMay.Equals(tenMay, StringComparison.OrdinalIgnoreCase))
                     {
                         count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten AND MaMay!=@id", new SqlParameter("@ten", mMay), new SqlParameter("@id", originalMaMay)));
                     }
@@ -665,6 +677,11 @@ namespace src.Views
             };
 
             return dlg;
+        }
+
+        private void cboStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
 
         private T Find<T>(Form f, string name) where T : Control
