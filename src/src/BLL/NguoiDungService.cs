@@ -59,7 +59,7 @@ namespace src.BLL
             return _NguoiDungRepository.GetAllUsers();
         }
 
-        public void CreateUser(string username, string password, string hoTen, string email, string role, bool active)
+        public void CreateUser(string username, string password, string hoTen, string email, string phone, bool active)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
@@ -72,7 +72,7 @@ namespace src.BLL
                 throw new Exception("Tên đăng nhập đã tồn tại!");
             }
 
-            int roleId = _NguoiDungRepository.GetRoleIdByName(role);
+            int roleId = _NguoiDungRepository.GetRoleIdByName("NhanVien");
             string hashed = DatabaseHelper.HashPassword(password);
 
             var user = new TaiKhoanDTO
@@ -81,7 +81,7 @@ namespace src.BLL
                 MatKhauDaMaHoa = hashed,
                 HoTen = string.IsNullOrEmpty(hoTen) ? username : hoTen,
                 Email = email,
-                SoDienThoai = "", // Do not store unencrypted password here
+                SoDienThoai = phone,
                 TrangThai = active,
                 MaVaiTro = roleId
             };
@@ -89,24 +89,21 @@ namespace src.BLL
             _NguoiDungRepository.CreateUser(user);
         }
 
-        public void UpdateUser(string username, string newPassword, string hoTen, string email, string role, bool active)
+        public void UpdateUser(string username, string newPassword, string hoTen, string email, string phone, bool active)
         {
-            int roleId = _NguoiDungRepository.GetRoleIdByName(role);
-            
             var user = new TaiKhoanDTO
             {
                 TenDangNhap = username,
                 HoTen = string.IsNullOrEmpty(hoTen) ? username : hoTen,
                 Email = email,
-                TrangThai = active,
-                MaVaiTro = roleId
+                SoDienThoai = phone,
+                TrangThai = active
             };
 
             bool updatePassword = !string.IsNullOrEmpty(newPassword);
             if (updatePassword)
             {
                 user.MatKhauDaMaHoa = DatabaseHelper.HashPassword(newPassword);
-                user.SoDienThoai = ""; // Do not store unencrypted password here
             }
 
             _NguoiDungRepository.UpdateUser(user, updatePassword);

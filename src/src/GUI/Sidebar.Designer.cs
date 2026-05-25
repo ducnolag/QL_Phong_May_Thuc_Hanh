@@ -90,7 +90,7 @@
             btnUserManage.Size = new System.Drawing.Size(247, 59);
             btnUserManage.TabIndex = 1;
             btnUserManage.Tag = "UserManage";
-            btnUserManage.Text = "👤   Quản Lý Người Dùng";
+            btnUserManage.Text = "👤   Quản Lý Nhân Viên";
             btnUserManage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             btnUserManage.UseVisualStyleBackColor = false;
             btnUserManage.Click += btnUserManage_Click;

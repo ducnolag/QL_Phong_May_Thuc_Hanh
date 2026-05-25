@@ -1,4 +1,4 @@
-﻿namespace src.Views
+namespace src.Views
 {
     partial class QuanLyNguoiDungView
     {
@@ -60,7 +60,7 @@
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new System.Drawing.Size(205, 51);
             btnAdd.TabIndex = 2;
-            btnAdd.Text = "+ Thêm Người Dùng";
+            btnAdd.Text = "+ Thêm Nhân Viên";
             btnAdd.UseVisualStyleBackColor = false;
             // 
             // lblSubtitle
@@ -83,7 +83,7 @@
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new System.Drawing.Size(387, 50);
             lblTitle.TabIndex = 0;
-            lblTitle.Text = "Quản Lý Người Dùng";
+            lblTitle.Text = "Quản Lý Nhân Viên";
             lblTitle.Click += lblTitle_Click;
             // 
             // pnlToolbar
@@ -109,7 +109,7 @@
             txtSearch.Location = new System.Drawing.Point(18, 80);
             txtSearch.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "🔍  Tìm kiếm người dùng...";
+            txtSearch.PlaceholderText = "🔍  Tìm kiếm nhân viên...";
             txtSearch.Size = new System.Drawing.Size(1060, 30);
             txtSearch.TabIndex = 2;
             // 
@@ -122,7 +122,7 @@
             lblSearchSub.Name = "lblSearchSub";
             lblSearchSub.Size = new System.Drawing.Size(335, 20);
             lblSearchSub.TabIndex = 1;
-            lblSearchSub.Text = "Xem và quản lý tất cả người dùng trong hệ thống";
+            lblSearchSub.Text = "Xem và quản lý tất cả nhân viên trong hệ thống";
             // 
             // lblSearchTitle
             // 
@@ -133,7 +133,7 @@
             lblSearchTitle.Name = "lblSearchTitle";
             lblSearchTitle.Size = new System.Drawing.Size(251, 28);
             lblSearchTitle.TabIndex = 0;
-            lblSearchTitle.Text = "Người Dùng && Tài Khoản";
+            lblSearchTitle.Text = "Nhân Viên && Tài Khoản";
             // 
             // pnlGrid
             // 

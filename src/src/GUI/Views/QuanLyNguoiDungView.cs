@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -50,7 +50,7 @@ namespace src.Views
             dgv.Columns.Add(new DataGridViewTextBoxColumn
             { Name = "Email", HeaderText = "Email", Width = 185, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
-            { Name = "VaiTro", HeaderText = "Vai trò", Width = 90, ReadOnly = true });
+            { Name = "SoDienThoai", HeaderText = "Số điện thoại", Width = 110, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
             { Name = "TrangThai", HeaderText = "Trạng thái", Width = 90, ReadOnly = true });
             dgv.Columns.Add(new DataGridViewTextBoxColumn
@@ -124,22 +124,25 @@ namespace src.Views
                 var users = _NguoiDungService.GetAllUsers();
                 foreach (var r in users)
                 {
+                    if (r.TenDangNhap.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
+                        r.TenVaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase)) continue;
+
                     bool active = r.TrangThai;
                     string status = active ? "active" : "inactive";
                     string ngay = r.CreatedAt.ToString("yyyy-MM-dd");
 
                     int idx = dgv.Rows.Add(
                         r.TenDangNhap, r.HoTen, r.Email,
-                        r.TenVaiTro, status, ngay);
+                        r.SoDienThoai, status, ngay);
                     // Tag lưu MaNguoiDung và trạng thái active
                     dgv.Rows[idx].Tag = (id: r.MaNguoiDung, active: active);
                 }
             }
             catch
             {
-                dgv.Rows.Add("admin", "Administrator", "admin@lab.vn", "Admin", "active", "2024-01-15");
-                dgv.Rows.Add("nhanvien1", "Trần Thị Bình", "binh@lab.vn", "NhanVien", "active", "2024-02-20");
-                dgv.Rows.Add("nhanvien2", "Lê Hoàng Nam", "nam@lab.vn", "NhanVien", "inactive", "2024-03-10");
+                dgv.Rows.Add("admin", "Administrator", "admin@lab.vn", "0123456789", "active", "2024-01-15");
+                dgv.Rows.Add("nhanvien1", "Trần Thị Bình", "binh@lab.vn", "0987654321", "active", "2024-02-20");
+                dgv.Rows.Add("nhanvien2", "Lê Hoàng Nam", "nam@lab.vn", "0912345678", "inactive", "2024-03-10");
             }
         }
 
@@ -150,15 +153,7 @@ namespace src.Views
             string col = dgv.Columns[e.ColumnIndex].Name;
             string val = e.Value?.ToString() ?? "";
 
-            if (col == "VaiTro")
-            {
-                bool isAdmin = val.Contains("Admin");
-                e.CellStyle.ForeColor = isAdmin ? ThemeColors.BadgePurpleFg : ThemeColors.BadgeBlueFg;
-                e.CellStyle.BackColor = isAdmin ? ThemeColors.BadgePurpleBg : ThemeColors.BadgeBlueBg;
-                e.CellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-                e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            }
-            else if (col == "TrangThai")
+            if (col == "TrangThai")
             {
                 bool active = val == "active";
                 e.CellStyle.ForeColor = active ? ThemeColors.BadgeGreenFg : ThemeColors.BadgeRedFg;
@@ -197,7 +192,7 @@ namespace src.Views
         // ── Dialog Thêm ───────────────────────────────────────────────────
         private void ShowAddDialog()
         {
-            using var dlg = BuildUserDialog("Thêm Người Dùng Mới", "", "", "", "", "", true, true);
+            using var dlg = BuildUserDialog("Thêm Nhân Viên Mới", "", "", "", "", "", true, true);
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
@@ -205,12 +200,12 @@ namespace src.Views
                 string hoTen = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
                 string email = Find<TextBox>(dlg, "txtEmail").Text.Trim();
                 string password = Find<TextBox>(dlg, "txtPassword").Text.Trim();
-                string role = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
+                string phone = Find<TextBox>(dlg, "txtPhone").Text.Trim();
                 bool active = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                _NguoiDungService.CreateUser(username, password, hoTen, email, role, active);
+                _NguoiDungService.CreateUser(username, password, hoTen, email, phone, active);
 
-                MessageBox.Show("Đã thêm người dùng thành công!", "Thành công",
+                MessageBox.Show("Đã thêm nhân viên thành công!", "Thành công",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadData();
             }
@@ -227,22 +222,22 @@ namespace src.Views
             string username = row.Cells["TenDN"].Value?.ToString() ?? "";
             string hoTen = row.Cells["HoTen"].Value?.ToString() ?? "";
             string email = row.Cells["Email"].Value?.ToString() ?? "";
-            string role = row.Cells["VaiTro"].Value?.ToString() ?? "";
+            string phone = row.Cells["SoDienThoai"].Value?.ToString() ?? "";
             // raw value lưu là "active"/"inactive" (lowercase)
             bool active = row.Cells["TrangThai"].Value?.ToString() == "active";
 
             // Mật khẩu đã hash – để trống, admin nhập mới nếu muốn đổi
-            using var dlg = BuildUserDialog("Chỉnh Sửa Người Dùng", username, hoTen, email, "", role, active, false);
+            using var dlg = BuildUserDialog("Chỉnh Sửa Nhân Viên", username, hoTen, email, "", phone, active, false);
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
                 string newHoTen = Find<TextBox>(dlg, "txtHoTen").Text.Trim();
                 string newEmail = Find<TextBox>(dlg, "txtEmail").Text.Trim();
                 string newPw = Find<TextBox>(dlg, "txtPassword").Text.Trim();
-                string newRole = Find<ComboBox>(dlg, "cboRole").SelectedItem?.ToString() ?? "NhanVien";
+                string newPhone = Find<TextBox>(dlg, "txtPhone").Text.Trim();
                 bool newActive = Find<CheckBox>(dlg, "chkActive").Checked;
 
-                _NguoiDungService.UpdateUser(username, newPw, newHoTen, newEmail, newRole, newActive);
+                _NguoiDungService.UpdateUser(username, newPw, newHoTen, newEmail, newPhone, newActive);
 
                 // Nếu đang sửa chính tài khoản đang đăng nhập → cập nhật sidebar
                 if (this.TopLevelControl is SidebarForm mf && string.Equals(mf._currentUser, username, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(newHoTen))
@@ -277,7 +272,7 @@ namespace src.Views
 
             try
             {
-                if (MessageBox.Show($"Xóa người dùng '{username}'?", "Xác nhận xóa",
+                if (MessageBox.Show($"Xóa nhân viên '{username}'?", "Xác nhận xóa",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
                 _NguoiDungService.DeleteUser(userId, username, active);
@@ -298,7 +293,7 @@ namespace src.Views
         /// password = mật khẩu plain-text đã lưu (hint), hiển thị sẵn khi Sửa.
         /// </summary>
         private Form BuildUserDialog(string title, string username, string hoTen,
-            string email, string password, string role, bool active, bool isNew)
+            string email, string password, string phone, bool active, bool isNew)
         {
             var dlg = new Form
             {
@@ -447,19 +442,17 @@ namespace src.Views
             }
             y += isNew ? 42 : 52;
 
-            // ── Vai trò ──
-            AddLabel("Vai trò", y);
-            var cboRole = new ComboBox
+            // ── Số điện thoại ──
+            AddLabel("Số điện thoại", y);
+            var txtPhone = new TextBox
             {
-                Name = "cboRole",
+                Name = "txtPhone",
+                Text = phone,
                 Location = new Point(tx, y),
                 Size = new Size(inputW, 26),
-                DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 10F)
             };
-            cboRole.Items.AddRange(new object[] { "Admin", "NhanVien" });
-            cboRole.SelectedItem = role.Contains("Admin") || role.Contains("admin") ? "Admin" : "NhanVien";
-            dlg.Controls.Add(cboRole);
+            dlg.Controls.Add(txtPhone);
             y += 42;
 
             // ── Trạng thái ──
