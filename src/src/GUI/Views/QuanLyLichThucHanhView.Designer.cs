@@ -31,6 +31,8 @@ namespace src.Views
             lblListTitle = new System.Windows.Forms.Label();
             lblListSub = new System.Windows.Forms.Label();
             pnlListHeader = new System.Windows.Forms.Panel();
+            txtSearch = new System.Windows.Forms.TextBox();
+            cboRoomFilter = new System.Windows.Forms.ComboBox();
             pnlHeader.SuspendLayout();
             pnlListHeader.SuspendLayout();
             SuspendLayout();
@@ -202,12 +204,37 @@ namespace src.Views
             pnlListHeader.Controls.Add(lblListSub);
             pnlListHeader.Controls.Add(chkXemLichCu);
             pnlListHeader.Controls.Add(lblListTitle);
+            pnlListHeader.Controls.Add(txtSearch);
+            pnlListHeader.Controls.Add(cboRoomFilter);
             pnlListHeader.Dock = System.Windows.Forms.DockStyle.Top;
             pnlListHeader.Location = new System.Drawing.Point(23, 240);
             pnlListHeader.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             pnlListHeader.Name = "pnlListHeader";
             pnlListHeader.Size = new System.Drawing.Size(1097, 67);
             pnlListHeader.TabIndex = 2;
+            // 
+            // txtSearch
+            // 
+            txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            txtSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            txtSearch.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            txtSearch.Location = new System.Drawing.Point(530, 23);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "🔍 Tìm môn, lớp...";
+            txtSearch.Size = new System.Drawing.Size(200, 26);
+            txtSearch.TabIndex = 9;
+            // 
+            // cboRoomFilter
+            // 
+            cboRoomFilter.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            cboRoomFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboRoomFilter.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            cboRoomFilter.IntegralHeight = false;
+            cboRoomFilter.Location = new System.Drawing.Point(740, 23);
+            cboRoomFilter.MaxDropDownItems = 5;
+            cboRoomFilter.Name = "cboRoomFilter";
+            cboRoomFilter.Size = new System.Drawing.Size(150, 26);
+            cboRoomFilter.TabIndex = 10;
             // 
             // QuanLyLichThucHanhView
             // 
@@ -246,5 +273,7 @@ namespace src.Views
         public System.Windows.Forms.DateTimePicker dtpToDate;
         public System.Windows.Forms.Label lblDenNgay;
         public System.Windows.Forms.FlowLayoutPanel pnlScheduleList;
+        public System.Windows.Forms.TextBox txtSearch;
+        public System.Windows.Forms.ComboBox cboRoomFilter;
     }
 }
