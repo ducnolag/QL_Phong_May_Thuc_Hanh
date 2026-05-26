@@ -12,15 +12,24 @@ namespace src.Login
     {
         public LoginForm()
         {
-            InitializeComponent();
-            ApplyCustomStyles();
+            InitializeComponent(); // Thiết kế giao diện bằng Designer, sau đó thêm code tùy chỉnh trong ApplyCustomStyles()
+            ApplyCustomStyles(); 
         }
 
         private void ApplyCustomStyles()
         {
-            // Drag support
+            // Hỗ trợ kéo form bằng di chuyển chỗ phù hợp trên màn hình
             pnlLeft.MouseDown += (s, e) => { Tag = e.Location; };
             pnlLeft.MouseMove += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Left && Tag is Point start)
+                {
+                    var p = PointToScreen(e.Location);
+                    Location = new Point(p.X - start.X, p.Y - start.Y);
+                }
+            };
+            pnlRight.MouseDown += (s, e) => { Tag = e.Location; };
+            pnlRight.MouseMove += (s, e) =>
             {
                 if (e.Button == MouseButtons.Left && Tag is Point start)
                 {
@@ -31,18 +40,18 @@ namespace src.Login
 
             btnClose.Click += (s, e) => Application.Exit();
 
-            // Hover colors
+            // Hover màu cho ô nhập
             txtUsername.GotFocus  += (s, e) => { pnlUserWrap.BackColor = Color.FromArgb(232, 238, 255); txtUsername.BackColor = Color.FromArgb(232, 238, 255); };
             txtUsername.LostFocus += (s, e) => { pnlUserWrap.BackColor = Color.FromArgb(245, 247, 252); txtUsername.BackColor = Color.FromArgb(245, 247, 252); };
             txtPassword.GotFocus  += (s, e) => { pnlPassWrap.BackColor = Color.FromArgb(232, 238, 255); txtPassword.BackColor = Color.FromArgb(232, 238, 255); };
             txtPassword.LostFocus += (s, e) => { pnlPassWrap.BackColor = Color.FromArgb(245, 247, 252); txtPassword.BackColor = Color.FromArgb(245, 247, 252); };
 
-            // Icon con mắt – vẽ bằng GDI+
+            // Icon con mắt 
             btnShowPass.Text = "";
             btnShowPass.Paint += BtnShowPass_Paint;
         }
 
-        // Vẽ icon con mắt: mắt bình thường (đang ẩn) hoặc mắt + gạch chéo (đang hiện)
+        // Vẽ icon con mắt
         private void BtnShowPass_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;

@@ -13,10 +13,10 @@ namespace src.DAL
         (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end);
         IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false);
         LichThucHanhDTO GetScheduleById(int id);
-        (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id);
+        (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu, string CPUToiThieu) GetScheduleRequirements(int id);
         (int MaPhong, string TenPhong, int SucChua) GetAssignedRoom(int scheduleId);
         
-        IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, DateTime date, int caId, int currentScheduleId = 0);
+        IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, DateTime date, int caId, int currentScheduleId = 0);
         
         int GetLopIdByName(string name);
         int CreateLop(string name);
@@ -24,11 +24,11 @@ namespace src.DAL
         int CreateMon(string name);
         
         int CheckDuplicateClassSchedule(int lopId, DateTime date, int caId, int excludeScheduleId = 0);
-        int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor);
+        int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor, string reqCpu);
         int CheckRoomConflict(int roomId, DateTime date, int caId, int excludeScheduleId = 0);
 
-        int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
-        void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId);
+        int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId);
+        void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId);
         void CancelSchedule(int id);
         void DeleteSchedule(int id);
         
@@ -45,20 +45,35 @@ namespace src.DAL
 
     public class LichThucHanhRepository : ILichThucHanhRepository
     {
+        private void AutoUpdateOldSchedules(IDbConnection db)
+        {
+            db.Execute(@"
+                UPDATE LICH_THUC_HANH 
+                SET TrangThaiLich = N'Không được xếp' 
+                WHERE TrangThaiLich = N'Chờ xếp phòng' 
+                  AND (NgayThucHanh < CAST(GETDATE() AS DATE) 
+                       OR (NgayThucHanh = CAST(GETDATE() AS DATE) AND MaCa IN (SELECT MaCa FROM CA_HOC WHERE GioKetThuc < CAST(GETDATE() AS TIME))))");
+        }
+
         public (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
+                AutoUpdateOldSchedules(db);
+                
                 string dtCond = "1=1";
                 if (start.HasValue && end.HasValue)
                 {
                     dtCond = "NgayThucHanh >= @start AND NgayThucHanh <= @end";
                 }
 
-                int total = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {dtCond}", new { start, end });
-                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
-                int pending = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich NOT IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
-                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {dtCond}", new { start, end });
+                // Dieu kien lich hien tai/tuong lai (chua qua)
+                string futureCond = $"{dtCond} AND (NgayThucHanh > CAST(GETDATE() AS DATE) OR (NgayThucHanh = CAST(GETDATE() AS DATE) AND MaCa IN (SELECT MaCa FROM CA_HOC WHERE GioKetThuc >= CAST(GETDATE() AS TIME))))";
+
+                int total    = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {futureCond}", new { start, end });
+                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'\u0110\u00e3 h\u1ee7y' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {futureCond}", new { start, end });
+                int pending  = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Ch\u1edd x\u1ebfp ph\u00f2ng' AND {futureCond}", new { start, end });
+                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'\u0110\u00e3 h\u1ee7y' AND {dtCond}", new { start, end });
                 return (total, assigned, pending, canceled);
             }
         }
@@ -67,11 +82,20 @@ namespace src.DAL
         {
             using (var db = DatabaseHelper.GetConnection())
             {
+                AutoUpdateOldSchedules(db);
+
                 string dtCond = "1=1";
                 if (start.HasValue && end.HasValue)
                 {
                     dtCond = "l.NgayThucHanh >= @start AND l.NgayThucHanh <= @end";
                 }
+
+                // Dieu kien lich qua khu (da qua)
+                string pastFilter    = "AND (l.NgayThucHanh < CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc < CAST(GETDATE() AS TIME)))";
+                // Dieu kien lich hien tai/tuong lai (chua qua)
+                string futureFilter  = "AND l.TrangThaiLich != N'\u0110\u00e3 h\u1ee7y' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))";
+
+                string modeFilter = includePast ? pastFilter : futureFilter;
 
                 string sql = $@"SELECT l.MaLich, mh.TenMon, l.TrangThaiLich, l.NgayThucHanh, 
                                       c.TenCa, c.GioBatDau, c.GioKetThuc,
@@ -82,7 +106,7 @@ namespace src.DAL
                                LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                                LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
                                WHERE {dtCond}
-                                 {(!includePast ? "AND l.TrangThaiLich != N'Đã hủy' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))" : "")}
+                                 {modeFilter}
                                ORDER BY l.NgayThucHanh DESC, c.GioBatDau";
                 return db.Query<LichThucHanhDTO>(sql, new { start, end });
             }
@@ -103,13 +127,13 @@ namespace src.DAL
             }
         }
 
-        public (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu) GetScheduleRequirements(int id)
+        public (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu, string CPUToiThieu) GetScheduleRequirements(int id)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                var row = db.QueryFirstOrDefault("SELECT RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new { id });
-                if (row == null) return (0, 0, 0);
-                return (row.RAMToiThieu ?? 0, row.LuuTruToiThieu ?? 0, (int?)row.ManHinhToiThieu ?? 0);
+                var row = db.QueryFirstOrDefault("SELECT RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu, CPUToiThieu FROM YEU_CAU_CAU_HINH WHERE MaLich=@id", new { id });
+                if (row == null) return (0, 0, 0, "");
+                return (row.RAMToiThieu ?? 0, row.LuuTruToiThieu ?? 0, (int?)row.ManHinhToiThieu ?? 0, (string)row.CPUToiThieu ?? "");
             }
         }
 
@@ -125,7 +149,7 @@ namespace src.DAL
             }
         }
 
-        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, DateTime date, int caId, int currentScheduleId = 0)
+        public IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, DateTime date, int caId, int currentScheduleId = 0)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -134,7 +158,8 @@ namespace src.DAL
                            (SELECT COUNT(*) FROM MAY_TINH m 
                             JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                             WHERE m.MaPhong = p.MaPhong AND tm.TenTrangThaiMay = N'Tốt'
-                              AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor) AS MayTot
+                              AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor
+                              AND (@reqCpu = '' OR ISNULL(m.CPU, '') = @reqCpu)) AS MayTot
                     FROM PHONG_MAY p
                     JOIN TRANG_THAI_PHONG ttp ON p.MaTTPhong = ttp.MaTTPhong
                     WHERE ttp.TenTrangThaiPhong = N'Hoạt động'
@@ -147,7 +172,7 @@ namespace src.DAL
                              AND l.TrangThaiLich != N'Đã hủy'
                             AND l.MaLich != @currentScheduleId
                       )";
-                return db.Query(sql, new { soSV, reqRam, reqStorage, reqMonitor, date = date.Date, caId, currentScheduleId });
+                return db.Query(sql, new { soSV, reqRam, reqStorage, reqMonitor, reqCpu = reqCpu ?? "", date = date.Date, caId, currentScheduleId });
             }
         }
 
@@ -194,15 +219,16 @@ namespace src.DAL
             }
         }
 
-        public int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor)
+        public int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor, string reqCpu)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
                 return db.ExecuteScalar<int>(@"SELECT COUNT(*) FROM MAY_TINH m
                                                JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                                                WHERE m.MaPhong = @roomId AND tm.TenTrangThaiMay = N'Tốt'
-                                                 AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor", 
-                                               new { roomId, reqRam, reqStorage, reqMonitor });
+                                                 AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor
+                                                 AND (@reqCpu = '' OR ISNULL(m.CPU, '') = @reqCpu)", 
+                                               new { roomId, reqRam, reqStorage, reqMonitor, reqCpu = reqCpu ?? "" });
             }
         }
 
@@ -218,7 +244,7 @@ namespace src.DAL
             }
         }
 
-        public int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
+        public int CreateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -232,8 +258,8 @@ namespace src.DAL
                               OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLop, @MaMon, @MaCa, @NguoiTao)",
                             schedule, trans);
 
-                        conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu) VALUES (@newId, @reqRam, @reqStorage, @reqMonitor)", 
-                            new { newId, reqRam, reqStorage, reqMonitor }, trans);
+                        conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu, CPUToiThieu) VALUES (@newId, @reqRam, @reqStorage, @reqMonitor, @reqCpu)", 
+                            new { newId, reqRam, reqStorage, reqMonitor, reqCpu }, trans);
 
                         if (roomId.HasValue)
                         {
@@ -253,7 +279,7 @@ namespace src.DAL
             }
         }
 
-        public void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, int? roomId)
+        public void UpdateSchedule(LichThucHanhDTO schedule, int reqRam, int reqStorage, int reqMonitor, string reqCpu, int? roomId)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             {
@@ -268,13 +294,13 @@ namespace src.DAL
                         int countYc = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM YEU_CAU_CAU_HINH WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);
                         if (countYc > 0)
                         {
-                            conn.Execute("UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@reqRam, LuuTruToiThieu=@reqStorage, ManHinhToiThieu=@reqMonitor WHERE MaLich=@MaLich", 
-                                new { reqRam, reqStorage, reqMonitor, schedule.MaLich }, trans);
+                            conn.Execute("UPDATE YEU_CAU_CAU_HINH SET RAMToiThieu=@reqRam, LuuTruToiThieu=@reqStorage, ManHinhToiThieu=@reqMonitor, CPUToiThieu=@reqCpu WHERE MaLich=@MaLich", 
+                                new { reqRam, reqStorage, reqMonitor, reqCpu, schedule.MaLich }, trans);
                         }
                         else
                         {
-                            conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu) VALUES (@MaLich, @reqRam, @reqStorage, @reqMonitor)", 
-                                new { schedule.MaLich, reqRam, reqStorage, reqMonitor }, trans);
+                            conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu, CPUToiThieu) VALUES (@MaLich, @reqRam, @reqStorage, @reqMonitor, @reqCpu)", 
+                                new { schedule.MaLich, reqRam, reqStorage, reqMonitor, reqCpu }, trans);
                         }
 
                         conn.Execute("DELETE FROM PHAN_CONG_PHONG WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);

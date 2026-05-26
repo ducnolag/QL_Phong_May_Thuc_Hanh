@@ -41,19 +41,19 @@ namespace src.BLL
 
         public (bool IsSuccess, string Message) DeleteRoom(int roomId)
         {
-            // Check if room has active (future or ongoing) schedules
+            // Kiểm tra xem phòng có lịch trong hiện tại hoặc tương lai không
             var count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
                 @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
                   JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
                   JOIN CA_HOC c ON l.MaCa = c.MaCa
-                  WHERE pc.MaPhong=@id AND l.TrangThaiLich != N'Đã hủy'
+                  WHERE pc.MaPhong=@id AND l.TrangThaiLich NOT IN (N'Đã hủy', N'Không được xếp')
                     AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) 
                          OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))",
                 new SqlParameter("@id", roomId)));
             
             if (count > 0)
             {
-                return (false, "Phòng đang có lịch thực hành không thể xóa!");
+                return (false, "Phòng đang có lịch thực hành trong hiện tại hoặc tương lai, không thể xóa!");
             }
 
             bool success = _PhongMayRepository.DeleteRoomWithTransaction(roomId);

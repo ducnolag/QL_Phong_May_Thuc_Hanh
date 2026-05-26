@@ -102,6 +102,7 @@ namespace src.Views
             catch { /* giữ mặc định */ }
 
             cboRoom.SelectedIndex = 0;
+            cboCpuFilter.SelectedIndex = 0;
             cboMonitor.SelectedIndex = 0;
             cboStorage.SelectedIndex = 0;
             cboRAM.SelectedIndex = 0;
@@ -110,6 +111,7 @@ namespace src.Views
             // Sự kiện lọc
             txtSearch.TextChanged += (s, e) => FilterRows();
             cboRoom.SelectedIndexChanged += (s, e) => FilterRows();
+            cboCpuFilter.SelectedIndexChanged += (s, e) => FilterRows();
             cboMonitor.SelectedIndexChanged += (s, e) => FilterRows();
             cboStorage.SelectedIndexChanged += (s, e) => FilterRows();
             cboRAM.SelectedIndexChanged += (s, e) => FilterRows();
@@ -264,6 +266,7 @@ namespace src.Views
         {
             string kw = txtSearch.Text?.Trim().ToLower() ?? "";
             string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+            string cpuF = cboCpuFilter.SelectedItem?.ToString() ?? "";
             string monF = cboMonitor.SelectedItem?.ToString() ?? "";
             string storF = cboStorage.SelectedItem?.ToString() ?? "";
             string ramF = cboRAM.SelectedItem?.ToString() ?? "";
@@ -288,6 +291,9 @@ namespace src.Views
                 }
                 if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                     if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+
+                if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
+                    if (row.Cells["CPU"].Value?.ToString() != cpuF) show = false;
 
                 if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
                 {
@@ -323,6 +329,7 @@ namespace src.Views
                 filteredRows = new System.Collections.Generic.List<DataGridViewRow>();
                 string kw = txtSearch.Text?.Trim().ToLower() ?? "";
                 string roomF = cboRoom.SelectedItem?.ToString() ?? "";
+                string cpuF = cboCpuFilter.SelectedItem?.ToString() ?? "";
                 string monF = cboMonitor.SelectedItem?.ToString() ?? "";
                 string ramF = cboRAM.SelectedItem?.ToString() ?? "";
                 string statusF = cboStatus.SelectedItem?.ToString() ?? "";
@@ -340,6 +347,8 @@ namespace src.Views
                     }
                     if (show && roomF != "Tất cả phòng" && !string.IsNullOrEmpty(roomF))
                         if (row.Cells["Room"].Value?.ToString() != roomF) show = false;
+                    if (show && cpuF != "Tất cả CPU" && !string.IsNullOrEmpty(cpuF))
+                        if (row.Cells["CPU"].Value?.ToString() != cpuF) show = false;
                     if (show && monF != "Tất cả màn hình" && !string.IsNullOrEmpty(monF))
                     {
                         string monVal = monF.Replace("\"", "");
@@ -386,12 +395,28 @@ namespace src.Views
         // ── Dialog Thêm máy ────────────────────────────────────────────
         private void ShowAddDialog()
         {
-            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 256, 24, 0, "Tốt");
+            // Lay phong dang duoc chon tren filter de tu dong dien tien to ma may
+            int initialMaPhong = 0;
+            string selectedRoom = cboRoom.SelectedItem?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(selectedRoom) && selectedRoom != "Tất cả phòng")
+            {
+                try
+                {
+                    var dt = DatabaseHelper.ExecuteQuery(
+                        "SELECT MaPhong FROM PHONG_MAY WHERE TenPhong = @name",
+                        new Microsoft.Data.SqlClient.SqlParameter("@name", selectedRoom));
+                    if (dt.Rows.Count > 0)
+                        initialMaPhong = Convert.ToInt32(dt.Rows[0]["MaPhong"]);
+                }
+                catch { }
+            }
+
+            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 256, 24, initialMaPhong, "Tốt");
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
                 string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                string cpu = Find<ComboBox>(dlg, "cboCPU").SelectedItem?.ToString() ?? "Intel Core i5";
                 int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
                 int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
                 int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
@@ -451,7 +476,7 @@ namespace src.Views
                 if (dlg.ShowDialog() != DialogResult.OK) return;
 
                 string tenMay = Find<TextBox>(dlg, "txtTenMay").Text.Trim();
-                string cpu = Find<TextBox>(dlg, "txtCPU").Text.Trim();
+                string cpu = Find<ComboBox>(dlg, "cboCPU").SelectedItem?.ToString() ?? "Intel Core i5";
                 int ram = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputRAM").SelectedItem.ToString().Replace(" GB", ""));
                 int storage = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputStorage").SelectedItem.ToString().Replace(" GB", ""));
                 int monitor = Convert.ToInt32(Find<ComboBox>(dlg, "cboInputMonitor").SelectedItem.ToString().Replace("\"", ""));
@@ -539,11 +564,56 @@ namespace src.Views
                 y += 40;
             }
 
-            var txtTen = new TextBox { Name = "txtTenMay", Text = tenMay };
-            AddRow("Mã máy *:", txtTen);
+            // Panel chứa prefix và suffix
+            var pnlMaMay = new FlowLayoutPanel { Size = new Size(240, 26), Margin = new Padding(0), BorderStyle = BorderStyle.Fixed3D, BackColor = Color.White, WrapContents = false };
+            var lblPrefix = new Label { Name = "lblPrefix", AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(0, 2, 0, 0), Margin = new Padding(0), ForeColor = SystemColors.ControlText, Font = new Font("Segoe UI", 9.5F) };
+            var txtSuffix = new TextBox { Name = "txtSuffix", BorderStyle = BorderStyle.None, Font = new Font("Segoe UI", 9.5F), Margin = new Padding(0, 2, 0, 0), Width = 120 };
+            pnlMaMay.Controls.Add(lblPrefix);
+            pnlMaMay.Controls.Add(txtSuffix);
 
-            var txtCpu = new TextBox { Name = "txtCPU", Text = cpu };
-            AddRow("CPU *:", txtCpu);
+            var txtTen = new TextBox { Name = "txtTenMay", Visible = false };
+            dlg.Controls.Add(txtTen);
+
+            Action updateTxtTenMay = () => { txtTen.Text = lblPrefix.Text + txtSuffix.Text; };
+            txtSuffix.TextChanged += (s, e) => updateTxtTenMay();
+            lblPrefix.TextChanged += (s, e) => updateTxtTenMay();
+
+            if (!string.IsNullOrEmpty(tenMay))
+            {
+                int pcIndex = tenMay.LastIndexOf("-PC");
+                if (pcIndex >= 0)
+                {
+                    lblPrefix.Text = tenMay.Substring(0, pcIndex + 3);
+                    txtSuffix.Text = tenMay.Substring(pcIndex + 3);
+                }
+                else
+                {
+                    int lastDash = tenMay.LastIndexOf('-');
+                    if (lastDash >= 0)
+                    {
+                        lblPrefix.Text = tenMay.Substring(0, lastDash + 1);
+                        txtSuffix.Text = tenMay.Substring(lastDash + 1);
+                    }
+                    else
+                    {
+                        lblPrefix.Text = "";
+                        txtSuffix.Text = tenMay;
+                    }
+                }
+            }
+            else
+            {
+                lblPrefix.Text = "";
+                txtSuffix.Text = "";
+            }
+
+            AddRow("Mã máy *:", pnlMaMay);
+
+            var cboCpu = new ComboBox { Name = "cboCPU", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
+            cboCpu.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
+            cboCpu.SelectedItem = cpu;
+            if (cboCpu.SelectedIndex < 0) cboCpu.SelectedIndex = 1; // i5 default
+            AddRow("CPU *:", cboCpu);
 
             var cboInputRam = new ComboBox { Name = "cboInputRAM", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
             cboInputRam.Items.AddRange(new object[] { "4 GB", "8 GB", "16 GB", "32 GB", "64 GB" });
@@ -567,6 +637,15 @@ namespace src.Views
             var cboPh = new ComboBox { Name = "cboPhong", DropDownStyle = ComboBoxStyle.DropDownList };
             try
             {
+                cboPh.SelectedIndexChanged += (s, e) =>
+                {
+                    if (originalMaMay == 0 && cboPh.SelectedItem is DataRowView drv)
+                    {
+                        string pName = drv["TenPhong"].ToString();
+                        lblPrefix.Text = $"{pName}-PC";
+                    }
+                };
+
                 var dtP = DatabaseHelper.ExecuteQuery("SELECT MaPhong, TenPhong FROM PHONG_MAY ORDER BY TenPhong");
                 cboPh.DisplayMember = "TenPhong"; cboPh.ValueMember = "MaPhong";
                 cboPh.DataSource = dtP;
@@ -574,7 +653,17 @@ namespace src.Views
                 dlg.Load += (s, e) =>
                 {
                     if (maPhong > 0)
+                    {
                         cboPh.SelectedValue = maPhong;
+                    }
+
+                    if (originalMaMay == 0 && cboPh.SelectedItem is DataRowView drvLoad)
+                    {
+                        string pName = drvLoad["TenPhong"].ToString();
+                        lblPrefix.Text = $"{pName}-PC";
+                    }
+                    
+                    if (originalMaMay == 0) txtSuffix.Focus();
                 };
             }
             catch { cboPh.DataSource = null; cboPh.Items.Clear(); cboPh.Items.Add("-- Không tải được --"); cboPh.SelectedIndex = 0; }
@@ -589,8 +678,8 @@ namespace src.Views
 
             if (!AppSession.IsAdmin)
             {
-                txtTen.Enabled = false;
-                txtCpu.Enabled = false;
+                txtSuffix.Enabled = false;
+                cboCpu.Enabled = false;
                 cboInputRam.Enabled = false;
                 cboInputStorage.Enabled = false;
                 cboInputMonitor.Enabled = false;
@@ -635,7 +724,7 @@ namespace src.Views
                 if (dlg.DialogResult == DialogResult.OK)
                 {
                     string mMay = txtTen.Text.Trim();
-                    string mCpu = txtCpu.Text.Trim();
+                    string mCpu = cboCpu.SelectedItem?.ToString() ?? "";
 
                     if (string.IsNullOrEmpty(mMay) || string.IsNullOrEmpty(mCpu))
                     {
@@ -649,7 +738,7 @@ namespace src.Views
                     {
                         count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten", new SqlParameter("@ten", mMay)));
                     }
-                    else
+                    else if (!mMay.Equals(tenMay, StringComparison.OrdinalIgnoreCase))
                     {
                         count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten AND MaMay!=@id", new SqlParameter("@ten", mMay), new SqlParameter("@id", originalMaMay)));
                     }
@@ -665,6 +754,11 @@ namespace src.Views
             };
 
             return dlg;
+        }
+
+        private void cboStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
 
         private T Find<T>(Form f, string name) where T : Control

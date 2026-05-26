@@ -4,5 +4,8 @@ namespace src.DTO
     {
         public int MaLop { get; set; }
         public string TenLop { get; set; }
+        public int SiSo { get; set; }
+        public int? MaMon { get; set; }
+        public string TenMon { get; set; }
     }
 }

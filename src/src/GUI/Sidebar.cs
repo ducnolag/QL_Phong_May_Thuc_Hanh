@@ -115,7 +115,7 @@ namespace src
                 if (b.Visible)
                 {
                     b.Top = y;
-                    y += b.Height + 11; // 11 là khoảng cách giữa các nút (vd: 70 - 59 = 11)
+                    y += b.Height + 10; // khoảng cách 10px giữa các nút
                 }
             }
         }
@@ -129,10 +129,8 @@ namespace src
         }
 
         // ── Đặt trạng thái active cho nút menu ───────────────────────
-        /// <summary>
-        /// Highlight nút menu đang active: nền xanh nhạt + chữ xanh đậm.
-        /// Dùng BackColor thay vì override Paint để text vẫn hiển thị đúng.
-        /// </summary>
+        // Highlight nút menu đang active: nền xanh nhạt + chữ xanh đậm.
+        // Dùng BackColor thay vì override Paint để text vẫn hiển thị đúng.
         private void SetActiveMenu(Button btn)
         {
             Button[] menuBtns = { btnUserManage, btnRoomManage,
@@ -168,13 +166,11 @@ namespace src
                 using (var br = new SolidBrush(ThemeColors.PrimaryBlue))
                     e.Graphics.FillRectangle(br, 0, 6, 3, btn.Height - 12);
             }
-            // QUAN TRỌNG: không tự hủy event – indicator phải còn sau khi hover/leave
+            // không tự hủy event – indicator phải còn sau khi hover/leave
         }
 
         // ── Điều hướng đến view ────────────────────────────────────────
-        /// <summary>
-        /// Load UserControl tương ứng vào vùng nội dung chính (pnlContent).
-        /// </summary>
+        // Load UserControl tương ứng vào vùng nội dung chính (pnlContent).
         private void NavigateTo(string viewName)
         {
             // Gỡ view cũ
@@ -213,7 +209,7 @@ namespace src
                 }
             }
         }
-        /// <summary>Cập nhật tên hiển thị trên sidebar khi admin sửa hồ sơ của mình.</summary>
+        //Cập nhật tên hiển thị trên sidebar khi admin sửa hồ sơ của mình.
         public void UpdateSidebarName(string newHoTen)
         {
             lblUsername.Text = newHoTen;

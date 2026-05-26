@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using src.Helpers;
@@ -116,10 +117,13 @@ namespace src.Views
 
                 foreach (var r in dt)
                 {
-                    // Đã được lọc bằng startDate và endDate từ CSDL nên không cần lọc lại ở đây
+                    // Lay trang thai truc tiep tu DB thay vi tu suy ra
+                    string status;
+                    if (r.TrangThaiLich == "Đã hủy") status = "Đã hủy";
+                    else if (r.TrangThaiLich == "Không được xếp") status = "Không được xếp";
+                    else if (r.TenPhong != "---") status = "Đã xếp";
+                    else status = "Chờ xếp";
 
-
-                    string status = r.TrangThaiLich == "Đã hủy" ? "Đã hủy" : (r.TenPhong != "---" ? "Đã xếp" : "Chờ xếp");
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
                     schedules.Add((
                         r.MaLich,
@@ -143,20 +147,22 @@ namespace src.Views
             }
 
             // === Summary cards: Tổng lịch | Đã xếp | Chờ xếp | Đã hủy ===
-            pnlStats.Controls.Add(MakeSummaryCard("Tổng lịch trong tháng", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
+            pnlStats.Controls.Add(MakeSummaryCard("Tổng lịch hiện tại", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
             pnlStats.Controls.Add(MakeSummaryCard("Đã xếp phòng", assigned.ToString(), ThemeColors.AccentGreen));
             pnlStats.Controls.Add(MakeSummaryCard("Chờ xếp phòng", pending.ToString(), ThemeColors.AccentOrange));
             pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.AccentRed));
 
-            // === Schedule cards (chỉ hiển thị lịch chưa hủy) ===
+            // === Schedule cards ===
             string searchTxt = txtSearch?.Text.ToLower() ?? "";
             string roomFilter = cboRoomFilter?.SelectedItem?.ToString() ?? "Tất cả phòng";
-            bool isOld = chkXemLichCu.Checked;
 
             foreach (var sch in schedules)
             {
-                if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt)) continue;
+                if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt) && !sch.room.ToLower().Contains(searchTxt)) continue;
                 if (roomFilter != "Tất cả phòng" && sch.room != roomFilter) continue;
+
+                // Mode xem lich cu: SQL da loc lich qua khu, isOld=true cho tat ca
+                bool isOld = chkXemLichCu.Checked;
 
                 pnlScheduleList.Controls.Add(MakeScheduleCard(
                     sch.id, sch.className, sch.status, sch.date, sch.dayName,
@@ -194,20 +200,24 @@ namespace src.Views
         private Guna.UI2.WinForms.Guna2Panel MakeScheduleCard(int id, string className, string status, string date,
             string dayName, string time, int students, string room, bool isOld = false)
         {
+            Color cardFill = isOld ? Color.FromArgb(249, 250, 251) : Color.White;
             var card = new Guna.UI2.WinForms.Guna2Panel
             {
                 Size = new Size(pnlScheduleList.Width - 30, 120),
                 Margin = new Padding(4),
                 BackColor = Color.Transparent,
-                FillColor = Color.White,
+                FillColor = cardFill,
                 BorderRadius = 12,
                 BorderColor = Color.FromArgb(226, 232, 240),
                 BorderThickness = 1,
                 Tag = id
             };
 
-            Color badgeBg = status == "Đã xếp" ? ThemeColors.BadgeBlueBg : (status == "Đã hủy" ? ThemeColors.BadgeRedBg : ThemeColors.BadgeOrangeBg);
-            Color badgeFg = status == "Đã xếp" ? ThemeColors.BadgeBlueFg : (status == "Đã hủy" ? ThemeColors.BadgeRedFg : ThemeColors.BadgeOrangeFg);
+            Color badgeBg, badgeFg;
+            if (status == "Đã xếp")        { badgeBg = ThemeColors.BadgeBlueBg;   badgeFg = ThemeColors.BadgeBlueFg; }
+            else if (status == "Đã hủy")   { badgeBg = ThemeColors.BadgeRedBg;    badgeFg = ThemeColors.BadgeRedFg; }
+            else if (status == "Không được xếp") { badgeBg = Color.FromArgb(241, 245, 249); badgeFg = Color.FromArgb(100, 116, 139); }
+            else                           { badgeBg = ThemeColors.BadgeOrangeBg; badgeFg = ThemeColors.BadgeOrangeFg; }
 
             var iconLabel = new Label
             {
@@ -251,49 +261,48 @@ namespace src.Views
             card.Controls.Add(badge);
 
             int infoY = 44;
-            card.Controls.Add(new Label { Text = $"📅  {date} ({dayName})", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"⏰  {time}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 20), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"👥  {students} sinh viên", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
-            card.Controls.Add(new Label { Text = $"🏢  {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Ngày thực hành: {date} ({dayName})", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Ca học: {time}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 20), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Số sinh viên: {students}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Phòng: {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
 
-            if (!isOld)
+            // Nút Edit bằng Guna2Button
+            var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
-                // Nút Edit bằng Guna2Button
-                var btnEdit = new Guna.UI2.WinForms.Guna2Button
-                {
-                    Text = "✏",
-                    Size = new Size(34, 30),
-                    Location = new Point(card.Width - 130, 16),
-                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                    FillColor = Color.White,
-                    ForeColor = ThemeColors.TextSecondary,
-                    Font = new Font("Segoe UI", 11F),
-                    Cursor = Cursors.Hand,
-                    BorderRadius = 6,
-                    BorderThickness = 1,
-                    BorderColor = Color.FromArgb(226, 232, 240)
-                };
-                btnEdit.Click += (s, ev) => ShowEditDialog(id);
-                card.Controls.Add(btnEdit);
+                Text = "✏",
+                Size = new Size(34, 30),
+                Location = new Point(card.Width - 130, 16),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FillColor = Color.White,
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 11F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                Enabled = !isOld
+            };
+            if (!isOld) btnEdit.Click += (s, ev) => ShowEditDialog(id);
+            card.Controls.Add(btnEdit);
 
-                // Nút Cancel bằng Guna2Button
-                var btnCancel = new Guna.UI2.WinForms.Guna2Button
-                {
-                    Text = "Hủy lịch",
-                    Size = new Size(80, 30),
-                    Location = new Point(card.Width - 90, 16),
-                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                    FillColor = Color.White,
-                    ForeColor = ThemeColors.TextSecondary,
-                    Font = new Font("Segoe UI", 9F),
-                    Cursor = Cursors.Hand,
-                    BorderRadius = 6,
-                    BorderThickness = 1,
-                    BorderColor = Color.FromArgb(226, 232, 240)
-                };
-                btnCancel.Click += (s, ev) => CancelSchedule(id);
-                card.Controls.Add(btnCancel);
-            }
+            // Nút Cancel bằng Guna2Button
+            var btnCancel = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "Hủy lịch",
+                Size = new Size(80, 30),
+                Location = new Point(card.Width - 90, 16),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FillColor = Color.White,
+                ForeColor = ThemeColors.TextSecondary,
+                Font = new Font("Segoe UI", 9F),
+                Cursor = Cursors.Hand,
+                BorderRadius = 6,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                Enabled = !isOld
+            };
+            if (!isOld) btnCancel.Click += (s, ev) => CancelSchedule(id);
+            card.Controls.Add(btnCancel);
 
             return card;
         }
@@ -313,24 +322,33 @@ namespace src.Views
                     {
                         var dtpDate = FindControl<DateTimePicker>(dlg, "dtpDate");
                         var cboLop = FindControl<ComboBox>(dlg, "cboLop");
-                        var cboMon = FindControl<ComboBox>(dlg, "cboMon");
+                        var txtMonHidden = FindControl<TextBox>(dlg, "txtMonHidden");
                         var cboCa = FindControl<ComboBox>(dlg, "cboCa");
                         var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
                         var numSV = FindControl<NumericUpDown>(dlg, "numSV");
                         var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                         var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                         var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                        var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
+
+                        string tenMon = txtMonHidden?.Text.Trim() ?? "";
+                        if (string.IsNullOrEmpty(tenMon))
+                        {
+                            MessageBox.Show("Lớp học phần chưa được gắn môn học. Hãy chọn lớp khác!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
 
                         DateTime date = dtpDate.Value;
                         int soSV = (int)numSV.Value;
                         int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                         int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                         int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                        string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
                         int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                         _LichThucHanhService.ValidateAndCreateSchedule(
-                            date, cboLop.Text.Trim(), cboMon.Text.Trim(),
-                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
+                            date, cboLop.Text.Trim(), tenMon,
+                            (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, reqCpu, roomId, AppSession.MaNguoiDung
                         );
 
                         MessageBox.Show("Đã tạo lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -369,13 +387,48 @@ namespace src.Views
                     dlg.Shown += (s, ev) =>
                     {
                         FindControl<DateTimePicker>(dlg, "dtpDate").Value = sch.NgayThucHanh;
-                        FindControl<NumericUpDown>(dlg, "numSV").Value = sch.SoLuongSinhVien;
 
                         var cboLopCtrl = FindControl<ComboBox>(dlg, "cboLop");
-                        cboLopCtrl.Text = sch.TenLop;
+                        int idxLop = cboLopCtrl.FindStringExact(sch.TenLop);
+                        
+                        var numSV = FindControl<NumericUpDown>(dlg, "numSV");
+                        
+                        if (idxLop >= 0) 
+                        {
+                            if (cboLopCtrl.SelectedIndex != idxLop) cboLopCtrl.SelectedIndex = idxLop;
+                            
+                            // Explicitly trigger the SiSo update
+                            if (cboLopCtrl.DataSource is System.Collections.IList ds && idxLop < ds.Count && ds[idxLop] is src.DTO.LopHocDTO lop)
+                            {
+                                if (lop.SiSo > 0 && lop.SiSo <= numSV.Maximum && lop.SiSo >= numSV.Minimum)
+                                {
+                                    numSV.Value = lop.SiSo;
+                                }
+                            }
+                        }
+                        else 
+                        {
+                            cboLopCtrl.Text = sch.TenLop;
+                        }
+                        
+                        // If it's an old schedule with default 30, but class has a specific SiSo, prioritize class SiSo
+                        if (sch.SoLuongSinhVien != 30) 
+                        {
+                            numSV.Value = sch.SoLuongSinhVien;
+                        }
+                        else if (idxLop < 0) 
+                        {
+                            numSV.Value = sch.SoLuongSinhVien;
+                        }
 
-                        var cboMonCtrl = FindControl<ComboBox>(dlg, "cboMon");
-                        cboMonCtrl.Text = sch.TenMon;
+                        // Mon hoc: tu dong lay tu Lop hoc phan, chi override khi lop khong co mon
+                        var txtMonHiddenCtrl = FindControl<TextBox>(dlg, "txtMonHidden");
+                        var lblMonAutoCtrl   = FindControl<Label>(dlg, "lblMonAuto");
+                        if (txtMonHiddenCtrl != null && !string.IsNullOrEmpty(sch.TenMon))
+                        {
+                            txtMonHiddenCtrl.Text = sch.TenMon;
+                            if (lblMonAutoCtrl != null) lblMonAutoCtrl.Text = sch.TenMon;
+                        }
 
                         var cboCaCtrl = FindControl<ComboBox>(dlg, "cboCa");
                         cboCaCtrl.SelectedValue = sch.MaCa;
@@ -387,11 +440,12 @@ namespace src.Views
                         cboRamCtrl.SelectedItem = req.RAMToiThieu + " GB";
                         cboStorageCtrl.SelectedItem = req.LuuTruToiThieu + " GB";
 
-                        // We need to fetch ManHinhToiThieu. Assuming req has it now.
-                        // Wait, req might not have ManHinhToiThieu strongly typed if DTO isn't updated. 
-                        // I will update DTO next. Let's assume it's `req.ManHinhToiThieu`.
                         cboMonitorCtrl.SelectedItem = req.ManHinhToiThieu + "\"";
                         if (cboMonitorCtrl.SelectedIndex < 0) cboMonitorCtrl.SelectedIndex = 2;
+
+                        var cboCpuCtrl = FindControl<ComboBox>(dlg, "cboReqCpu");
+                        cboCpuCtrl.SelectedItem = req.CPUToiThieu;
+                        if (cboCpuCtrl.SelectedIndex < 0) cboCpuCtrl.SelectedIndex = 1;
 
                         if (room.MaPhong > 0)
                         {
@@ -421,23 +475,32 @@ namespace src.Views
                         {
                             DateTime date = FindControl<DateTimePicker>(dlg, "dtpDate").Value;
                             var cboLop = FindControl<ComboBox>(dlg, "cboLop");
-                            var cboMon = FindControl<ComboBox>(dlg, "cboMon");
+                            var txtMonHidden = FindControl<TextBox>(dlg, "txtMonHidden");
                             var cboCa = FindControl<ComboBox>(dlg, "cboCa");
                             var cboRoom = FindControl<ComboBox>(dlg, "cboRoom");
                             var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                             var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                             var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                            var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
+
+                            string tenMon = txtMonHidden?.Text.Trim() ?? "";
+                            if (string.IsNullOrEmpty(tenMon))
+                            {
+                                MessageBox.Show("Lớp học phần chưa được gắn môn học!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
 
                             int soSV = (int)FindControl<NumericUpDown>(dlg, "numSV").Value;
                             int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                             int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                             int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                            string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
 
                             int? roomId = GetRoomId(cboRoom.SelectedItem);
 
                             _LichThucHanhService.ValidateAndUpdateSchedule(
-                                scheduleId, date, cboLop.Text.Trim(), cboMon.Text.Trim(),
-                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, roomId, AppSession.MaNguoiDung
+                                scheduleId, date, cboLop.Text.Trim(), tenMon,
+                                (int)cboCa.SelectedValue, soSV, reqRam, reqStorage, reqMonitor, reqCpu, roomId, AppSession.MaNguoiDung
                             );
 
                             MessageBox.Show("Đã cập nhật lịch thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -514,7 +577,7 @@ namespace src.Views
             var dlg = new Form
             {
                 Text = title,
-                Size = new Size(460, 640),
+                Size = new Size(460, 680),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
@@ -526,7 +589,7 @@ namespace src.Views
             int y = 20;
 
             // Ngày thực hành
-            dlg.Controls.Add(new Label { Text = "Ngày TH:", Location = new Point(20, y + 3), AutoSize = true });
+            dlg.Controls.Add(new Label { Text = "Ngày thực hành:", Location = new Point(20, y + 3), AutoSize = true });
             var dtpDate = new DateTimePicker
             {
                 Name = "dtpDate",
@@ -552,33 +615,28 @@ namespace src.Views
             };
             try
             {
-                var dtLop = _LopMonService.GetAllLopHoc();
+                var dtLop = _LopMonService.GetAllLopHoc().ToList();
                 cboLop.DisplayMember = "TenLop"; cboLop.ValueMember = "MaLop"; cboLop.DataSource = dtLop;
             }
             catch { cboLop.Items.AddRange(new object[] { "CNTT01", "CNTT02", "KTPM01" }); }
             dlg.Controls.Add(cboLop);
             y += 40;
 
-            // Môn học
+            // Mon hoc: tu dong hien thi tu Lop hoc phan (khong cho chon rieng)
             dlg.Controls.Add(new Label { Text = "Môn học:", Location = new Point(20, y + 3), AutoSize = true });
-            var cboMon = new ComboBox
+            var lblMonAuto = new Label
             {
-                Name = "cboMon",
-                Location = new Point(140, y),
-                Size = new Size(290, 26),
-                DropDownStyle = ComboBoxStyle.DropDown,
-                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems,
-                IntegralHeight = false,
-                MaxDropDownItems = 5
+                Name = "lblMonAuto",
+                Text = "--- Chọn lớp để xem ---",
+                Location = new Point(140, y + 3),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = ThemeColors.PrimaryBlue
             };
-            try
-            {
-                var dtMon = _LopMonService.GetAllMonHoc();
-                cboMon.DisplayMember = "TenMon"; cboMon.ValueMember = "MaMon"; cboMon.DataSource = dtMon;
-            }
-            catch { cboMon.Items.AddRange(new object[] { "Lập trình C#", "Mạng MT" }); }
-            dlg.Controls.Add(cboMon);
+            // Hidden textbox de luu ten mon
+            var txtMonHidden = new TextBox { Name = "txtMonHidden", Visible = false, Text = "" };
+            dlg.Controls.Add(lblMonAuto);
+            dlg.Controls.Add(txtMonHidden);
             y += 40;
 
             // Ca học
@@ -601,8 +659,8 @@ namespace src.Views
             dlg.Controls.Add(cboCa);
             y += 40;
 
-            // Số SV
-            dlg.Controls.Add(new Label { Text = "Số SV:", Location = new Point(20, y + 3), AutoSize = true });
+            // Số sinh viên
+            dlg.Controls.Add(new Label { Text = "Số sinh viên:", Location = new Point(20, y + 3), AutoSize = true });
             var numSV = new NumericUpDown
             {
                 Name = "numSV",
@@ -613,6 +671,54 @@ namespace src.Views
                 Size = new Size(120, 26)
             };
             dlg.Controls.Add(numSV);
+
+            Action updateSiSo = () =>
+            {
+                if (cboLop.SelectedItem is src.DTO.LopHocDTO lop)
+                {
+                    // Cap nhat si so
+                    if (lop.SiSo > 0 && lop.SiSo <= numSV.Maximum && lop.SiSo >= numSV.Minimum)
+                        numSV.Value = lop.SiSo;
+                    // Cap nhat ten mon tu lop hoc phan
+                    if (!string.IsNullOrEmpty(lop.TenMon))
+                    {
+                        lblMonAuto.Text = lop.TenMon;
+                        lblMonAuto.ForeColor = ThemeColors.PrimaryBlue;
+                        txtMonHidden.Text = lop.TenMon;
+                    }
+                    else
+                    {
+                        lblMonAuto.Text = "(Lớp chưa gắn môn)";
+                        lblMonAuto.ForeColor = ThemeColors.AccentRed;
+                        txtMonHidden.Text = "";
+                    }
+                }
+            };
+
+            // Auto-fill numSV and Mon based on cboLop
+            cboLop.SelectedIndexChanged += (s, ev) => updateSiSo();
+
+            // Trigger initially
+            if (cboLop.DataSource is System.Collections.Generic.IEnumerable<src.DTO.LopHocDTO> dList)
+            {
+                var firstLop = System.Linq.Enumerable.FirstOrDefault(dList);
+                if (firstLop != null)
+                {
+                    if (firstLop.SiSo > 0 && firstLop.SiSo <= numSV.Maximum && firstLop.SiSo >= numSV.Minimum)
+                        numSV.Value = firstLop.SiSo;
+                    if (!string.IsNullOrEmpty(firstLop.TenMon))
+                    {
+                        lblMonAuto.Text = firstLop.TenMon;
+                        txtMonHidden.Text = firstLop.TenMon;
+                    }
+                }
+            }
+            else if (cboLop.Items.Count > 0)
+            {
+                cboLop.SelectedIndex = 0;
+                updateSiSo();
+            }
+
             y += 40;
 
             // RAM Tối thiểu
@@ -637,6 +743,14 @@ namespace src.Views
             cboInputMonitor.Items.AddRange(new object[] { "19\"", "21\"", "24\"", "27\"" });
             cboInputMonitor.SelectedItem = "24\"";
             dlg.Controls.Add(cboInputMonitor);
+            y += 40;
+
+            // CPU Tối thiểu
+            dlg.Controls.Add(new Label { Text = "CPU tối thiểu:", Location = new Point(20, y + 3), AutoSize = true });
+            var cboReqCpu = new ComboBox { Name = "cboReqCpu", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false, Location = new Point(140, y), Size = new Size(180, 26) };
+            cboReqCpu.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
+            cboReqCpu.SelectedItem = "Intel Core i5";
+            dlg.Controls.Add(cboReqCpu);
             y += 45;
 
             // ── Gợi ý phòng tự động ─────────────────────────────────────────
@@ -711,13 +825,15 @@ namespace src.Views
                     var cboRam = FindControl<ComboBox>(dlg, "cboInputRAM");
                     var cboStorage = FindControl<ComboBox>(dlg, "cboInputStorage");
                     var cboMonitor = FindControl<ComboBox>(dlg, "cboInputMonitor");
+                    var cboCpu = FindControl<ComboBox>(dlg, "cboReqCpu");
 
                     int reqRam = Convert.ToInt32(cboRam.SelectedItem.ToString().Replace(" GB", ""));
                     int reqStorage = Convert.ToInt32(cboStorage.SelectedItem.ToString().Replace(" GB", ""));
                     int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
+                    string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
                     int found = 0;
                     // Tìm phòng trống (chưa bị chiếm) có đủ sức chứa và đếm số lượng máy đạt cấu hình yêu cầu
-                    var dtRooms = _LichThucHanhService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, selDate, (int)caId, currentScheduleId);
+                    var dtRooms = _LichThucHanhService.GetRoomsForAssignment(svCount, reqRam, reqStorage, reqMonitor, reqCpu, selDate, (int)caId, currentScheduleId);
                     int roomCount = 0;
                     foreach (var r in dtRooms)
                     {
@@ -778,6 +894,7 @@ namespace src.Views
             cboInputRam.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
             cboInputStorage.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
             cboInputMonitor.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
+            cboReqCpu.SelectedIndexChanged += (s, ev) => btnSuggest.PerformClick();
 
             // Buttons
             var btnSave = new Button

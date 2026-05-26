@@ -46,9 +46,9 @@ namespace src.BLL
         {
             var computers = _MayTinhRepository.GetAllComputers();
             var computer = computers.Find(c => c.MaMay == maMay);
-            if (computer != null && _MayTinhRepository.IsRoomInUseNow(computer.MaPhong))
+            if (computer != null && computer.TenTrangThaiMay != "Hỏng")
             {
-                return (false, "Phòng máy này đang có ca học, không thể xóa máy tính ngay lúc này!");
+                return (false, "Chỉ được phép xóa máy tính khi máy đang ở trạng thái 'Hỏng'!");
             }
 
             bool success = _MayTinhRepository.DeleteComputer(maMay);
