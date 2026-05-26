@@ -349,6 +349,16 @@ namespace src.Views
                             return;
                         }
 
+                        int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                            "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong=@name",
+                            new SqlParameter("@name", name)));
+                        if (count > 0)
+                        {
+                            MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
                         var statusId = DatabaseHelper.ExecuteScalar(
                             "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
                             new SqlParameter("@s", status));
@@ -419,6 +429,26 @@ namespace src.Views
                         string location = FindControl<TextBox>(dlg, "txtLocation").Text.Trim();
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
+
+                        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
+                        {
+                            MessageBox.Show("Vui lòng điền đầy đủ thông tin!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        if (!name.Equals(roomName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
+                                "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong=@name AND MaPhong!=@id",
+                                new SqlParameter("@name", name),
+                                new SqlParameter("@id", roomId)));
+                            if (count > 0)
+                            {
+                                MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+                        }
 
                         var statusId = DatabaseHelper.ExecuteScalar(
                             "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",

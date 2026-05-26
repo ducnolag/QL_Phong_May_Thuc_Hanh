@@ -395,7 +395,23 @@ namespace src.Views
         // ── Dialog Thêm máy ────────────────────────────────────────────
         private void ShowAddDialog()
         {
-            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 256, 24, 0, "Tốt");
+            // Lay phong dang duoc chon tren filter de tu dong dien tien to ma may
+            int initialMaPhong = 0;
+            string selectedRoom = cboRoom.SelectedItem?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(selectedRoom) && selectedRoom != "Tất cả phòng")
+            {
+                try
+                {
+                    var dt = DatabaseHelper.ExecuteQuery(
+                        "SELECT MaPhong FROM PHONG_MAY WHERE TenPhong = @name",
+                        new Microsoft.Data.SqlClient.SqlParameter("@name", selectedRoom));
+                    if (dt.Rows.Count > 0)
+                        initialMaPhong = Convert.ToInt32(dt.Rows[0]["MaPhong"]);
+                }
+                catch { }
+            }
+
+            using var dlg = BuildComputerDialog("Thêm Máy Tính Mới", "", "", "", 8, 256, 24, initialMaPhong, "Tốt");
             if (dlg.ShowDialog() != DialogResult.OK) return;
             try
             {
@@ -548,8 +564,50 @@ namespace src.Views
                 y += 40;
             }
 
-            var txtTen = new TextBox { Name = "txtTenMay", Text = tenMay };
-            AddRow("Mã máy *:", txtTen);
+            // Panel chứa prefix và suffix
+            var pnlMaMay = new FlowLayoutPanel { Size = new Size(240, 26), Margin = new Padding(0), BorderStyle = BorderStyle.Fixed3D, BackColor = Color.White, WrapContents = false };
+            var lblPrefix = new Label { Name = "lblPrefix", AutoSize = true, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(0, 2, 0, 0), Margin = new Padding(0), ForeColor = SystemColors.ControlText, Font = new Font("Segoe UI", 9.5F) };
+            var txtSuffix = new TextBox { Name = "txtSuffix", BorderStyle = BorderStyle.None, Font = new Font("Segoe UI", 9.5F), Margin = new Padding(0, 2, 0, 0), Width = 120 };
+            pnlMaMay.Controls.Add(lblPrefix);
+            pnlMaMay.Controls.Add(txtSuffix);
+
+            var txtTen = new TextBox { Name = "txtTenMay", Visible = false };
+            dlg.Controls.Add(txtTen);
+
+            Action updateTxtTenMay = () => { txtTen.Text = lblPrefix.Text + txtSuffix.Text; };
+            txtSuffix.TextChanged += (s, e) => updateTxtTenMay();
+            lblPrefix.TextChanged += (s, e) => updateTxtTenMay();
+
+            if (!string.IsNullOrEmpty(tenMay))
+            {
+                int pcIndex = tenMay.LastIndexOf("-PC");
+                if (pcIndex >= 0)
+                {
+                    lblPrefix.Text = tenMay.Substring(0, pcIndex + 3);
+                    txtSuffix.Text = tenMay.Substring(pcIndex + 3);
+                }
+                else
+                {
+                    int lastDash = tenMay.LastIndexOf('-');
+                    if (lastDash >= 0)
+                    {
+                        lblPrefix.Text = tenMay.Substring(0, lastDash + 1);
+                        txtSuffix.Text = tenMay.Substring(lastDash + 1);
+                    }
+                    else
+                    {
+                        lblPrefix.Text = "";
+                        txtSuffix.Text = tenMay;
+                    }
+                }
+            }
+            else
+            {
+                lblPrefix.Text = "";
+                txtSuffix.Text = "";
+            }
+
+            AddRow("Mã máy *:", pnlMaMay);
 
             var cboCpu = new ComboBox { Name = "cboCPU", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
             cboCpu.Items.AddRange(new object[] { "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7" });
@@ -579,6 +637,15 @@ namespace src.Views
             var cboPh = new ComboBox { Name = "cboPhong", DropDownStyle = ComboBoxStyle.DropDownList };
             try
             {
+                cboPh.SelectedIndexChanged += (s, e) =>
+                {
+                    if (originalMaMay == 0 && cboPh.SelectedItem is DataRowView drv)
+                    {
+                        string pName = drv["TenPhong"].ToString();
+                        lblPrefix.Text = $"{pName}-PC";
+                    }
+                };
+
                 var dtP = DatabaseHelper.ExecuteQuery("SELECT MaPhong, TenPhong FROM PHONG_MAY ORDER BY TenPhong");
                 cboPh.DisplayMember = "TenPhong"; cboPh.ValueMember = "MaPhong";
                 cboPh.DataSource = dtP;
@@ -586,7 +653,17 @@ namespace src.Views
                 dlg.Load += (s, e) =>
                 {
                     if (maPhong > 0)
+                    {
                         cboPh.SelectedValue = maPhong;
+                    }
+
+                    if (originalMaMay == 0 && cboPh.SelectedItem is DataRowView drvLoad)
+                    {
+                        string pName = drvLoad["TenPhong"].ToString();
+                        lblPrefix.Text = $"{pName}-PC";
+                    }
+                    
+                    if (originalMaMay == 0) txtSuffix.Focus();
                 };
             }
             catch { cboPh.DataSource = null; cboPh.Items.Clear(); cboPh.Items.Add("-- Không tải được --"); cboPh.SelectedIndex = 0; }
@@ -601,7 +678,7 @@ namespace src.Views
 
             if (!AppSession.IsAdmin)
             {
-                txtTen.Enabled = false;
+                txtSuffix.Enabled = false;
                 cboCpu.Enabled = false;
                 cboInputRam.Enabled = false;
                 cboInputStorage.Enabled = false;

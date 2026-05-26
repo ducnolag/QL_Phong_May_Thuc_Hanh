@@ -10,9 +10,9 @@ namespace src.DAL
     {
         IEnumerable<LopHocDTO> GetAllLopHoc();
         IEnumerable<MonHocDTO> GetAllMonHoc();
-        void CreateLopHoc(string tenLop, int siSo);
+        void CreateLopHoc(string tenLop, int siSo, int? maMon);
         void CreateMonHoc(string tenMon);
-        void UpdateLopHoc(int maLop, string tenLop, int siSo);
+        void UpdateLopHoc(int maLop, string tenLop, int siSo, int? maMon);
         void UpdateMonHoc(int maMon, string tenMon);
         void DeleteLopHoc(int maLop);
         void DeleteMonHoc(int maMon);
@@ -24,7 +24,11 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                return db.Query<LopHocDTO>("SELECT MaLop, TenLop, SiSo FROM LOP_HOC ORDER BY TenLop");
+                return db.Query<LopHocDTO>(@"
+                    SELECT l.MaLop, l.TenLop, l.SiSo, l.MaMon, m.TenMon 
+                    FROM LOP_HOC l 
+                    LEFT JOIN MON_HOC m ON l.MaMon = m.MaMon 
+                    ORDER BY l.TenLop");
             }
         }
 
@@ -36,11 +40,11 @@ namespace src.DAL
             }
         }
 
-        public void CreateLopHoc(string tenLop, int siSo)
+        public void CreateLopHoc(string tenLop, int siSo, int? maMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO LOP_HOC (TenLop, SiSo) VALUES (@tenLop, @siSo)", new { tenLop, siSo });
+                db.Execute("INSERT INTO LOP_HOC (TenLop, SiSo, MaMon) VALUES (@tenLop, @siSo, @maMon)", new { tenLop, siSo, maMon });
             }
         }
 
@@ -52,11 +56,11 @@ namespace src.DAL
             }
         }
 
-        public void UpdateLopHoc(int maLop, string tenLop, int siSo)
+        public void UpdateLopHoc(int maLop, string tenLop, int siSo, int? maMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo WHERE MaLop=@maLop", new { tenLop, siSo, maLop });
+                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo, MaMon=@maMon WHERE MaLop=@maLop", new { tenLop, siSo, maMon, maLop });
             }
         }
 
