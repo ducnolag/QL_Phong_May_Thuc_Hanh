@@ -3,6 +3,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using src.Helpers;
 
@@ -450,7 +451,14 @@ namespace src.Views
                 Text = phone,
                 Location = new Point(tx, y),
                 Size = new Size(inputW, 26),
-                Font = new Font("Segoe UI", 10F)
+                Font = new Font("Segoe UI", 10F),
+                MaxLength = 11
+            };
+            // Chỉ cho nhập ký tự số
+            txtPhone.KeyPress += (s, kpe) =>
+            {
+                if (!char.IsDigit(kpe.KeyChar) && !char.IsControl(kpe.KeyChar))
+                    kpe.Handled = true;
             };
             dlg.Controls.Add(txtPhone);
             y += 42;
@@ -511,6 +519,44 @@ namespace src.Views
 
             dlg.AcceptButton = btnSave;
             dlg.CancelButton = btnCancel;
+
+            dlg.FormClosing += (s, e) =>
+            {
+                if (dlg.DialogResult == DialogResult.OK)
+                {
+                    string mEmail = txtEmail.Text.Trim();
+                    string mPhone = txtPhone.Text.Trim();
+                    string mPass = txtPass.Text;
+
+                    if (!string.IsNullOrEmpty(mEmail) && !Regex.IsMatch(mEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                    {
+                        MessageBox.Show("Định dạng email không hợp lệ!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtEmail.Focus();
+                        return;
+                    }
+
+                    if (!string.IsNullOrEmpty(mPhone) && !Regex.IsMatch(mPhone, @"^\d{10,11}$"))
+                    {
+                        MessageBox.Show("Số điện thoại phải chứa từ 10 đến 11 chữ số!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtPhone.Focus();
+                        return;
+                    }
+
+                    if (isNew || (!isNew && !string.IsNullOrEmpty(mPass)))
+                    {
+                        if (mPass.Length < 8)
+                        {
+                            MessageBox.Show("Mật khẩu phải có ít nhất 8 ký tự!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            e.Cancel = true;
+                            txtPass.Focus();
+                            return;
+                        }
+                    }
+                }
+            };
+
             return dlg;
         }
 
