@@ -29,8 +29,8 @@ namespace src.Views
             // Grid Mon hoc
             dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "PK", Visible = false });
             dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Tên Môn Học", ReadOnly = true, FillWeight = 70 });
-            AddBtnCol(dgvMonHoc, "Edit",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue,  15);
-            AddBtnCol(dgvMonHoc, "Delete", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,   15);
+            AddBtnCol(dgvMonHoc, "Edit", "Sửa",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue,  15);
+            AddBtnCol(dgvMonHoc, "Delete", "Xóa", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,   15);
             ApplyGridStyling(dgvMonHoc);
             WireCursor(dgvMonHoc);
 
@@ -40,17 +40,17 @@ namespace src.Views
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Mon", HeaderText = "Thuộc Môn Học", ReadOnly = true, FillWeight = 40 });
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "SiSo", HeaderText = "Sĩ số", ReadOnly = true, FillWeight = 15 });
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaMon", Visible = false });
-            AddBtnCol(dgvLopHoc, "Edit",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue, 15);
-            AddBtnCol(dgvLopHoc, "Delete", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,  15);
+            AddBtnCol(dgvLopHoc, "Edit", "Sửa",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue, 15);
+            AddBtnCol(dgvLopHoc, "Delete", "Xóa", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,  15);
             ApplyGridStyling(dgvLopHoc);
             WireCursor(dgvLopHoc);
         }
 
-        private void AddBtnCol(DataGridView dgv, string name, string text, Color bg, Color fg, int weight)
+        private void AddBtnCol(DataGridView dgv, string name, string headerText, string text, Color bg, Color fg, int weight)
         {
             var col = new DataGridViewButtonColumn
             {
-                Name = name, HeaderText = "", Text = text,
+                Name = name, HeaderText = headerText, Text = text,
                 UseColumnTextForButtonValue = true, FillWeight = weight, FlatStyle = FlatStyle.Flat
             };
             col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
