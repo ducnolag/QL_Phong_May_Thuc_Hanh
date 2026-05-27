@@ -34,7 +34,8 @@ namespace src.BLL
         {
             if (string.IsNullOrEmpty(computer.TenMay) || string.IsNullOrEmpty(computer.CPU))
                 return (false, "Mã máy và CPU không được để trống!");
-
+            if (!_MayTinhRepository.IsRoomInUseNow(computer.MaPhong))
+                return (false, "Phòng đã được đặt lịch, không thể cập nhật máy tính");
             bool success = _MayTinhRepository.UpdateComputer(computer);
             if (success)
                 return (true, "Đã cập nhật máy tính thành công!");
@@ -50,7 +51,8 @@ namespace src.BLL
             {
                 return (false, "Chỉ được phép xóa máy tính khi máy đang ở trạng thái 'Hỏng'!");
             }
-
+            if (!_MayTinhRepository.IsRoomInUseNow(computer.MaPhong))
+                return (false, "Phòng đã được đặt lịch, không thể xóa máy tính");
             bool success = _MayTinhRepository.DeleteComputer(maMay);
             if (success)
                 return (true, "Đã xóa máy tính thành công!");
