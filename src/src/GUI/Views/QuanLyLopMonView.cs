@@ -28,7 +28,8 @@ namespace src.Views
         {
             // Grid Mon hoc
             dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "PK", Visible = false });
-            dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Tên Môn Học", ReadOnly = true, FillWeight = 70 });
+            dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaHocPhan", HeaderText = "Mã Học Phần", ReadOnly = true, FillWeight = 20 });
+            dgvMonHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Tên Môn Học", ReadOnly = true, FillWeight = 30 });
             AddBtnCol(dgvMonHoc, "Edit", "Sửa",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue,  15);
             AddBtnCol(dgvMonHoc, "Delete", "Xóa", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,   15);
             ApplyGridStyling(dgvMonHoc);
@@ -36,12 +37,12 @@ namespace src.Views
 
             // Grid Lop hoc phan
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "PK", Visible = false });
-            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Ten", HeaderText = "Mã / Tên Lớp Học Phần", ReadOnly = true, FillWeight = 30 });
-            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Mon", HeaderText = "Thuộc Môn Học", ReadOnly = true, FillWeight = 40 });
-            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "SiSo", HeaderText = "Sĩ số", ReadOnly = true, FillWeight = 15 });
+            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaLopHocPhan", HeaderText = "Mã Lớp Học Phần", ReadOnly = true, FillWeight = 10 });
+            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "Mon", HeaderText = "Thuộc Môn Học", ReadOnly = true, FillWeight = 15 });
+            dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "SiSo", HeaderText = "Sĩ số", ReadOnly = true, FillWeight = 10 });
             dgvLopHoc.Columns.Add(new DataGridViewTextBoxColumn { Name = "MaMon", Visible = false });
-            AddBtnCol(dgvLopHoc, "Edit", "Sửa",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue, 15);
-            AddBtnCol(dgvLopHoc, "Delete", "Xóa", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,  15);
+            AddBtnCol(dgvLopHoc, "Edit", "Sửa",   "✏  Sửa",  Color.FromArgb(239,246,255), ThemeColors.PrimaryBlue, 10);
+            AddBtnCol(dgvLopHoc, "Delete", "Xóa", "🗑 Xóa",  Color.FromArgb(254,226,226), ThemeColors.AccentRed,  10);
             ApplyGridStyling(dgvLopHoc);
             WireCursor(dgvLopHoc);
         }
@@ -104,7 +105,7 @@ namespace src.Views
             try
             {
                 var list = _LopMonService.GetAllMonHoc().ToList();
-                foreach (var r in list) dgvMonHoc.Rows.Add(r.MaMon, r.TenMon);
+                foreach (var r in list) dgvMonHoc.Rows.Add(r.MaMon, r.MaHocPhan, r.TenMon);
                 lblMonCount.Text = $"{list.Count} môn học";
             }
             catch (Exception ex)
@@ -120,7 +121,7 @@ namespace src.Views
             try
             {
                 var list = _LopMonService.GetAllLopHoc().ToList();
-                foreach (var r in list) dgvLopHoc.Rows.Add(r.MaLop, r.TenLop, string.IsNullOrEmpty(r.TenMon) ? "(Chưa gắn môn)" : r.TenMon, r.SiSo, r.MaMon);
+                foreach (var r in list) dgvLopHoc.Rows.Add(r.MaLop, r.MaLopHocPhan, string.IsNullOrEmpty(r.TenMon) ? "(Chưa gắn môn)" : r.TenMon, r.SiSo, r.MaMon);
                 lblLopCount.Text = $"{list.Count} lớp học phần";
             }
             catch (Exception ex)
@@ -138,9 +139,9 @@ namespace src.Views
 
             btnAddMon.Click += (s, e) =>
             {
-                string name = ShowMonDialog("Thêm Môn học", "Tên môn:", "");
-                if (name == null) return;
-                try { _LopMonService.CreateMonHoc(name); LoadMonHoc(); LoadLopHoc(); }
+                var result = ShowMonDialog("Thêm Môn học", "", "");
+                if (result == null) return;
+                try { _LopMonService.CreateMonHoc(result.Value.maHocPhan, result.Value.tenMon); LoadMonHoc(); LoadLopHoc(); }
                 catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
             };
 
@@ -148,7 +149,7 @@ namespace src.Views
             {
                 var result = ShowLopDialog("Thêm Lớp học phần", "", 30, null);
                 if (result == null) return;
-                try { _LopMonService.CreateLopHoc(result.Value.name, result.Value.siso, result.Value.maMon); LoadLopHoc(); }
+                try { _LopMonService.CreateLopHoc(result.Value.maLop, result.Value.maLop, result.Value.siso, result.Value.maMon); LoadLopHoc(); }
                 catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
             };
 
@@ -174,6 +175,7 @@ namespace src.Views
             var row = dgvMonHoc.Rows[e.RowIndex];
             string col = dgvMonHoc.Columns[e.ColumnIndex].Name;
             int pk   = Convert.ToInt32(row.Cells["PK"].Value);
+            string maHocPhan = row.Cells["MaHocPhan"].Value?.ToString() ?? "";
             string ten = row.Cells["Ten"].Value?.ToString() ?? "";
 
             if (col != "Edit" && col != "Delete") return;
@@ -182,9 +184,9 @@ namespace src.Views
             {
                 if (col == "Edit")
                 {
-                    string newName = ShowMonDialog("Sửa Môn học", "Tên môn:", ten);
-                    if (newName == null) return;
-                    _LopMonService.UpdateMonHoc(pk, newName);
+                    var result = ShowMonDialog("Sửa Môn học", maHocPhan, ten);
+                    if (result == null) return;
+                    _LopMonService.UpdateMonHoc(pk, result.Value.maHocPhan, result.Value.tenMon);
                     LoadMonHoc();
                     LoadLopHoc(); // To update class names
                 }
@@ -208,7 +210,7 @@ namespace src.Views
             var row = dgvLopHoc.Rows[e.RowIndex];
             string col  = dgvLopHoc.Columns[e.ColumnIndex].Name;
             int pk      = Convert.ToInt32(row.Cells["PK"].Value);
-            string ten  = row.Cells["Ten"].Value?.ToString() ?? "";
+            string maLopHocPhan = row.Cells["MaLopHocPhan"].Value?.ToString() ?? "";
             int siso    = Convert.ToInt32(row.Cells["SiSo"].Value ?? 30);
             int? maMon  = row.Cells["MaMon"].Value != null ? Convert.ToInt32(row.Cells["MaMon"].Value) : (int?)null;
 
@@ -218,14 +220,14 @@ namespace src.Views
             {
                 if (col == "Edit")
                 {
-                    var result = ShowLopDialog("Sửa Lớp học phần", ten, siso, maMon);
+                    var result = ShowLopDialog("Sửa Lớp học phần", maLopHocPhan, siso, maMon);
                     if (result == null) return;
-                    _LopMonService.UpdateLopHoc(pk, result.Value.name, result.Value.siso, result.Value.maMon);
+                    _LopMonService.UpdateLopHoc(pk, result.Value.maLop, result.Value.maLop, result.Value.siso, result.Value.maMon);
                     LoadLopHoc();
                 }
                 else if (col == "Delete")
                 {
-                    if (MessageBox.Show($"Xóa lớp '{ten}' khỏi hệ thống?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    if (MessageBox.Show($"Xóa lớp '{maLopHocPhan}' khỏi hệ thống?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
                         _LopMonService.DeleteLopHoc(pk);
                         LoadLopHoc();
@@ -236,24 +238,29 @@ namespace src.Views
         }
 
         // ── Dialogs ─────────────────────────────────────────────────────
-        private string ShowMonDialog(string title, string label, string defaultVal)
+        private (string maHocPhan, string tenMon)? ShowMonDialog(string title, string defaultMa, string defaultTen)
         {
-            var dlg = BuildDialog(title, 380, 165);
-            dlg.Controls.Add(new Label { Text = label, Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
-            var txt = new TextBox { Text = defaultVal, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
-            dlg.Controls.Add(txt);
-            AddDialogButtons(dlg, 86, () => string.IsNullOrWhiteSpace(txt.Text) ? "Vui lòng nhập thông tin!" : null);
-            return dlg.ShowDialog() == DialogResult.OK ? txt.Text.Trim() : null;
+            var dlg = BuildDialog(title, 380, 230);
+            dlg.Controls.Add(new Label { Text = "Mã học phần:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
+            var txtMa = new TextBox { Text = defaultMa, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
+            dlg.Controls.Add(txtMa);
+            
+            dlg.Controls.Add(new Label { Text = "Tên môn:", Location = new Point(20, 84), AutoSize = true, Font = new Font("Segoe UI", 10F) });
+            var txtTen = new TextBox { Text = defaultTen, Location = new Point(20, 110), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
+            dlg.Controls.Add(txtTen);
+            
+            AddDialogButtons(dlg, 150, () => (string.IsNullOrWhiteSpace(txtMa.Text) || string.IsNullOrWhiteSpace(txtTen.Text)) ? "Vui lòng nhập đủ thông tin!" : null);
+            return dlg.ShowDialog() == DialogResult.OK ? (txtMa.Text.Trim(), txtTen.Text.Trim()) : ((string, string)?)null;
         }
 
-        private (string name, int siso, int? maMon)? ShowLopDialog(string title, string defaultVal, int defaultSiso, int? defaultMaMon)
+        private (string maLop, int siso, int? maMon)? ShowLopDialog(string title, string defaultMa, int defaultSiso, int? defaultMaMon)
         {
             var dlg = BuildDialog(title, 380, 290);
             
-            dlg.Controls.Add(new Label { Text = "Mã / Tên lớp:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
-            var txt = new TextBox { Text = defaultVal, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
-            dlg.Controls.Add(txt);
-            
+            dlg.Controls.Add(new Label { Text = "Mã lớp học phần:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
+            var txtMa = new TextBox { Text = defaultMa, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
+            dlg.Controls.Add(txtMa);
+
             dlg.Controls.Add(new Label { Text = "Sĩ số:", Location = new Point(20, 84), AutoSize = true, Font = new Font("Segoe UI", 10F) });
             var num = new NumericUpDown { Value = defaultSiso, Minimum = 1, Maximum = 300, Location = new Point(20, 110), Size = new Size(150, 28), Font = new Font("Segoe UI", 10F) };
             dlg.Controls.Add(num);
@@ -274,12 +281,12 @@ namespace src.Views
 
             dlg.Controls.Add(cboMon);
 
-            AddDialogButtons(dlg, 214, () => string.IsNullOrWhiteSpace(txt.Text) ? "Vui lòng nhập mã/tên lớp!" : null);
+            AddDialogButtons(dlg, 214, () => string.IsNullOrWhiteSpace(txtMa.Text) ? "Vui lòng nhập mã lớp!" : null);
             
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 int? maMonSelected = cboMon.SelectedValue != null ? (int?)cboMon.SelectedValue : null;
-                return (txt.Text.Trim(), (int)num.Value, maMonSelected);
+                return (txtMa.Text.Trim(), (int)num.Value, maMonSelected);
             }
             return null;
         }

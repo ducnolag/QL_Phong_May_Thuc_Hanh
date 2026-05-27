@@ -22,61 +22,75 @@ namespace src.BLL
             if (!list.Any())
             {
                 // Seed data if empty
-                _repository.CreateMonHoc("Lập trình C#");
-                _repository.CreateMonHoc("Lập trình Web");
-                _repository.CreateMonHoc("Cơ sở dữ liệu");
+                _repository.CreateMonHoc("IT01", "Lập trình C#");
+                _repository.CreateMonHoc("IT02", "Lập trình Web");
+                _repository.CreateMonHoc("IT03", "Cơ sở dữ liệu");
                 list = _repository.GetAllMonHoc().ToList();
                 
                 var csharp = list.FirstOrDefault(x => x.TenMon == "Lập trình C#");
                 if (csharp != null)
                 {
-                    _repository.CreateLopHoc("KTPM01", 30, csharp.MaMon);
-                    _repository.CreateLopHoc("KTPM02", 30, csharp.MaMon);
+                    _repository.CreateLopHoc("KTPM01-01", "KTPM01", 30, csharp.MaMon);
+                    _repository.CreateLopHoc("KTPM02-01", "KTPM02", 30, csharp.MaMon);
                 }
                 var web = list.FirstOrDefault(x => x.TenMon == "Lập trình Web");
                 if (web != null)
                 {
-                    _repository.CreateLopHoc("CNTT01", 35, web.MaMon);
-                    _repository.CreateLopHoc("CNTT02", 35, web.MaMon);
+                    _repository.CreateLopHoc("CNTT01-01", "CNTT01", 35, web.MaMon);
+                    _repository.CreateLopHoc("CNTT02-01", "CNTT02", 35, web.MaMon);
                 }
             }
             return list;
         }
 
-        public void CreateLopHoc(string name, int siSo, int? maMon)
+        public void CreateLopHoc(string maLopHocPhan, string name, int siSo, int? maMon)
         {
+            if (string.IsNullOrWhiteSpace(maLopHocPhan)) throw new Exception("Mã lớp học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
             if (siSo <= 0) throw new Exception("Sĩ số phải lớn hơn 0.");
 
             var allLops = GetAllLopHoc();
-            if (allLops.Any(l => l.TenLop.Equals(name, StringComparison.OrdinalIgnoreCase)))
-                throw new Exception("Tên lớp đã tồn tại.");
+            if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true))
+                throw new Exception("Mã lớp học phần đã tồn tại.");
 
-            _repository.CreateLopHoc(name, siSo, maMon);
+            _repository.CreateLopHoc(maLopHocPhan, name, siSo, maMon);
         }
 
-        public void CreateMonHoc(string name)
+        public void CreateMonHoc(string maHocPhan, string name)
         {
+            if (string.IsNullOrWhiteSpace(maHocPhan)) throw new Exception("Mã học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên môn không hợp lệ.");
-            _repository.CreateMonHoc(name);
+
+            var allMons = GetAllMonHoc();
+            if (allMons.Any(m => m.MaHocPhan?.Equals(maHocPhan, StringComparison.OrdinalIgnoreCase) == true))
+                throw new Exception("Mã học phần đã tồn tại.");
+
+            _repository.CreateMonHoc(maHocPhan, name);
         }
 
-        public void UpdateLopHoc(int id, string name, int siSo, int? maMon)
+        public void UpdateLopHoc(int id, string maLopHocPhan, string name, int siSo, int? maMon)
         {
+            if (string.IsNullOrWhiteSpace(maLopHocPhan)) throw new Exception("Mã lớp học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
             if (siSo <= 0) throw new Exception("Sĩ số phải lớn hơn 0.");
 
             var allLops = GetAllLopHoc();
-            if (allLops.Any(l => l.TenLop.Equals(name, StringComparison.OrdinalIgnoreCase) && l.MaLop != id))
-                throw new Exception("Tên lớp đã tồn tại.");
+            if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true && l.MaLop != id))
+                throw new Exception("Mã lớp học phần đã tồn tại.");
 
-            _repository.UpdateLopHoc(id, name, siSo, maMon);
+            _repository.UpdateLopHoc(id, maLopHocPhan, name, siSo, maMon);
         }
 
-        public void UpdateMonHoc(int id, string name)
+        public void UpdateMonHoc(int id, string maHocPhan, string name)
         {
+            if (string.IsNullOrWhiteSpace(maHocPhan)) throw new Exception("Mã học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên môn không hợp lệ.");
-            _repository.UpdateMonHoc(id, name);
+
+            var allMons = GetAllMonHoc();
+            if (allMons.Any(m => m.MaHocPhan?.Equals(maHocPhan, StringComparison.OrdinalIgnoreCase) == true && m.MaMon != id))
+                throw new Exception("Mã học phần đã tồn tại.");
+
+            _repository.UpdateMonHoc(id, maHocPhan, name);
         }
 
         public void DeleteLopHoc(int id)

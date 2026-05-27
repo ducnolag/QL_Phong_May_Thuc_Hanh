@@ -10,10 +10,10 @@ namespace src.DAL
     {
         IEnumerable<LopHocDTO> GetAllLopHoc();
         IEnumerable<MonHocDTO> GetAllMonHoc();
-        void CreateLopHoc(string tenLop, int siSo, int? maMon);
-        void CreateMonHoc(string tenMon);
-        void UpdateLopHoc(int maLop, string tenLop, int siSo, int? maMon);
-        void UpdateMonHoc(int maMon, string tenMon);
+        void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, int? maMon);
+        void CreateMonHoc(string maHocPhan, string tenMon);
+        void UpdateLopHoc(int maLop, string maLopHocPhan, string tenLop, int siSo, int? maMon);
+        void UpdateMonHoc(int maMon, string maHocPhan, string tenMon);
         void DeleteLopHoc(int maLop);
         void DeleteMonHoc(int maMon);
     }
@@ -25,7 +25,7 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 return db.Query<LopHocDTO>(@"
-                    SELECT l.MaLop, l.TenLop, l.SiSo, l.MaMon, m.TenMon 
+                    SELECT l.MaLop, l.MaLopHocPhan, l.TenLop, l.SiSo, l.MaMon, m.TenMon 
                     FROM LOP_HOC l 
                     LEFT JOIN MON_HOC m ON l.MaMon = m.MaMon 
                     ORDER BY l.TenLop");
@@ -36,39 +36,39 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                return db.Query<MonHocDTO>("SELECT MaMon, TenMon FROM MON_HOC ORDER BY TenMon");
+                return db.Query<MonHocDTO>("SELECT MaMon, MaHocPhan, TenMon FROM MON_HOC ORDER BY TenMon");
             }
         }
 
-        public void CreateLopHoc(string tenLop, int siSo, int? maMon)
+        public void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, int? maMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO LOP_HOC (TenLop, SiSo, MaMon) VALUES (@tenLop, @siSo, @maMon)", new { tenLop, siSo, maMon });
+                db.Execute("INSERT INTO LOP_HOC (MaLopHocPhan, TenLop, SiSo, MaMon) VALUES (@maLopHocPhan, @tenLop, @siSo, @maMon)", new { maLopHocPhan, tenLop, siSo, maMon });
             }
         }
 
-        public void CreateMonHoc(string tenMon)
+        public void CreateMonHoc(string maHocPhan, string tenMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO MON_HOC (TenMon) VALUES (@tenMon)", new { tenMon });
+                db.Execute("INSERT INTO MON_HOC (MaHocPhan, TenMon) VALUES (@maHocPhan, @tenMon)", new { maHocPhan, tenMon });
             }
         }
 
-        public void UpdateLopHoc(int maLop, string tenLop, int siSo, int? maMon)
+        public void UpdateLopHoc(int maLop, string maLopHocPhan, string tenLop, int siSo, int? maMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo, MaMon=@maMon WHERE MaLop=@maLop", new { tenLop, siSo, maMon, maLop });
+                db.Execute("UPDATE LOP_HOC SET MaLopHocPhan=@maLopHocPhan, TenLop=@tenLop, SiSo=@siSo, MaMon=@maMon WHERE MaLop=@maLop", new { maLopHocPhan, tenLop, siSo, maMon, maLop });
             }
         }
 
-        public void UpdateMonHoc(int maMon, string tenMon)
+        public void UpdateMonHoc(int maMon, string maHocPhan, string tenMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE MON_HOC SET TenMon=@tenMon WHERE MaMon=@maMon", new { tenMon, maMon });
+                db.Execute("UPDATE MON_HOC SET MaHocPhan=@maHocPhan, TenMon=@tenMon WHERE MaMon=@maMon", new { maHocPhan, tenMon, maMon });
             }
         }
 
