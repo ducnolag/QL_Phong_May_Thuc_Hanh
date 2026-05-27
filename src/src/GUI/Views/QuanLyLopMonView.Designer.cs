@@ -29,6 +29,7 @@ namespace src.Views
             pnlLopToolbar = new System.Windows.Forms.Panel();
             lblLopCount = new System.Windows.Forms.Label();
             txtSearchLop = new System.Windows.Forms.TextBox();
+            cboFilterMonHoc = new System.Windows.Forms.ComboBox();
             btnAddLop = new System.Windows.Forms.Button();
             dgvLopHoc = new System.Windows.Forms.DataGridView();
             
@@ -210,6 +211,7 @@ namespace src.Views
             // 
             pnlLopToolbar.Controls.Add(lblLopCount);
             pnlLopToolbar.Controls.Add(txtSearchLop);
+            pnlLopToolbar.Controls.Add(cboFilterMonHoc);
             pnlLopToolbar.Controls.Add(btnAddLop);
             pnlLopToolbar.Dock = System.Windows.Forms.DockStyle.Top;
             pnlLopToolbar.Location = new System.Drawing.Point(12, 12);
@@ -237,6 +239,18 @@ namespace src.Views
             txtSearchLop.PlaceholderText = "🔍  Tìm lớp học...";
             txtSearchLop.Size = new System.Drawing.Size(280, 30);
             txtSearchLop.TabIndex = 0;
+            // 
+            // cboFilterMonHoc
+            // 
+            cboFilterMonHoc.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboFilterMonHoc.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cboFilterMonHoc.Location = new System.Drawing.Point(435, 15);
+            cboFilterMonHoc.Name = "cboFilterMonHoc";
+            cboFilterMonHoc.Size = new System.Drawing.Size(200, 31);
+            cboFilterMonHoc.TabIndex = 1;
+            cboFilterMonHoc.MaxDropDownItems = 6;
+            cboFilterMonHoc.IntegralHeight = false;
+            cboFilterMonHoc.DropDownHeight = 150;
             // 
             // btnAddLop
             // 
@@ -320,6 +334,7 @@ namespace src.Views
         public System.Windows.Forms.Panel pnlLopToolbar;
         public System.Windows.Forms.Label lblLopCount;
         public System.Windows.Forms.TextBox txtSearchLop;
+        public System.Windows.Forms.ComboBox cboFilterMonHoc;
         public System.Windows.Forms.Button btnAddLop;
         public System.Windows.Forms.DataGridView dgvLopHoc;
     }

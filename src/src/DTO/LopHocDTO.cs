@@ -3,6 +3,7 @@ namespace src.DTO
     public class LopHocDTO
     {
         public int MaLop { get; set; }
+        public string MaLopHocPhan { get; set; }
         public string TenLop { get; set; }
         public int SiSo { get; set; }
         public int? MaMon { get; set; }

@@ -190,6 +190,22 @@ namespace src.Helpers
                     END
                 ");
 
+                // Thêm trường MaHocPhan vào MON_HOC
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'MON_HOC') AND name = 'MaHocPhan')
+                    BEGIN
+                        ALTER TABLE MON_HOC ADD MaHocPhan NVARCHAR(50) NULL;
+                    END
+                ");
+
+                // Thêm trường MaLopHocPhan vào LOP_HOC
+                ExecuteNonQuery(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'LOP_HOC') AND name = 'MaLopHocPhan')
+                    BEGIN
+                        ALTER TABLE LOP_HOC ADD MaLopHocPhan NVARCHAR(50) NULL;
+                    END
+                ");
+
                 // Create CHOT_SO_LIEU table if it doesn't exist
                 ExecuteNonQuery(@"
                     IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'CHOT_SO_LIEU') AND type in (N'U'))
