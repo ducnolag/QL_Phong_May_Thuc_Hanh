@@ -107,6 +107,16 @@ namespace src.Views
                 var list = _LopMonService.GetAllMonHoc().ToList();
                 foreach (var r in list) dgvMonHoc.Rows.Add(r.MaMon, r.MaHocPhan, r.TenMon);
                 lblMonCount.Text = $"{list.Count} môn học";
+
+                // Update combobox
+                int selectedVal = cboFilterMonHoc.SelectedValue != null ? (int)cboFilterMonHoc.SelectedValue : 0;
+                var filterList = new System.Collections.Generic.List<dynamic> { new { MaMon = 0, TenMon = "Tất cả môn học" } };
+                filterList.AddRange(list.Select(m => new { MaMon = m.MaMon, TenMon = m.TenMon }));
+                cboFilterMonHoc.DisplayMember = "TenMon";
+                cboFilterMonHoc.ValueMember = "MaMon";
+                cboFilterMonHoc.DataSource = filterList;
+                if (filterList.Any(x => x.MaMon == selectedVal))
+                    cboFilterMonHoc.SelectedValue = selectedVal;
             }
             catch (Exception ex)
             {
@@ -134,8 +144,9 @@ namespace src.Views
         // ── Wire events ─────────────────────────────────────────────────
         private void WireEvents()
         {
-            txtSearchMon.TextChanged += (s, e) => DoSearch(dgvMonHoc, txtSearchMon.Text);
-            txtSearchLop.TextChanged += (s, e) => DoSearch(dgvLopHoc, txtSearchLop.Text);
+            txtSearchMon.TextChanged += (s, e) => DoSearchMon();
+            txtSearchLop.TextChanged += (s, e) => DoSearchLop();
+            cboFilterMonHoc.SelectedIndexChanged += (s, e) => DoSearchLop();
 
             btnAddMon.Click += (s, e) =>
             {
@@ -157,14 +168,31 @@ namespace src.Views
             dgvLopHoc.CellClick += HandleLopClick;
         }
 
-        private void DoSearch(DataGridView dgv, string kw)
+        private void DoSearchMon()
         {
-            kw = kw.Trim().ToLower();
-            foreach (DataGridViewRow row in dgv.Rows)
+            string kw = txtSearchMon.Text.Trim().ToLower();
+            foreach (DataGridViewRow row in dgvMonHoc.Rows)
             {
                 if (row.IsNewRow) continue;
                 row.Visible = string.IsNullOrEmpty(kw)
-                    || row.Cells["Ten"].Value?.ToString().ToLower().Contains(kw) == true;
+                    || row.Cells["Ten"].Value?.ToString().ToLower().Contains(kw) == true
+                    || row.Cells["MaHocPhan"].Value?.ToString().ToLower().Contains(kw) == true;
+            }
+        }
+
+        private void DoSearchLop()
+        {
+            if (dgvLopHoc.Columns.Count == 0 || cboFilterMonHoc.Items.Count == 0) return;
+            string kw = txtSearchLop.Text.Trim().ToLower();
+            string selectedMon = cboFilterMonHoc.Text;
+            bool filterByMon = cboFilterMonHoc.SelectedIndex > 0;
+
+            foreach (DataGridViewRow row in dgvLopHoc.Rows)
+            {
+                if (row.IsNewRow) continue;
+                bool matchKw = string.IsNullOrEmpty(kw) || row.Cells["MaLopHocPhan"].Value?.ToString().ToLower().Contains(kw) == true;
+                bool matchMon = !filterByMon || row.Cells["Mon"].Value?.ToString() == selectedMon;
+                row.Visible = matchKw && matchMon;
             }
         }
 
