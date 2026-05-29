@@ -12,5 +12,6 @@ namespace src.DTO
         public string TenPhong { get; set; }
         public int MaTTMay { get; set; }
         public string TenTrangThaiMay { get; set; }
+        public int MaNguoiDung { get; set; }
     }
 }

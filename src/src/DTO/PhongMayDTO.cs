@@ -11,6 +11,7 @@ namespace src.DTO
         // Joined fields for view
         public string TenTrangThaiPhong { get; set; }
         public int SoMay { get; set; }
+        public int MaNguoiDung { get; set; }
         
         // Derived fields for view
         public string StatusEng => TenTrangThaiPhong?.Contains("Hoạt") == true ? "available" : TenTrangThaiPhong?.Contains("Bảo") == true ? "maintenance" : "occupied";

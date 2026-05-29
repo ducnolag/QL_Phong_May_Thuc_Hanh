@@ -314,8 +314,13 @@ namespace src.Views
                 cboMon.DisplayMember = "TenMon";
                 cboMon.ValueMember = "MaMon";
                 cboMon.DataSource = dsMon;
-                if (defaultMaMon != null && dsMon.Any(m => m.MaMon == defaultMaMon.Value))
-                    cboMon.SelectedValue = defaultMaMon.Value;
+                // Dùng dlg.Load để set SelectedValue sau khi binding DataSource hoàn tất,
+                // tránh bị binding reset về phần tử đầu tiên
+                dlg.Load += (s, e) =>
+                {
+                    if (defaultMaMon != null && dsMon.Any(m => m.MaMon == defaultMaMon.Value))
+                        cboMon.SelectedValue = defaultMaMon.Value;
+                };
             } 
             catch { }
 

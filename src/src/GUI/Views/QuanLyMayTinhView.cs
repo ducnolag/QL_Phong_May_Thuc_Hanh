@@ -684,6 +684,7 @@ namespace src.Views
                 cboInputStorage.Enabled = false;
                 cboInputMonitor.Enabled = false;
                 cboPh.Enabled = false;
+                // cboTT vẫn được bật để mọi người dùng có thể chuyển máy sang Hỏng
             }
 
             y += 5;
