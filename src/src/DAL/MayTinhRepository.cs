@@ -5,6 +5,7 @@ using Dapper;
 using src.DTO;
 using src.Helpers;
 
+
 namespace src.DAL
 {
     public interface IMayTinhRepository
@@ -58,6 +59,13 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 int ttId = GetStatusId(computer.TenTrangThaiMay, db);
+
+                // Truyền MaNguoiDung vào CONTEXT_INFO để trigger trg_LogTrangThaiMayTinh đọc được
+                int maNguoiDung = computer.MaNguoiDung > 0 ? computer.MaNguoiDung : AppSession.MaNguoiDung;
+                // Dùng BINARY(4) làm buffer trung gian: INT -> BINARY(4) -> VARBINARY(128)
+                db.Execute("DECLARE @ctx VARBINARY(128) = CONVERT(VARBINARY(128), CONVERT(BINARY(4), @uid)); SET CONTEXT_INFO @ctx",
+                    new { uid = maNguoiDung });
+
                 string sql = @"UPDATE MAY_TINH SET TenMay=@TenMay, CPU=@CPU, RAM=@RAM, DungLuongLuuTru=@DungLuongLuuTru,
                                KichThuocManHinh=@KichThuocManHinh, MaPhong=@MaPhong, MaTTMay=@MaTTMay, UpdatedAt=GETDATE()
                                WHERE MaMay=@MaMay";
@@ -74,7 +82,9 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                string sql = "DELETE FROM MAY_TINH WHERE MaMay=@id";
+                string sql = @"
+                    DELETE FROM CAP_NHAT_MAY WHERE MaMay=@id;
+                    DELETE FROM MAY_TINH WHERE MaMay=@id;";
                 int rows = db.Execute(sql, new { id = maMay });
                 return rows > 0;
             }

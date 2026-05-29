@@ -455,8 +455,11 @@ namespace src.Views
                             new SqlParameter("@s", status));
 
                         DatabaseHelper.ExecuteNonQuery(
-                            @"UPDATE PHONG_MAY SET TenPhong=@name, ViTri=@loc, SucChua=@cap, MaTTPhong=@status, UpdatedAt=GETDATE()
+                            @"DECLARE @ctx VARBINARY(128) = CONVERT(VARBINARY(128), CONVERT(BINARY(4), @uid));
+                              SET CONTEXT_INFO @ctx;
+                              UPDATE PHONG_MAY SET TenPhong=@name, ViTri=@loc, SucChua=@cap, MaTTPhong=@status, UpdatedAt=GETDATE()
                               WHERE MaPhong=@id",
+                            new SqlParameter("@uid", AppSession.MaNguoiDung),
                             new SqlParameter("@name", name),
                             new SqlParameter("@loc", location),
                             new SqlParameter("@cap", capacity),
