@@ -95,30 +95,24 @@ namespace src.BLL
 
         public void DeleteLopHoc(int id)
         {
-            try
-            {
-                _repository.DeleteLopHoc(id);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("REFERENCE") || ex.Message.Contains("FK_"))
-                    throw new Exception("Không thể xóa vì đang được sử dụng trong lịch thực hành.");
-                throw new Exception("Lỗi: " + ex.Message);
-            }
+            // Kiểm tra nếu lớp còn lịch HIỆN TẠI hoặc TƯƠNG LAI chưa hủy => chặn
+            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Lop(id);
+            if (hasFutureSched)
+                throw new Exception("Lớp này còn lịch thực hành hiện tại hoặc tương lai chưa hủy.\nVui lòng hủy hoặc xóa các lịch đó trước!");
+
+            // Cascade xóa lịch quá khứ/đã hủy liên quan, sau đó xóa lớp
+            _repository.DeleteLopHocWithCascade(id);
         }
 
         public void DeleteMonHoc(int id)
         {
-            try
-            {
-                _repository.DeleteMonHoc(id);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("REFERENCE") || ex.Message.Contains("FK_"))
-                    throw new Exception("Không thể xóa vì đang được sử dụng trong lịch thực hành.");
-                throw new Exception("Lỗi: " + ex.Message);
-            }
+            // Kiểm tra nếu môn còn lịch HIỆN TẠI hoặc TƯƠNG LAI chưa hủy => chặn
+            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Mon(id);
+            if (hasFutureSched)
+                throw new Exception("Môn học này còn lịch thực hành hiện tại hoặc tương lai chưa hủy.\nVui lòng hủy hoặc xóa các lịch đó trước!");
+
+            // Cascade xóa lịch quá khứ/đã hủy của tất cả lớp thuộc môn, sau đó xóa môn
+            _repository.DeleteMonHocWithCascade(id);
         }
     }
 }

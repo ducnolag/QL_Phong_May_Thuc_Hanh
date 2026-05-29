@@ -16,6 +16,14 @@ namespace src.DAL
         void UpdateMonHoc(int maMon, string maHocPhan, string tenMon);
         void DeleteLopHoc(int maLop);
         void DeleteMonHoc(int maMon);
+
+        // Kiem tra con lich hien tai/tuong lai chua huy
+        bool HasActiveOrFutureSchedule_Lop(int maLop);
+        bool HasActiveOrFutureSchedule_Mon(int maMon);
+
+        // Xoa cascade (lich qua khu/da huy + lop/mon)
+        void DeleteLopHocWithCascade(int maLop);
+        void DeleteMonHocWithCascade(int maMon);
     }
 
     public class LopMonRepository : ILopMonRepository
@@ -85,6 +93,143 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 db.Execute("DELETE FROM MON_HOC WHERE MaMon=@maMon", new { maMon });
+            }
+        }
+
+        // ── Kiem tra con lich hien tai / tuong lai chua huy ──────────────
+        public bool HasActiveOrFutureSchedule_Lop(int maLop)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                // Chi chan neu con lich CHUA HUY va CHUA QUA
+                int count = db.ExecuteScalar<int>(@"
+                    SELECT COUNT(*) FROM LICH_THUC_HANH l
+                    JOIN CA_HOC c ON l.MaCa = c.MaCa
+                    WHERE l.MaLop = @maLop
+                      AND l.TrangThaiLich NOT IN (N'Da huy', N'Khong duoc xep')
+                      AND l.TrangThaiLich NOT IN (N'Đã hủy', N'Không được xếp')
+                      AND (
+                            l.NgayThucHanh > CAST(GETDATE() AS DATE)
+                            OR (l.NgayThucHanh = CAST(GETDATE() AS DATE)
+                                AND c.GioKetThuc >= CAST(GETDATE() AS TIME))
+                          )",
+                    new { maLop });
+                return count > 0;
+            }
+        }
+
+        public bool HasActiveOrFutureSchedule_Mon(int maMon)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                int count = db.ExecuteScalar<int>(@"
+                    SELECT COUNT(*) FROM LICH_THUC_HANH l
+                    JOIN CA_HOC c ON l.MaCa = c.MaCa
+                    WHERE l.MaMon = @maMon
+                      AND l.TrangThaiLich NOT IN (N'Da huy', N'Khong duoc xep')
+                      AND l.TrangThaiLich NOT IN (N'Đã hủy', N'Không được xếp')
+                      AND (
+                            l.NgayThucHanh > CAST(GETDATE() AS DATE)
+                            OR (l.NgayThucHanh = CAST(GETDATE() AS DATE)
+                                AND c.GioKetThuc >= CAST(GETDATE() AS TIME))
+                          )",
+                    new { maMon });
+                return count > 0;
+            }
+        }
+
+        // ── Cascade xoa (lich qua khu / da huy) roi xoa lop/mon ─────────
+        public void DeleteLopHocWithCascade(int maLop)
+        {
+            using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
+            using (var trans = conn.BeginTransaction())
+            {
+                try
+                {
+                    // 1. Xoa YEU_CAU_CAU_HINH cua cac lich thuoc lop
+                    conn.Execute(
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop = @maLop)",
+                        new { maLop }, trans);
+
+                    // 2. Xoa PHAN_CONG_PHONG cua cac lich thuoc lop
+                    conn.Execute(
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop = @maLop)",
+                        new { maLop }, trans);
+
+                    // 3. Xoa cac lich cua lop (tat ca - qua khu, da huy)
+                    conn.Execute(
+                        "DELETE FROM LICH_THUC_HANH WHERE MaLop = @maLop",
+                        new { maLop }, trans);
+
+                    // 4. Xoa lop
+                    conn.Execute(
+                        "DELETE FROM LOP_HOC WHERE MaLop = @maLop",
+                        new { maLop }, trans);
+
+                    trans.Commit();
+                }
+                catch
+                {
+                    trans.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public void DeleteMonHocWithCascade(int maMon)
+        {
+            using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
+            using (var trans = conn.BeginTransaction())
+            {
+                try
+                {
+                    // 1. Xoa YEU_CAU_CAU_HINH cho lich truc tiep theo mon
+                    conn.Execute(
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaMon = @maMon)",
+                        new { maMon }, trans);
+
+                    // 2. Xoa PHAN_CONG_PHONG cho lich theo mon
+                    conn.Execute(
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaMon = @maMon)",
+                        new { maMon }, trans);
+
+                    // 3. Xoa lich truc tiep theo mon
+                    conn.Execute(
+                        "DELETE FROM LICH_THUC_HANH WHERE MaMon = @maMon",
+                        new { maMon }, trans);
+
+                    // 4. Xoa YEU_CAU_CAU_HINH cho lich thuoc cac lop cua mon
+                    conn.Execute(
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon))",
+                        new { maMon }, trans);
+
+                    // 5. Xoa PHAN_CONG_PHONG cho lich thuoc cac lop
+                    conn.Execute(
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon))",
+                        new { maMon }, trans);
+
+                    // 6. Xoa lich thuoc cac lop cua mon
+                    conn.Execute(
+                        "DELETE FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon)",
+                        new { maMon }, trans);
+
+                    // 7. Xoa cac lop cua mon
+                    conn.Execute(
+                        "DELETE FROM LOP_HOC WHERE MaMon = @maMon",
+                        new { maMon }, trans);
+
+                    // 8. Xoa mon
+                    conn.Execute(
+                        "DELETE FROM MON_HOC WHERE MaMon = @maMon",
+                        new { maMon }, trans);
+
+                    trans.Commit();
+                }
+                catch
+                {
+                    trans.Rollback();
+                    throw;
+                }
             }
         }
     }

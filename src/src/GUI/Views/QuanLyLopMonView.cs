@@ -220,7 +220,13 @@ namespace src.Views
                 }
                 else if (col == "Delete")
                 {
-                    if (MessageBox.Show($"Xóa môn '{ten}' và toàn bộ lớp học phần phụ thuộc?\nThao tác này không thể hoàn tác.", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    if (MessageBox.Show(
+                        $"Xóa môn '{ten}' khỏi hệ thống?\n\n" +
+                        "⚠ Lưu ý: Toàn bộ lớp học và lịch thực hành (quá khứ/đã hủy) thuộc môn này cũng sẽ bị xóa.\n" +
+                        "Nếu còn lịch tương lai chưa hủy, hệ thống sẽ từ chối.\n\n" +
+                        "Thao tác này không thể hoàn tác!",
+                        "Xác nhận xóa môn học",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
                         _LopMonService.DeleteMonHoc(pk);
                         LoadMonHoc();
@@ -255,7 +261,13 @@ namespace src.Views
                 }
                 else if (col == "Delete")
                 {
-                    if (MessageBox.Show($"Xóa lớp '{maLopHocPhan}' khỏi hệ thống?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    if (MessageBox.Show(
+                        $"Xóa lớp '{maLopHocPhan}' khỏi hệ thống?\n\n" +
+                        "⚠ Lưu ý: Toàn bộ lịch thực hành quá khứ/đã hủy của lớp này cũng sẽ bị xóa.\n" +
+                        "Nếu còn lịch tương lai chưa hủy, hệ thống sẽ từ chối.\n\n" +
+                        "Thao tác này không thể hoàn tác!",
+                        "Xác nhận xóa lớp học phần",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
                         _LopMonService.DeleteLopHoc(pk);
                         LoadLopHoc();
