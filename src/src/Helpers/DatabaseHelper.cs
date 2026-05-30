@@ -181,12 +181,12 @@ namespace src.Helpers
                     END
                 ");
 
-                // Thêm trường MaMon vào bảng LOP_HOC để biến thành Lớp Học Phần
+                // Thêm trường MaHocPhan vào bảng LOP_HOC để biến thành Lớp Học Phần
                 ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'LOP_HOC') AND name = 'MaMon')
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'LOP_HOC') AND name = 'MaHocPhan')
                     BEGIN
-                        ALTER TABLE LOP_HOC ADD MaMon INT NULL;
-                        ALTER TABLE LOP_HOC ADD CONSTRAINT FK_LOP_HOC_MON_HOC FOREIGN KEY (MaMon) REFERENCES MON_HOC(MaMon);
+                        ALTER TABLE LOP_HOC ADD MaHocPhan INT NULL;
+                        ALTER TABLE LOP_HOC ADD CONSTRAINT FK_LOP_HOC_MON_HOC FOREIGN KEY (MaHocPhan) REFERENCES MON_HOC(MaHocPhan);
                     END
                 ");
 

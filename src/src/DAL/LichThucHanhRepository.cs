@@ -18,12 +18,12 @@ namespace src.DAL
         
         IEnumerable<dynamic> GetRoomsForAssignment(int soSV, int reqRam, int reqStorage, int reqMonitor, string reqCpu, DateTime date, int caId, int currentScheduleId = 0);
         
-        int GetLopIdByName(string name);
-        int CreateLop(string name);
-        int GetMonIdByName(string name);
-        int CreateMon(string name);
+        string GetLopIdByName(string name);
+        string CreateLop(string name);
+        string GetMonIdByName(string name);
+        string CreateMon(string name);
         
-        int CheckDuplicateClassSchedule(int lopId, DateTime date, int caId, int excludeScheduleId = 0);
+        int CheckDuplicateClassSchedule(string maLopHocPhan, DateTime date, int caId, int excludeScheduleId = 0);
         int CountAvailableComputers(int roomId, int reqRam, int reqStorage, int reqMonitor, string reqCpu);
         int CheckRoomConflict(int roomId, DateTime date, int caId, int excludeScheduleId = 0);
 
@@ -67,13 +67,10 @@ namespace src.DAL
                     dtCond = "NgayThucHanh >= @start AND NgayThucHanh <= @end";
                 }
 
-                // Dieu kien lich hien tai/tuong lai (chua qua)
-                string futureCond = $"{dtCond} AND (NgayThucHanh > CAST(GETDATE() AS DATE) OR (NgayThucHanh = CAST(GETDATE() AS DATE) AND MaCa IN (SELECT MaCa FROM CA_HOC WHERE GioKetThuc >= CAST(GETDATE() AS TIME))))";
-
-                int total    = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {futureCond}", new { start, end });
-                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'\u0110\u00e3 h\u1ee7y' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {futureCond}", new { start, end });
-                int pending  = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Ch\u1edd x\u1ebfp ph\u00f2ng' AND {futureCond}", new { start, end });
-                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'\u0110\u00e3 h\u1ee7y' AND {dtCond}", new { start, end });
+                int total    = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {dtCond}", new { start, end });
+                int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
+                int pending  = 0;
+                int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {dtCond}", new { start, end });
                 return (total, assigned, pending, canceled);
             }
         }
@@ -91,18 +88,19 @@ namespace src.DAL
                 }
 
                 // Dieu kien lich qua khu (da qua)
-                string pastFilter    = "AND (l.NgayThucHanh < CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc < CAST(GETDATE() AS TIME)))";
+                string pastFilter    = "AND (l.TrangThaiLich = N'Đã hủy' OR l.NgayThucHanh < CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc < CAST(GETDATE() AS TIME)))";
                 // Dieu kien lich hien tai/tuong lai (chua qua)
-                string futureFilter  = "AND l.TrangThaiLich != N'\u0110\u00e3 h\u1ee7y' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))";
+                string futureFilter  = "AND l.TrangThaiLich != N'Đã hủy' AND (l.NgayThucHanh > CAST(GETDATE() AS DATE) OR (l.NgayThucHanh = CAST(GETDATE() AS DATE) AND c.GioKetThuc >= CAST(GETDATE() AS TIME)))";
 
+                // Nếu chọn includePast (Xem lịch cũ) thì lấy lịch quá khứ + đã hủy, nếu không thì lấy lịch tương lai
                 string modeFilter = includePast ? pastFilter : futureFilter;
 
-                string sql = $@"SELECT l.MaLich, mh.TenMon, l.TrangThaiLich, l.NgayThucHanh, 
+                string sql = $@"SELECT l.MaLich, l.MaLopHocPhan, nd.HoTen AS TenNguoiTao, l.TrangThaiLich, l.NgayThucHanh, 
                                       c.TenCa, c.GioBatDau, c.GioKetThuc,
                                       l.SoLuongSinhVien, ISNULL(p.TenPhong, '---') AS TenPhong
                                FROM LICH_THUC_HANH l
                                JOIN CA_HOC c ON l.MaCa = c.MaCa
-                               JOIN MON_HOC mh ON l.MaMon = mh.MaMon
+                               JOIN NGUOI_DUNG nd ON l.NguoiTao = nd.MaNguoiDung
                                LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                                LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong
                                WHERE {dtCond}
@@ -116,11 +114,11 @@ namespace src.DAL
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                string sql = @"SELECT l.NgayThucHanh, l.SoLuongSinhVien, l.MaLop, l.MaMon, l.MaCa,
+                string sql = @"SELECT l.NgayThucHanh, l.SoLuongSinhVien, l.MaLopHocPhan, l.MaHocPhan, l.MaCa,
                                       lh.TenLop, mh.TenMon, c.TenCa
                                FROM LICH_THUC_HANH l
-                               JOIN LOP_HOC lh ON l.MaLop = lh.MaLop
-                               JOIN MON_HOC mh ON l.MaMon = mh.MaMon
+                               JOIN LOP_HOC lh ON l.MaLopHocPhan = lh.MaLopHocPhan
+                               JOIN MON_HOC mh ON l.MaHocPhan = mh.MaHocPhan
                                JOIN CA_HOC c   ON l.MaCa  = c.MaCa
                                WHERE l.MaLich = @id";
                 return db.QueryFirstOrDefault<LichThucHanhDTO>(sql, new { id });
@@ -176,46 +174,48 @@ namespace src.DAL
             }
         }
 
-        public int GetLopIdByName(string name)
+        public string GetLopIdByName(string name)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                return db.ExecuteScalar<int>("SELECT MaLop FROM LOP_HOC WHERE TenLop = @name", new { name });
+                return db.ExecuteScalar<string>("SELECT MaLopHocPhan FROM LOP_HOC WHERE TenLop = @name", new { name });
             }
         }
 
-        public int CreateLop(string name)
+        public string CreateLop(string name)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                return db.ExecuteScalar<int>("INSERT INTO LOP_HOC (TenLop, SiSo) OUTPUT INSERTED.MaLop VALUES (@name, 30)", new { name });
+                db.Execute("INSERT INTO LOP_HOC (MaLopHocPhan, TenLop, SiSo) VALUES (@name, @name, 30)", new { name });
+                return name;
             }
         }
 
-        public int GetMonIdByName(string name)
+        public string GetMonIdByName(string name)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                return db.ExecuteScalar<int>("SELECT MaMon FROM MON_HOC WHERE TenMon = @name", new { name });
+                return db.ExecuteScalar<string>("SELECT MaHocPhan FROM MON_HOC WHERE TenMon = @name", new { name });
             }
         }
 
-        public int CreateMon(string name)
+        public string CreateMon(string name)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                return db.ExecuteScalar<int>("INSERT INTO MON_HOC (TenMon) OUTPUT INSERTED.MaMon VALUES (@name)", new { name });
+                db.Execute("INSERT INTO MON_HOC (MaHocPhan, TenMon) VALUES (@name, @name)", new { name });
+                return name;
             }
         }
 
-        public int CheckDuplicateClassSchedule(int lopId, DateTime date, int caId, int excludeScheduleId = 0)
+        public int CheckDuplicateClassSchedule(string maLopHocPhan, DateTime date, int caId, int excludeScheduleId = 0)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
                 return db.ExecuteScalar<int>(@"SELECT COUNT(*) FROM LICH_THUC_HANH l
-                                               WHERE l.MaLop = @lopId AND l.NgayThucHanh = @date AND l.MaCa = @caId
+                                               WHERE l.MaLopHocPhan = @maLopHocPhan AND l.NgayThucHanh = @date AND l.MaCa = @caId
                                                  AND l.TrangThaiLich != N'Đã hủy' AND l.MaLich != @excludeScheduleId", 
-                                               new { lopId, date = date.Date, caId, excludeScheduleId });
+                                               new { maLopHocPhan, date = date.Date, caId, excludeScheduleId });
             }
         }
 
@@ -254,8 +254,8 @@ namespace src.DAL
                     try
                     {
                         int newId = conn.ExecuteScalar<int>(
-                            @"INSERT INTO LICH_THUC_HANH (NgayThucHanh, SoLuongSinhVien, MaLop, MaMon, MaCa, NguoiTao)
-                              OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLop, @MaMon, @MaCa, @NguoiTao)",
+                            @"INSERT INTO LICH_THUC_HANH (NgayThucHanh, SoLuongSinhVien, MaLopHocPhan, MaHocPhan, MaCa, NguoiTao)
+                              OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLopHocPhan, @MaHocPhan, @MaCa, @NguoiTao)",
                             schedule, trans);
 
                         conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu, CPUToiThieu) VALUES (@newId, @reqRam, @reqStorage, @reqMonitor, @reqCpu)", 
@@ -289,7 +289,7 @@ namespace src.DAL
                     try
                     {
                         conn.Execute(@"UPDATE LICH_THUC_HANH SET NgayThucHanh=@NgayThucHanh, SoLuongSinhVien=@SoLuongSinhVien,
-                                       MaLop=@MaLop, MaMon=@MaMon, MaCa=@MaCa WHERE MaLich=@MaLich", schedule, trans);
+                                       MaLopHocPhan=@MaLopHocPhan, MaHocPhan=@MaHocPhan, MaCa=@MaCa WHERE MaLich=@MaLich", schedule, trans);
 
                         int countYc = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM YEU_CAU_CAU_HINH WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);
                         if (countYc > 0)

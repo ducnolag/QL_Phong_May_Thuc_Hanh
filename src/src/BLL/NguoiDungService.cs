@@ -59,9 +59,14 @@ namespace src.BLL
             return _NguoiDungRepository.GetAllUsers();
         }
 
+        public bool CheckUserExists(string username)
+        {
+            return _NguoiDungRepository.GetUserByUsername(username) != null;
+        }
+
         public void CreateUser(string username, string password, string hoTen, string email, string phone, bool active)
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(phone) || string.IsNullOrEmpty(password))
             {
                 throw new Exception("Vui lòng điền đầy đủ thông tin bắt buộc!");
             }
@@ -100,8 +105,8 @@ namespace src.BLL
             {
                 TenDangNhap = username,
                 HoTen = string.IsNullOrWhiteSpace(hoTen) ? throw new Exception("Họ và tên không được để trống!") : hoTen,
-                Email = email,
-                SoDienThoai = phone,
+                Email = string.IsNullOrWhiteSpace(email) ? throw new Exception("Email không được để trống!") : email,
+                SoDienThoai = string.IsNullOrWhiteSpace(phone) ? throw new Exception("Số điện thoại không được để trống!") : phone,
                 TrangThai = active
             };
 

@@ -30,20 +30,20 @@ namespace src.BLL
                 var csharp = list.FirstOrDefault(x => x.TenMon == "Lập trình C#");
                 if (csharp != null)
                 {
-                    _repository.CreateLopHoc("KTPM01-01", "KTPM01", 30, csharp.MaMon);
-                    _repository.CreateLopHoc("KTPM02-01", "KTPM02", 30, csharp.MaMon);
+                    _repository.CreateLopHoc("KTPM01-01", "KTPM01", 30, csharp.MaHocPhan);
+                    _repository.CreateLopHoc("KTPM02-01", "KTPM02", 30, csharp.MaHocPhan);
                 }
                 var web = list.FirstOrDefault(x => x.TenMon == "Lập trình Web");
                 if (web != null)
                 {
-                    _repository.CreateLopHoc("CNTT01-01", "CNTT01", 35, web.MaMon);
-                    _repository.CreateLopHoc("CNTT02-01", "CNTT02", 35, web.MaMon);
+                    _repository.CreateLopHoc("CNTT01-01", "CNTT01", 35, web.MaHocPhan);
+                    _repository.CreateLopHoc("CNTT02-01", "CNTT02", 35, web.MaHocPhan);
                 }
             }
             return list;
         }
 
-        public void CreateLopHoc(string maLopHocPhan, string name, int siSo, int? maMon)
+        public void CreateLopHoc(string maLopHocPhan, string name, int siSo, string MaHocPhan)
         {
             if (string.IsNullOrWhiteSpace(maLopHocPhan)) throw new Exception("Mã lớp học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
@@ -53,66 +53,66 @@ namespace src.BLL
             if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true))
                 throw new Exception("Mã lớp học phần đã tồn tại.");
 
-            _repository.CreateLopHoc(maLopHocPhan, name, siSo, maMon);
+            _repository.CreateLopHoc(maLopHocPhan, name, siSo, MaHocPhan);
         }
 
-        public void CreateMonHoc(string maHocPhan, string name)
+        public void CreateMonHoc(string MaHocPhan, string name)
         {
-            if (string.IsNullOrWhiteSpace(maHocPhan)) throw new Exception("Mã học phần không hợp lệ.");
+            if (string.IsNullOrWhiteSpace(MaHocPhan)) throw new Exception("Mã môn không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên môn không hợp lệ.");
 
             var allMons = GetAllMonHoc();
-            if (allMons.Any(m => m.MaHocPhan?.Equals(maHocPhan, StringComparison.OrdinalIgnoreCase) == true))
-                throw new Exception("Mã học phần đã tồn tại.");
+            if (allMons.Any(m => m.MaHocPhan?.Equals(MaHocPhan, StringComparison.OrdinalIgnoreCase) == true))
+                throw new Exception("Mã môn đã tồn tại.");
 
-            _repository.CreateMonHoc(maHocPhan, name);
+            _repository.CreateMonHoc(MaHocPhan, name);
         }
 
-        public void UpdateLopHoc(int id, string maLopHocPhan, string name, int siSo, int? maMon)
+        public void UpdateLopHoc(string oldMaLopHocPhan, string maLopHocPhan, string name, int siSo, string MaHocPhan)
         {
             if (string.IsNullOrWhiteSpace(maLopHocPhan)) throw new Exception("Mã lớp học phần không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên lớp không hợp lệ.");
             if (siSo <= 0) throw new Exception("Sĩ số phải lớn hơn 0.");
 
             var allLops = GetAllLopHoc();
-            if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true && l.MaLop != id))
+            if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true && !l.MaLopHocPhan.Equals(oldMaLopHocPhan, StringComparison.OrdinalIgnoreCase)))
                 throw new Exception("Mã lớp học phần đã tồn tại.");
 
-            _repository.UpdateLopHoc(id, maLopHocPhan, name, siSo, maMon);
+            _repository.UpdateLopHoc(maLopHocPhan, name, siSo, MaHocPhan);
         }
 
-        public void UpdateMonHoc(int id, string maHocPhan, string name)
+        public void UpdateMonHoc(string oldMaMon, string MaHocPhan, string name)
         {
-            if (string.IsNullOrWhiteSpace(maHocPhan)) throw new Exception("Mã học phần không hợp lệ.");
+            if (string.IsNullOrWhiteSpace(MaHocPhan)) throw new Exception("Mã môn không hợp lệ.");
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Tên môn không hợp lệ.");
 
             var allMons = GetAllMonHoc();
-            if (allMons.Any(m => m.MaHocPhan?.Equals(maHocPhan, StringComparison.OrdinalIgnoreCase) == true && m.MaMon != id))
-                throw new Exception("Mã học phần đã tồn tại.");
+            if (allMons.Any(m => m.MaHocPhan?.Equals(MaHocPhan, StringComparison.OrdinalIgnoreCase) == true && !m.MaHocPhan.Equals(oldMaMon, StringComparison.OrdinalIgnoreCase)))
+                throw new Exception("Mã môn đã tồn tại.");
 
-            _repository.UpdateMonHoc(id, maHocPhan, name);
+            _repository.UpdateMonHoc(MaHocPhan, name);
         }
 
-        public void DeleteLopHoc(int id)
+        public void DeleteLopHoc(string maLopHocPhan)
         {
             // Kiểm tra nếu lớp còn lịch HIỆN TẠI hoặc TƯƠNG LAI chưa hủy => chặn
-            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Lop(id);
+            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Lop(maLopHocPhan);
             if (hasFutureSched)
                 throw new Exception("Lớp này còn lịch thực hành hiện tại hoặc tương lai chưa hủy.\nVui lòng hủy hoặc xóa các lịch đó trước!");
 
             // Cascade xóa lịch quá khứ/đã hủy liên quan, sau đó xóa lớp
-            _repository.DeleteLopHocWithCascade(id);
+            _repository.DeleteLopHocWithCascade(maLopHocPhan);
         }
 
-        public void DeleteMonHoc(int id)
+        public void DeleteMonHoc(string MaHocPhan)
         {
             // Kiểm tra nếu môn còn lịch HIỆN TẠI hoặc TƯƠNG LAI chưa hủy => chặn
-            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Mon(id);
+            bool hasFutureSched = _repository.HasActiveOrFutureSchedule_Mon(MaHocPhan);
             if (hasFutureSched)
                 throw new Exception("Môn học này còn lịch thực hành hiện tại hoặc tương lai chưa hủy.\nVui lòng hủy hoặc xóa các lịch đó trước!");
 
             // Cascade xóa lịch quá khứ/đã hủy của tất cả lớp thuộc môn, sau đó xóa môn
-            _repository.DeleteMonHocWithCascade(id);
+            _repository.DeleteMonHocWithCascade(MaHocPhan);
         }
     }
 }

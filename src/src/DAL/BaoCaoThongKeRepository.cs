@@ -118,7 +118,7 @@ namespace src.DAL
                         l.TrangThaiLich,
                         ISNULL(p.TenPhong, N'Chưa xếp') AS TenPhong
                     FROM LICH_THUC_HANH l
-                    JOIN MON_HOC mh ON l.MaMon = mh.MaMon
+                    JOIN MON_HOC mh ON l.MaHocPhan = mh.MaHocPhan
                     JOIN CA_HOC c ON l.MaCa = c.MaCa
                     LEFT JOIN PHAN_CONG_PHONG pc ON l.MaLich = pc.MaLich
                     LEFT JOIN PHONG_MAY p ON pc.MaPhong = p.MaPhong

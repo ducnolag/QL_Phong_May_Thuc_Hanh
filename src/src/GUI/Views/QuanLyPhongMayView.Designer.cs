@@ -1,4 +1,4 @@
-﻿namespace src.Views
+namespace src.Views
 {
     partial class QuanLyPhongMayView
     {

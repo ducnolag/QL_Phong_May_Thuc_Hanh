@@ -7,8 +7,8 @@ namespace src.DTO
         public int MaLich { get; set; }
         public DateTime NgayThucHanh { get; set; }
         public int SoLuongSinhVien { get; set; }
-        public int MaLop { get; set; }
-        public int MaMon { get; set; }
+        public string MaLopHocPhan { get; set; }
+        public string MaHocPhan { get; set; }
         public int MaCa { get; set; }
         public int NguoiTao { get; set; }
         public string TrangThaiLich { get; set; }
@@ -16,6 +16,7 @@ namespace src.DTO
         // Additional fields for display/logic
         public string TenMon { get; set; }
         public string TenLop { get; set; }
+        public string TenNguoiTao { get; set; }
         public string TenCa { get; set; }
         public TimeSpan GioBatDau { get; set; }
         public TimeSpan GioKetThuc { get; set; }
