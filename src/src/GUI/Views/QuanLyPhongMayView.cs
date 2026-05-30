@@ -71,9 +71,49 @@ namespace src.Views
                 ForeColor = ThemeColors.TextPrimary
             };
 
+            var txtGoToPage = new TextBox
+            {
+                Size = new Size(40, 30),
+                Font = new Font("Segoe UI", 9.5F),
+                TextAlign = HorizontalAlignment.Center
+            };
+            txtGoToPage.KeyDown += (s, e) => {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.SuppressKeyPress = true;
+                    if (int.TryParse(txtGoToPage.Text, out int page))
+                    {
+                        if (page < 1) page = 1;
+                        currentPage = page;
+                        ApplyPagination();
+                    }
+                }
+            };
+
+            var btnGoToPage = new Button
+            {
+                Text = "Đến",
+                Size = new Size(50, 30),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White,
+                FlatAppearance = { BorderColor = Color.FromArgb(226, 232, 240) },
+                Font = new Font("Segoe UI", 9F)
+            };
+            btnGoToPage.Click += (s, e) => {
+                if (int.TryParse(txtGoToPage.Text, out int page))
+                {
+                    if (page < 1) page = 1;
+                    currentPage = page;
+                    ApplyPagination();
+                }
+            };
+
             pnlPagination.Controls.Add(btnPrev);
             pnlPagination.Controls.Add(lblPageInfo);
             pnlPagination.Controls.Add(btnNext);
+            pnlPagination.Controls.Add(txtGoToPage);
+            pnlPagination.Controls.Add(btnGoToPage);
 
             pnlPagination.Resize += (s, e) =>
             {
@@ -81,6 +121,8 @@ namespace src.Views
                 lblPageInfo.Location = new Point(cx - lblPageInfo.Width / 2, 15);
                 btnPrev.Location = new Point(cx - lblPageInfo.Width / 2 - 90, 10);
                 btnNext.Location = new Point(cx + lblPageInfo.Width / 2 + 10, 10);
+                txtGoToPage.Location = new Point(cx + lblPageInfo.Width / 2 + 100, 12);
+                btnGoToPage.Location = new Point(cx + lblPageInfo.Width / 2 + 145, 10);
             };
 
             this.Controls.Add(pnlPagination);
