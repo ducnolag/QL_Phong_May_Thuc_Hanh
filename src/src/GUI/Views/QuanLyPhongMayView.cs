@@ -1,9 +1,7 @@
 using System;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
 using src.Helpers;
 
 namespace src.Views
@@ -384,58 +382,28 @@ namespace src.Views
                         var cboM = FindControl<ComboBox>(dlg, "cboInputMonitor");
                         if (cboM != null) monitor = Convert.ToInt32(cboM.SelectedItem.ToString().Replace("\"", ""));
 
-                        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
+                        var PhongMayService = new src.BLL.PhongMayService();
+                        var result = PhongMayService.AddRoom(
+                            new src.DTO.PhongMayDTO
+                            {
+                                TenPhong = name,
+                                ViTri = location,
+                                SucChua = capacity,
+                                TenTrangThaiPhong = status
+                            },
+                            cpu, ram, storage, monitor);
+
+                        if (result.IsSuccess)
                         {
-                            MessageBox.Show("Vui lòng điền đầy đủ thông tin!", "Lỗi",
+                            MessageBox.Show(result.Message, "Thành công",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show(result.Message, "Lỗi",
                                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
                         }
-
-                        int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                            "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong=@name",
-                            new SqlParameter("@name", name)));
-                        if (count > 0)
-                        {
-                            MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
-                        var statusId = DatabaseHelper.ExecuteScalar(
-                            "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
-                            new SqlParameter("@s", status));
-
-                        var newRoomId = DatabaseHelper.ExecuteScalar(
-                            @"INSERT INTO PHONG_MAY (TenPhong, ViTri, SucChua, MaTTPhong)
-                              VALUES (@name, @loc, @cap, @status);
-                              SELECT SCOPE_IDENTITY();",
-                            new SqlParameter("@name", name),
-                            new SqlParameter("@loc", location),
-                            new SqlParameter("@cap", capacity),
-                            new SqlParameter("@status", statusId));
-
-                        int maPhong = Convert.ToInt32(newRoomId);
-                        var ttMayId = DatabaseHelper.ExecuteScalar("SELECT MaTTMay FROM TRANG_THAI_MAY WHERE TenTrangThaiMay=N'Tốt'");
-                        if (ttMayId == null || ttMayId == DBNull.Value) ttMayId = 1;
-
-                        for (int i = 1; i <= capacity; i++)
-                        {
-                            string tenMay = $"{name}-PC{i:D2}";
-                            DatabaseHelper.ExecuteNonQuery(
-                                @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
-                                  VALUES (@ten, @cpu, @ram, @sto, @mon, @phong, @tt)",
-                                new SqlParameter("@ten", tenMay),
-                                new SqlParameter("@cpu", cpu),
-                                new SqlParameter("@ram", ram),
-                                new SqlParameter("@sto", storage),
-                                new SqlParameter("@mon", monitor),
-                                new SqlParameter("@phong", maPhong),
-                                new SqlParameter("@tt", ttMayId));
-                        }
-
-                        MessageBox.Show($"Đã thêm phòng và tự động tạo {capacity} máy tính thành công!", "Thành công",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoadData();
                     }
                     catch (Exception ex)
                     {
@@ -452,18 +420,13 @@ namespace src.Views
         {
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    @"SELECT p.TenPhong, p.ViTri, p.SucChua, t.TenTrangThaiPhong
-                      FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong
-                      WHERE p.MaPhong=@id",
-                    new SqlParameter("@id", roomId));
-
-                if (dt.Rows.Count == 0) return;
-                var r = dt.Rows[0];
+                var PhongMayService = new src.BLL.PhongMayService();
+                var room = PhongMayService.GetRoomWithStatus(roomId);
+                if (room == null) return;
 
                 using (var dlg = CreateRoomDialog("Sửa Phòng: " + roomName,
-                    r["TenPhong"].ToString(), r["ViTri"].ToString(),
-                    Convert.ToInt32(r["SucChua"]), r["TenTrangThaiPhong"].ToString()))
+                    room.TenPhong, room.ViTri,
+                    room.SucChua, room.TenTrangThaiPhong))
                 {
                     if (dlg.ShowDialog() == DialogResult.OK)
                     {
@@ -472,19 +435,10 @@ namespace src.Views
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
 
-                        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(location))
-                        {
-                            MessageBox.Show("Vui lòng điền đầy đủ thông tin!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
+                        // Kiểm tra trùng tên phòng (chỉ khi đổi tên)
                         if (!name.Equals(roomName, StringComparison.OrdinalIgnoreCase))
                         {
-                            int count = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
-                                "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong=@name AND MaPhong!=@id",
-                                new SqlParameter("@name", name),
-                                new SqlParameter("@id", roomId)));
-                            if (count > 0)
+                            if (PhongMayService.IsRoomNameExists(name, roomId))
                             {
                                 MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo",
                                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -492,25 +446,28 @@ namespace src.Views
                             }
                         }
 
-                        var statusId = DatabaseHelper.ExecuteScalar(
-                            "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
-                            new SqlParameter("@s", status));
+                        var result = PhongMayService.UpdateRoom(
+                            new src.DTO.PhongMayDTO
+                            {
+                                MaPhong = roomId,
+                                TenPhong = name,
+                                ViTri = location,
+                                SucChua = capacity,
+                                TenTrangThaiPhong = status
+                            },
+                            AppSession.MaNguoiDung);
 
-                        DatabaseHelper.ExecuteNonQuery(
-                            @"DECLARE @ctx VARBINARY(128) = CONVERT(VARBINARY(128), CONVERT(BINARY(4), @uid));
-                              SET CONTEXT_INFO @ctx;
-                              UPDATE PHONG_MAY SET TenPhong=@name, ViTri=@loc, SucChua=@cap, MaTTPhong=@status, UpdatedAt=GETDATE()
-                              WHERE MaPhong=@id",
-                            new SqlParameter("@uid", AppSession.MaNguoiDung),
-                            new SqlParameter("@name", name),
-                            new SqlParameter("@loc", location),
-                            new SqlParameter("@cap", capacity),
-                            new SqlParameter("@status", statusId),
-                            new SqlParameter("@id", roomId));
-
-                        MessageBox.Show("Đã cập nhật phòng thành công!", "Thành công",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoadData();
+                        if (result.IsSuccess)
+                        {
+                            MessageBox.Show(result.Message, "Thành công",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show(result.Message, "Lỗi",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
@@ -562,12 +519,12 @@ namespace src.Views
 
             int y = 20;
 
-            dlg.Controls.Add(new Label { Text = "Tên phòng:", Location = new Point(20, y + 3), AutoSize = true });
+            dlg.Controls.Add(new Label { Text = "Tên phòng *:", Location = new Point(20, y + 3), AutoSize = true });
             var txtName = new TextBox { Name = "txtName", Text = name, Location = new Point(130, y), Size = new Size(250, 26) };
             dlg.Controls.Add(txtName);
             y += 40;
 
-            dlg.Controls.Add(new Label { Text = "Vị trí:", Location = new Point(20, y + 3), AutoSize = true });
+            dlg.Controls.Add(new Label { Text = "Vị trí *:", Location = new Point(20, y + 3), AutoSize = true });
             var txtLoc = new TextBox { Name = "txtLocation", Text = location, Location = new Point(130, y), Size = new Size(250, 26) };
             dlg.Controls.Add(txtLoc);
             y += 40;
@@ -657,6 +614,31 @@ namespace src.Views
 
             dlg.AcceptButton = btnSave;
             dlg.CancelButton = btnCancel;
+
+            // Validation khi bấm Lưu: không cho để trống
+            dlg.FormClosing += (s, e) =>
+            {
+                if (dlg.DialogResult == DialogResult.OK)
+                {
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
+                    {
+                        MessageBox.Show("Tên phòng không được để trống!", "Thiếu thông tin",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtName.Focus();
+                        e.Cancel = true;
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(txtLoc.Text))
+                    {
+                        MessageBox.Show("Vị trí không được để trống!", "Thiếu thông tin",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtLoc.Focus();
+                        e.Cancel = true;
+                        return;
+                    }
+                }
+            };
+
             return dlg;
         }
 

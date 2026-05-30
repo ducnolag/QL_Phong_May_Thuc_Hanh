@@ -337,7 +337,7 @@ namespace src.Views
             y += 42;
 
             // ── Họ tên ──
-            AddLabel("Họ và tên", y);
+            AddLabel("Họ và tên *", y);
             var txtHoTen = new TextBox
             {
                 Name = "txtHoTen",
@@ -524,9 +524,29 @@ namespace src.Views
             {
                 if (dlg.DialogResult == DialogResult.OK)
                 {
+                    string mUser = txtUser.Text.Trim();
+                    string mHoTen = txtHoTen.Text.Trim();
                     string mEmail = txtEmail.Text.Trim();
                     string mPhone = txtPhone.Text.Trim();
                     string mPass = txtPass.Text;
+
+                    // Kiểm tra tên đăng nhập (chỉ khi thêm mới)
+                    if (isNew && string.IsNullOrWhiteSpace(mUser))
+                    {
+                        MessageBox.Show("Tên đăng nhập không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtUser.Focus();
+                        return;
+                    }
+
+                    // Kiểm tra họ tên
+                    if (string.IsNullOrWhiteSpace(mHoTen))
+                    {
+                        MessageBox.Show("Họ và tên không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtHoTen.Focus();
+                        return;
+                    }
 
                     if (!string.IsNullOrEmpty(mEmail) && !Regex.IsMatch(mEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                     {

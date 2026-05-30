@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using src.DAL;
 using src.DTO;
 
@@ -57,6 +58,47 @@ namespace src.BLL
             else
                 return (false, "Lỗi hệ thống khi xóa máy tính.");
         }
+
+        /// <summary>
+        /// Lấy danh sách tên phòng (cho filter combobox).
+        /// </summary>
+        public List<string> GetRoomNames()
+        {
+            return _MayTinhRepository.GetRoomNames();
+        }
+
+        /// <summary>
+        /// Lấy danh sách phòng (MaPhong, TenPhong) dạng DataTable cho ComboBox.
+        /// </summary>
+        public DataTable GetRoomListForComboBox()
+        {
+            return _MayTinhRepository.GetRoomListForComboBox();
+        }
+
+        /// <summary>
+        /// Lấy thông tin 1 máy tính theo MaMay.
+        /// </summary>
+        public MayTinhDTO GetComputerById(int maMay)
+        {
+            return _MayTinhRepository.GetComputerById(maMay);
+        }
+
+        /// <summary>
+        /// Lấy MaPhong từ TenPhong.
+        /// </summary>
+        public int? GetRoomIdByName(string roomName)
+        {
+            return _MayTinhRepository.GetRoomIdByName(roomName);
+        }
+
+        /// <summary>
+        /// Kiểm tra tên máy đã tồn tại chưa.
+        /// </summary>
+        public bool IsComputerNameExists(string name, int? excludeId = null)
+        {
+            return _MayTinhRepository.IsComputerNameExists(name, excludeId);
+        }
     }
 }
+
 
