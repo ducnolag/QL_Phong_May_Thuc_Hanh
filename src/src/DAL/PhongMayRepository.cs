@@ -10,10 +10,8 @@ namespace src.DAL
     public interface IPhongMayRepository
     {
         List<PhongMayDTO> GetAllRooms();
-        PhongMayDTO GetRoomById(int roomId);
         bool DeleteRoomWithTransaction(int roomId);
         bool IsRoomNameExists(string name, int? excludeId = null);
-        int GetRoomStatusId(string statusName);
         int AddRoomWithComputers(PhongMayDTO room, string cpu, int ram, int storage, int monitor);
         bool UpdateRoom(PhongMayDTO room, int userId);
         (int TotalRooms, int Available, int Occupied) GetRoomStats();
@@ -36,15 +34,6 @@ namespace src.DAL
                     ORDER BY p.TenPhong";
                 
                 return db.Query<PhongMayDTO>(sql).ToList();
-            }
-        }
-
-        public PhongMayDTO GetRoomById(int roomId)
-        {
-            using (IDbConnection db = DatabaseHelper.GetConnection())
-            {
-                string sql = "SELECT * FROM PHONG_MAY WHERE MaPhong = @roomId";
-                return db.QueryFirstOrDefault<PhongMayDTO>(sql, new { roomId });
             }
         }
 
@@ -78,19 +67,6 @@ namespace src.DAL
                 return db.ExecuteScalar<int>(
                     "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong=@name",
                     new { name }) > 0;
-            }
-        }
-
-        /// <summary>
-        /// Lấy MaTTPhong từ tên trạng thái.
-        /// </summary>
-        public int GetRoomStatusId(string statusName)
-        {
-            using (IDbConnection db = DatabaseHelper.GetConnection())
-            {
-                return db.ExecuteScalar<int>(
-                    "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
-                    new { s = statusName });
             }
         }
 

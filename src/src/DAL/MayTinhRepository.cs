@@ -14,7 +14,6 @@ namespace src.DAL
         bool AddComputer(MayTinhDTO computer);
         bool UpdateComputer(MayTinhDTO computer);
         bool DeleteComputer(int maMay);
-        bool IsRoomInUseNow(int roomId);
         List<string> GetRoomNames();
         DataTable GetRoomListForComboBox();
         MayTinhDTO GetComputerById(int maMay);
@@ -92,21 +91,6 @@ namespace src.DAL
                     DELETE FROM MAY_TINH WHERE MaMay=@id;";
                 int rows = db.Execute(sql, new { id = maMay });
                 return rows > 0;
-            }
-        }
-
-        public bool IsRoomInUseNow(int roomId)
-        {
-            using (IDbConnection db = DatabaseHelper.GetConnection())
-            {
-                string sql = @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                               JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                               JOIN CA_HOC c ON l.MaCa = c.MaCa
-                               WHERE pc.MaPhong = @roomId
-                                 AND l.NgayThucHanh = CAST(GETDATE() AS DATE)
-                                 AND l.TrangThaiLich != N'Đã hủy'
-                                 AND CAST(GETDATE() AS TIME) BETWEEN c.GioBatDau AND c.GioKetThuc";
-                return db.ExecuteScalar<int>(sql, new { roomId }) > 0;
             }
         }
 
