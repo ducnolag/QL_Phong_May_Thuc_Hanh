@@ -62,10 +62,10 @@ namespace src.BLL
 
             if (string.IsNullOrWhiteSpace(lopName) || string.IsNullOrWhiteSpace(monName)) throw new Exception("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!");
 
-            int lopId = _repository.GetLopIdByName(lopName);
-            if (lopId == 0) lopId = _repository.CreateLop(lopName);
-            int monId = _repository.GetMonIdByName(monName);
-            if (monId == 0) monId = _repository.CreateMon(monName);
+            string lopId = _repository.GetLopIdByName(lopName);
+            if (string.IsNullOrEmpty(lopId)) lopId = _repository.CreateLop(lopName);
+            string monId = _repository.GetMonIdByName(monName);
+            if (string.IsNullOrEmpty(monId)) monId = _repository.CreateMon(monName);
 
             if (_repository.CheckDuplicateClassSchedule(lopId, date, caId) > 0)
             {
@@ -90,8 +90,8 @@ namespace src.BLL
             {
                 NgayThucHanh = date,
                 SoLuongSinhVien = soSV,
-                MaLop = lopId,
-                MaMon = monId,
+                MaLopHocPhan = lopId,
+                MaHocPhan = monId,
                 MaCa = caId,
                 NguoiTao = creatorId
             };
@@ -111,10 +111,10 @@ namespace src.BLL
 
             if (string.IsNullOrWhiteSpace(lopName) || string.IsNullOrWhiteSpace(monName)) throw new Exception("Vui lòng nhập đầy đủ thông tin Lớp, Môn và chọn Ca học!");
 
-            int lopId = _repository.GetLopIdByName(lopName);
-            if (lopId == 0) lopId = _repository.CreateLop(lopName);
-            int monId = _repository.GetMonIdByName(monName);
-            if (monId == 0) monId = _repository.CreateMon(monName);
+            string lopId = _repository.GetLopIdByName(lopName);
+            if (string.IsNullOrEmpty(lopId)) lopId = _repository.CreateLop(lopName);
+            string monId = _repository.GetMonIdByName(monName);
+            if (string.IsNullOrEmpty(monId)) monId = _repository.CreateMon(monName);
 
             if (_repository.CheckDuplicateClassSchedule(lopId, date, caId, scheduleId) > 0)
             {
@@ -140,8 +140,8 @@ namespace src.BLL
                 MaLich = scheduleId,
                 NgayThucHanh = date,
                 SoLuongSinhVien = soSV,
-                MaLop = lopId,
-                MaMon = monId,
+                MaLopHocPhan = lopId,
+                MaHocPhan = monId,
                 MaCa = caId,
                 NguoiTao = updaterId // In update, this might not strictly overwrite creator, but serves as context for PHAN_CONG_PHONG
             };

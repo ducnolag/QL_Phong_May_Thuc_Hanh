@@ -99,7 +99,7 @@ namespace src.Views
             pnlScheduleList.Controls.Clear();
 
             int totalSchedules = 0, assigned = 0, pending = 0, canceled = 0;
-            var schedules = new System.Collections.Generic.List<(int id, string className, string status, string date, string dayName, string time, int students, string room)>();
+            var schedules = new System.Collections.Generic.List<(int id, string className, string status, string date, string dayName, string time, int students, string room, string creator)>();
 
             try
             {
@@ -121,35 +121,34 @@ namespace src.Views
                     string status;
                     if (r.TrangThaiLich == "Đã hủy") status = "Đã hủy";
                     else if (r.TrangThaiLich == "Không được xếp") status = "Không được xếp";
-                    else if (r.TenPhong != "---") status = "Đã xếp";
-                    else status = "Chờ xếp";
+                    else status = "Đã xếp";
 
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
                     schedules.Add((
                         r.MaLich,
-                        r.TenMon,
+                        r.MaLopHocPhan, // Show Class instead of Subject
                         status,
                         r.NgayThucHanh.ToString("yyyy-MM-dd"),
                         r.NgayThucHanh.ToString("dddd", new System.Globalization.CultureInfo("vi-VN")),
                         timeStr,
                         r.SoLuongSinhVien,
-                        r.TenPhong
+                        r.TenPhong,
+                        r.TenNguoiTao // Include Creator
                     ));
                 }
             }
             catch
             {
                 totalSchedules = 4; assigned = 3; pending = 1; canceled = 0;
-                schedules.Add((1, "CS101", "Đã xếp", "2026-04-16", "Thứ Năm", "08:00-10:00", 25, "Lab A-301"));
-                schedules.Add((2, "CS202", "Đã xếp", "2026-04-16", "Thứ Năm", "10:00-12:00", 20, "Lab B-205"));
-                schedules.Add((3, "CS303", "Chờ xếp", "2026-04-17", "Thứ Sáu", "13:00-15:00", 30, "---"));
-                schedules.Add((4, "CS404", "Đã xếp", "2026-04-18", "Thứ Bảy", "08:00-10:00", 35, "Lab C-102"));
+                schedules.Add((1, "KTPM01-01", "Đã xếp", "2026-04-16", "Thứ Năm", "08:00-10:00", 25, "Lab A-301", "Admin"));
+                schedules.Add((2, "CNTT01-01", "Đã xếp", "2026-04-16", "Thứ Năm", "10:00-12:00", 20, "Lab B-205", "NhanVien"));
+                schedules.Add((3, "KTPM02-01", "Chờ xếp", "2026-04-17", "Thứ Sáu", "13:00-15:00", 30, "---", "NhanVien"));
+                schedules.Add((4, "CNTT02-01", "Đã xếp", "2026-04-18", "Thứ Bảy", "08:00-10:00", 35, "Lab C-102", "Admin"));
             }
 
-            // === Summary cards: Tổng lịch | Đã xếp | Chờ xếp | Đã hủy ===
+            // === Summary cards: Tổng lịch | Đã xếp | Đã hủy ===
             pnlStats.Controls.Add(MakeSummaryCard("Tổng lịch hiện tại", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
             pnlStats.Controls.Add(MakeSummaryCard("Đã xếp phòng", assigned.ToString(), ThemeColors.AccentGreen));
-            pnlStats.Controls.Add(MakeSummaryCard("Chờ xếp phòng", pending.ToString(), ThemeColors.AccentOrange));
             pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.AccentRed));
 
             // === Schedule cards ===
@@ -166,7 +165,7 @@ namespace src.Views
 
                 pnlScheduleList.Controls.Add(MakeScheduleCard(
                     sch.id, sch.className, sch.status, sch.date, sch.dayName,
-                    sch.time, sch.students, sch.room, isOld));
+                    sch.time, sch.students, sch.room, sch.creator, isOld));
             }
         }
 
@@ -198,12 +197,12 @@ namespace src.Views
         /// Tạo card lịch thực hành bằng Guna2Panel
         /// </summary>
         private Guna.UI2.WinForms.Guna2Panel MakeScheduleCard(int id, string className, string status, string date,
-            string dayName, string time, int students, string room, bool isOld = false)
+            string dayName, string time, int students, string room, string creator, bool isOld = false)
         {
             Color cardFill = isOld ? Color.FromArgb(249, 250, 251) : Color.White;
             var card = new Guna.UI2.WinForms.Guna2Panel
             {
-                Size = new Size(pnlScheduleList.Width - 30, 120),
+                Size = new Size(pnlScheduleList.Width - 30, 135),
                 Margin = new Padding(4),
                 BackColor = Color.Transparent,
                 FillColor = cardFill,
@@ -263,6 +262,8 @@ namespace src.Views
             int infoY = 44;
             card.Controls.Add(new Label { Text = $"Ngày thực hành: {date} ({dayName})", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY), AutoSize = true });
             card.Controls.Add(new Label { Text = $"Ca học: {time}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 20), AutoSize = true });
+            card.Controls.Add(new Label { Text = $"Người lập: {creator}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(72, infoY + 40), AutoSize = true });
+
             card.Controls.Add(new Label { Text = $"Số sinh viên: {students}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY), AutoSize = true });
             card.Controls.Add(new Label { Text = $"Phòng: {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
 
@@ -616,7 +617,7 @@ namespace src.Views
             try
             {
                 var dtLop = _LopMonService.GetAllLopHoc().ToList();
-                cboLop.DisplayMember = "TenLop"; cboLop.ValueMember = "MaLop"; cboLop.DataSource = dtLop;
+                cboLop.DisplayMember = "TenLop"; cboLop.ValueMember = "MaLopHocPhan"; cboLop.DataSource = dtLop;
             }
             catch { cboLop.Items.AddRange(new object[] { "CNTT01", "CNTT02", "KTPM01" }); }
             dlg.Controls.Add(cboLop);

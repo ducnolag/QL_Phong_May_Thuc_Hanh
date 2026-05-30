@@ -435,16 +435,7 @@ namespace src.Views
                         int capacity = (int)FindControl<NumericUpDown>(dlg, "numCapacity").Value;
                         string status = FindControl<ComboBox>(dlg, "cboStatus").SelectedItem?.ToString() ?? "Hoạt động";
 
-                        // Kiểm tra trùng tên phòng (chỉ khi đổi tên)
-                        if (!name.Equals(roomName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (PhongMayService.IsRoomNameExists(name, roomId))
-                            {
-                                MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                return;
-                            }
-                        }
+
 
                         var result = PhongMayService.UpdateRoom(
                             new src.DTO.PhongMayDTO
@@ -635,6 +626,19 @@ namespace src.Views
                         txtLoc.Focus();
                         e.Cancel = true;
                         return;
+                    }
+
+                    string newName = txtName.Text.Trim();
+                    if (isAdd || !newName.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var svc = new src.BLL.PhongMayService();
+                        if (svc.IsRoomNameExists(newName))
+                        {
+                            MessageBox.Show("Tên phòng này đã tồn tại! Vui lòng nhập tên khác.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            txtName.Focus();
+                            e.Cancel = true;
+                            return;
+                        }
                     }
                 }
             };

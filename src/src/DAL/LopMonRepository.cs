@@ -10,20 +10,20 @@ namespace src.DAL
     {
         IEnumerable<LopHocDTO> GetAllLopHoc();
         IEnumerable<MonHocDTO> GetAllMonHoc();
-        void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, int? maMon);
-        void CreateMonHoc(string maHocPhan, string tenMon);
-        void UpdateLopHoc(int maLop, string maLopHocPhan, string tenLop, int siSo, int? maMon);
-        void UpdateMonHoc(int maMon, string maHocPhan, string tenMon);
-        void DeleteLopHoc(int maLop);
-        void DeleteMonHoc(int maMon);
+        void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan);
+        void CreateMonHoc(string MaHocPhan, string tenMon);
+        void UpdateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan);
+        void UpdateMonHoc(string MaHocPhan, string tenMon);
+        void DeleteLopHoc(string maLopHocPhan);
+        void DeleteMonHoc(string MaHocPhan);
 
         // Kiem tra con lich hien tai/tuong lai chua huy
-        bool HasActiveOrFutureSchedule_Lop(int maLop);
-        bool HasActiveOrFutureSchedule_Mon(int maMon);
+        bool HasActiveOrFutureSchedule_Lop(string maLopHocPhan);
+        bool HasActiveOrFutureSchedule_Mon(string MaHocPhan);
 
         // Xoa cascade (lich qua khu/da huy + lop/mon)
-        void DeleteLopHocWithCascade(int maLop);
-        void DeleteMonHocWithCascade(int maMon);
+        void DeleteLopHocWithCascade(string maLopHocPhan);
+        void DeleteMonHocWithCascade(string MaHocPhan);
     }
 
     public class LopMonRepository : ILopMonRepository
@@ -33,9 +33,9 @@ namespace src.DAL
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 return db.Query<LopHocDTO>(@"
-                    SELECT l.MaLop, l.MaLopHocPhan, l.TenLop, l.SiSo, l.MaMon, m.TenMon 
+                    SELECT l.MaLopHocPhan, l.TenLop, l.SiSo, l.MaHocPhan, m.TenMon 
                     FROM LOP_HOC l 
-                    LEFT JOIN MON_HOC m ON l.MaMon = m.MaMon 
+                    LEFT JOIN MON_HOC m ON l.MaHocPhan = m.MaHocPhan 
                     ORDER BY l.TenLop");
             }
         }
@@ -44,60 +44,60 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                return db.Query<MonHocDTO>("SELECT MaMon, MaHocPhan, TenMon FROM MON_HOC ORDER BY TenMon");
+                return db.Query<MonHocDTO>("SELECT MaHocPhan, TenMon FROM MON_HOC ORDER BY TenMon");
             }
         }
 
-        public void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, int? maMon)
+        public void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO LOP_HOC (MaLopHocPhan, TenLop, SiSo, MaMon) VALUES (@maLopHocPhan, @tenLop, @siSo, @maMon)", new { maLopHocPhan, tenLop, siSo, maMon });
+                db.Execute("INSERT INTO LOP_HOC (MaLopHocPhan, TenLop, SiSo, MaHocPhan) VALUES (@maLopHocPhan, @tenLop, @siSo, @MaHocPhan)", new { maLopHocPhan, tenLop, siSo, MaHocPhan });
             }
         }
 
-        public void CreateMonHoc(string maHocPhan, string tenMon)
+        public void CreateMonHoc(string MaHocPhan, string tenMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("INSERT INTO MON_HOC (MaHocPhan, TenMon) VALUES (@maHocPhan, @tenMon)", new { maHocPhan, tenMon });
+                db.Execute("INSERT INTO MON_HOC (MaHocPhan, TenMon) VALUES (@MaHocPhan, @tenMon)", new { MaHocPhan, tenMon });
             }
         }
 
-        public void UpdateLopHoc(int maLop, string maLopHocPhan, string tenLop, int siSo, int? maMon)
+        public void UpdateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE LOP_HOC SET MaLopHocPhan=@maLopHocPhan, TenLop=@tenLop, SiSo=@siSo, MaMon=@maMon WHERE MaLop=@maLop", new { maLopHocPhan, tenLop, siSo, maMon, maLop });
+                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo, MaHocPhan=@MaHocPhan WHERE MaLopHocPhan=@maLopHocPhan", new { maLopHocPhan, tenLop, siSo, MaHocPhan });
             }
         }
 
-        public void UpdateMonHoc(int maMon, string maHocPhan, string tenMon)
+        public void UpdateMonHoc(string MaHocPhan, string tenMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE MON_HOC SET MaHocPhan=@maHocPhan, TenMon=@tenMon WHERE MaMon=@maMon", new { maHocPhan, tenMon, maMon });
+                db.Execute("UPDATE MON_HOC SET TenMon=@tenMon WHERE MaHocPhan=@MaHocPhan", new { tenMon, MaHocPhan });
             }
         }
 
-        public void DeleteLopHoc(int maLop)
+        public void DeleteLopHoc(string maLopHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("DELETE FROM LOP_HOC WHERE MaLop=@maLop", new { maLop });
+                db.Execute("DELETE FROM LOP_HOC WHERE MaLopHocPhan=@maLopHocPhan", new { maLopHocPhan });
             }
         }
 
-        public void DeleteMonHoc(int maMon)
+        public void DeleteMonHoc(string MaHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("DELETE FROM MON_HOC WHERE MaMon=@maMon", new { maMon });
+                db.Execute("DELETE FROM MON_HOC WHERE MaHocPhan=@MaHocPhan", new { MaHocPhan });
             }
         }
 
         // ── Kiem tra con lich hien tai / tuong lai chua huy ──────────────
-        public bool HasActiveOrFutureSchedule_Lop(int maLop)
+        public bool HasActiveOrFutureSchedule_Lop(string maLopHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
@@ -105,7 +105,7 @@ namespace src.DAL
                 int count = db.ExecuteScalar<int>(@"
                     SELECT COUNT(*) FROM LICH_THUC_HANH l
                     JOIN CA_HOC c ON l.MaCa = c.MaCa
-                    WHERE l.MaLop = @maLop
+                    WHERE l.MaLopHocPhan = @maLopHocPhan
                       AND l.TrangThaiLich NOT IN (N'Da huy', N'Khong duoc xep')
                       AND l.TrangThaiLich NOT IN (N'Đã hủy', N'Không được xếp')
                       AND (
@@ -113,19 +113,19 @@ namespace src.DAL
                             OR (l.NgayThucHanh = CAST(GETDATE() AS DATE)
                                 AND c.GioKetThuc >= CAST(GETDATE() AS TIME))
                           )",
-                    new { maLop });
+                    new { maLopHocPhan });
                 return count > 0;
             }
         }
 
-        public bool HasActiveOrFutureSchedule_Mon(int maMon)
+        public bool HasActiveOrFutureSchedule_Mon(string MaHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
                 int count = db.ExecuteScalar<int>(@"
                     SELECT COUNT(*) FROM LICH_THUC_HANH l
                     JOIN CA_HOC c ON l.MaCa = c.MaCa
-                    WHERE l.MaMon = @maMon
+                    WHERE l.MaHocPhan = @MaHocPhan
                       AND l.TrangThaiLich NOT IN (N'Da huy', N'Khong duoc xep')
                       AND l.TrangThaiLich NOT IN (N'Đã hủy', N'Không được xếp')
                       AND (
@@ -133,13 +133,13 @@ namespace src.DAL
                             OR (l.NgayThucHanh = CAST(GETDATE() AS DATE)
                                 AND c.GioKetThuc >= CAST(GETDATE() AS TIME))
                           )",
-                    new { maMon });
+                    new { MaHocPhan });
                 return count > 0;
             }
         }
 
         // ── Cascade xoa (lich qua khu / da huy) roi xoa lop/mon ─────────
-        public void DeleteLopHocWithCascade(int maLop)
+        public void DeleteLopHocWithCascade(string maLopHocPhan)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             using (var trans = conn.BeginTransaction())
@@ -148,23 +148,23 @@ namespace src.DAL
                 {
                     // 1. Xoa YEU_CAU_CAU_HINH cua cac lich thuoc lop
                     conn.Execute(
-                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop = @maLop)",
-                        new { maLop }, trans);
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLopHocPhan = @maLopHocPhan)",
+                        new { maLopHocPhan }, trans);
 
                     // 2. Xoa PHAN_CONG_PHONG cua cac lich thuoc lop
                     conn.Execute(
-                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop = @maLop)",
-                        new { maLop }, trans);
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLopHocPhan = @maLopHocPhan)",
+                        new { maLopHocPhan }, trans);
 
                     // 3. Xoa cac lich cua lop (tat ca - qua khu, da huy)
                     conn.Execute(
-                        "DELETE FROM LICH_THUC_HANH WHERE MaLop = @maLop",
-                        new { maLop }, trans);
+                        "DELETE FROM LICH_THUC_HANH WHERE MaLopHocPhan = @maLopHocPhan",
+                        new { maLopHocPhan }, trans);
 
                     // 4. Xoa lop
                     conn.Execute(
-                        "DELETE FROM LOP_HOC WHERE MaLop = @maLop",
-                        new { maLop }, trans);
+                        "DELETE FROM LOP_HOC WHERE MaLopHocPhan = @maLopHocPhan",
+                        new { maLopHocPhan }, trans);
 
                     trans.Commit();
                 }
@@ -176,7 +176,7 @@ namespace src.DAL
             }
         }
 
-        public void DeleteMonHocWithCascade(int maMon)
+        public void DeleteMonHocWithCascade(string MaHocPhan)
         {
             using (var conn = DatabaseHelper.GetConnection() as Microsoft.Data.SqlClient.SqlConnection)
             using (var trans = conn.BeginTransaction())
@@ -185,43 +185,43 @@ namespace src.DAL
                 {
                     // 1. Xoa YEU_CAU_CAU_HINH cho lich truc tiep theo mon
                     conn.Execute(
-                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaMon = @maMon)",
-                        new { maMon }, trans);
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaHocPhan = @MaHocPhan)",
+                        new { MaHocPhan }, trans);
 
                     // 2. Xoa PHAN_CONG_PHONG cho lich theo mon
                     conn.Execute(
-                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaMon = @maMon)",
-                        new { maMon }, trans);
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaHocPhan = @MaHocPhan)",
+                        new { MaHocPhan }, trans);
 
                     // 3. Xoa lich truc tiep theo mon
                     conn.Execute(
-                        "DELETE FROM LICH_THUC_HANH WHERE MaMon = @maMon",
-                        new { maMon }, trans);
+                        "DELETE FROM LICH_THUC_HANH WHERE MaHocPhan = @MaHocPhan",
+                        new { MaHocPhan }, trans);
 
                     // 4. Xoa YEU_CAU_CAU_HINH cho lich thuoc cac lop cua mon
                     conn.Execute(
-                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon))",
-                        new { maMon }, trans);
+                        "DELETE FROM YEU_CAU_CAU_HINH WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLopHocPhan IN (SELECT MaLopHocPhan FROM LOP_HOC WHERE MaHocPhan = @MaHocPhan))",
+                        new { MaHocPhan }, trans);
 
                     // 5. Xoa PHAN_CONG_PHONG cho lich thuoc cac lop
                     conn.Execute(
-                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon))",
-                        new { maMon }, trans);
+                        "DELETE FROM PHAN_CONG_PHONG WHERE MaLich IN (SELECT MaLich FROM LICH_THUC_HANH WHERE MaLopHocPhan IN (SELECT MaLopHocPhan FROM LOP_HOC WHERE MaHocPhan = @MaHocPhan))",
+                        new { MaHocPhan }, trans);
 
                     // 6. Xoa lich thuoc cac lop cua mon
                     conn.Execute(
-                        "DELETE FROM LICH_THUC_HANH WHERE MaLop IN (SELECT MaLop FROM LOP_HOC WHERE MaMon = @maMon)",
-                        new { maMon }, trans);
+                        "DELETE FROM LICH_THUC_HANH WHERE MaLopHocPhan IN (SELECT MaLopHocPhan FROM LOP_HOC WHERE MaHocPhan = @MaHocPhan)",
+                        new { MaHocPhan }, trans);
 
                     // 7. Xoa cac lop cua mon
                     conn.Execute(
-                        "DELETE FROM LOP_HOC WHERE MaMon = @maMon",
-                        new { maMon }, trans);
+                        "DELETE FROM LOP_HOC WHERE MaHocPhan = @MaHocPhan",
+                        new { MaHocPhan }, trans);
 
                     // 8. Xoa mon
                     conn.Execute(
-                        "DELETE FROM MON_HOC WHERE MaMon = @maMon",
-                        new { maMon }, trans);
+                        "DELETE FROM MON_HOC WHERE MaHocPhan = @MaHocPhan",
+                        new { MaHocPhan }, trans);
 
                     trans.Commit();
                 }

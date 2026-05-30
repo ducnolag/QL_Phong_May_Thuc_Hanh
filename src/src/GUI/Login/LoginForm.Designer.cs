@@ -1,4 +1,4 @@
-﻿namespace src.Login
+namespace src.Login
 {
     partial class LoginForm
     {

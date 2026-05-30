@@ -444,7 +444,7 @@ namespace src.Views
             y += isNew ? 42 : 52;
 
             // ── Số điện thoại ──
-            AddLabel("Số điện thoại", y);
+            AddLabel("Số điện thoại *", y);
             var txtPhone = new TextBox
             {
                 Name = "txtPhone",
@@ -531,12 +531,24 @@ namespace src.Views
                     string mPass = txtPass.Text;
 
                     // Kiểm tra tên đăng nhập (chỉ khi thêm mới)
-                    if (isNew && string.IsNullOrWhiteSpace(mUser))
+                    if (isNew)
                     {
-                        MessageBox.Show("Tên đăng nhập không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        e.Cancel = true;
-                        txtUser.Focus();
-                        return;
+                        if (string.IsNullOrWhiteSpace(mUser))
+                        {
+                            MessageBox.Show("Tên đăng nhập không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            e.Cancel = true;
+                            txtUser.Focus();
+                            return;
+                        }
+
+                        var svc = new src.BLL.NguoiDungService();
+                        if (svc.CheckUserExists(mUser))
+                        {
+                            MessageBox.Show("Tên đăng nhập đã tồn tại! Vui lòng chọn tên khác.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            e.Cancel = true;
+                            txtUser.Focus();
+                            return;
+                        }
                     }
 
                     // Kiểm tra họ tên
@@ -548,7 +560,15 @@ namespace src.Views
                         return;
                     }
 
-                    if (!string.IsNullOrEmpty(mEmail) && !Regex.IsMatch(mEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                    if (string.IsNullOrWhiteSpace(mEmail))
+                    {
+                        MessageBox.Show("Email không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtEmail.Focus();
+                        return;
+                    }
+
+                    if (!Regex.IsMatch(mEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                     {
                         MessageBox.Show("Định dạng email không hợp lệ!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
@@ -556,7 +576,15 @@ namespace src.Views
                         return;
                     }
 
-                    if (!string.IsNullOrEmpty(mPhone) && !Regex.IsMatch(mPhone, @"^\d{10,11}$"))
+                    if (string.IsNullOrWhiteSpace(mPhone))
+                    {
+                        MessageBox.Show("Số điện thoại không được để trống!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtPhone.Focus();
+                        return;
+                    }
+
+                    if (!Regex.IsMatch(mPhone, @"^\d{10,11}$"))
                     {
                         MessageBox.Show("Số điện thoại phải chứa từ 10 đến 11 chữ số!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
