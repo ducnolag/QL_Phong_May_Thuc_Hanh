@@ -11,7 +11,7 @@ namespace src.Helpers
     {
         // Connection string for SQL Server
         public static readonly string ConnectionString =
-            @"Data Source=LapLag;Initial Catalog=QuanLyPhongMay;Integrated Security=True;Encrypt=False";
+            @"Data Source=DESKTOP-BIIH3IM\MSSQLSERVER02;Initial Catalog=QuanLyPhongMay;Integrated Security=True;Trust Server Certificate=True";
 
 
         public static SqlConnection GetConnection()
