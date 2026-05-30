@@ -13,7 +13,6 @@ namespace src.DAL
         bool AddComputer(MayTinhDTO computer);
         bool UpdateComputer(MayTinhDTO computer);
         bool DeleteComputer(int maMay);
-        bool IsRoomInUseNow(int roomId);
     }
 
     public class MayTinhRepository : IMayTinhRepository
@@ -80,20 +79,6 @@ namespace src.DAL
             }
         }
 
-        public bool IsRoomInUseNow(int roomId)
-        {
-            using (IDbConnection db = DatabaseHelper.GetConnection())
-            {
-                string sql = @"SELECT COUNT(*) FROM PHAN_CONG_PHONG pc
-                               JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
-                               JOIN CA_HOC c ON l.MaCa = c.MaCa
-                               WHERE pc.MaPhong = @roomId
-                                 AND l.NgayThucHanh = CAST(GETDATE() AS DATE)
-                                 AND l.TrangThaiLich != N'Đã hủy'
-                                 AND CAST(GETDATE() AS TIME) BETWEEN c.GioBatDau AND c.GioKetThuc";
-                return db.ExecuteScalar<int>(sql, new { roomId }) > 0;
-            }
-        }
     }
 }
 

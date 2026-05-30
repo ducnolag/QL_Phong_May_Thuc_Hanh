@@ -12,6 +12,11 @@ namespace src.DAL
         List<PhongMayDTO> GetAllRooms();
         PhongMayDTO GetRoomById(int roomId);
         bool DeleteRoomWithTransaction(int roomId);
+        bool AddRoom(PhongMayDTO room);
+        bool UpdateRoom(PhongMayDTO room);
+        bool CheckRoomNameExists(string tenPhong, int? excludeRoomId = null);
+        bool UpdateRoomStatus(int roomId, int statusId);
+        int GetRoomStatusIdByName(string statusName);
     }
 
     public class PhongMayRepository : IPhongMayRepository
@@ -79,6 +84,58 @@ namespace src.DAL
                 }
             }
         }
+        public bool AddRoom(PhongMayDTO room)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                string sql = "INSERT INTO PHONG_MAY (TenPhong, ViTri, SucChua, MaTTPhong) VALUES (@TenPhong, @ViTri, @SucChua, @MaTTPhong)";
+                int rows = db.Execute(sql, new { room.TenPhong, room.ViTri, room.SucChua, room.MaTTPhong });
+                return rows > 0;
+            }
+        }
+
+        public bool UpdateRoom(PhongMayDTO room)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                string sql = "UPDATE PHONG_MAY SET TenPhong = @TenPhong, ViTri = @ViTri, SucChua = @SucChua, MaTTPhong = @MaTTPhong WHERE MaPhong = @MaPhong";
+                int rows = db.Execute(sql, new { room.TenPhong, room.ViTri, room.SucChua, room.MaTTPhong, room.MaPhong });
+                return rows > 0;
+            }
+        }
+
+        public bool CheckRoomNameExists(string tenPhong, int? excludeRoomId = null)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                string sql = "SELECT COUNT(*) FROM PHONG_MAY WHERE TenPhong = @tenPhong";
+                if (excludeRoomId.HasValue)
+                {
+                    sql += " AND MaPhong != @excludeRoomId";
+                }
+                int count = db.ExecuteScalar<int>(sql, new { tenPhong, excludeRoomId });
+                return count > 0;
+            }
+        }
+
+        public bool UpdateRoomStatus(int roomId, int statusId)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                string sql = "UPDATE PHONG_MAY SET MaTTPhong = @statusId WHERE MaPhong = @roomId";
+                int rows = db.Execute(sql, new { statusId, roomId });
+                return rows > 0;
+            }
+        }
+
+        public int GetRoomStatusIdByName(string statusName)
+        {
+            using (IDbConnection db = DatabaseHelper.GetConnection())
+            {
+                string sql = "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong = @statusName";
+                return db.ExecuteScalar<int>(sql, new { statusName });
+            }
+        }
+
     }
 }
-

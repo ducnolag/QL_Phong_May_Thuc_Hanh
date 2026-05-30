@@ -142,6 +142,14 @@ namespace src.Helpers
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Hoạt động')");
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Đóng cửa')");
                 }
+                else
+                {
+                    var existMaintenance = ExecuteScalar("SELECT COUNT(*) FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong = N'Cần bảo trì'");
+                    if (Convert.ToInt32(existMaintenance) == 0)
+                    {
+                        ExecuteNonQuery("INSERT INTO TRANG_THAI_PHONG (TenTrangThaiPhong) VALUES (N'Cần bảo trì')");
+                    }
+                }
 
                 // Seed computer statuses
                 var ttMayCount = ExecuteScalar("SELECT COUNT(*) FROM TRANG_THAI_MAY");

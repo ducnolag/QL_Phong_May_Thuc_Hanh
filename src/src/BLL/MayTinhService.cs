@@ -22,7 +22,6 @@ namespace src.BLL
         {
             if (string.IsNullOrEmpty(computer.TenMay) || string.IsNullOrEmpty(computer.CPU))
                 return (false, "Mã máy và CPU không được để trống!");
-
             bool success = _MayTinhRepository.AddComputer(computer);
             if (success)
                 return (true, "Đã thêm máy tính thành công!");
