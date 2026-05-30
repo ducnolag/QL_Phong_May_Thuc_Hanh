@@ -3,7 +3,6 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
 using src.Helpers;
 
 namespace src.Views
@@ -136,10 +135,10 @@ namespace src.Views
             cboRoom.Items.Add("Tất cả phòng");
             try
             {
-                var dtPhong = DatabaseHelper.ExecuteQuery(
-                    "SELECT TenPhong FROM PHONG_MAY ORDER BY TenPhong");
-                foreach (DataRow r in dtPhong.Rows)
-                    cboRoom.Items.Add(r["TenPhong"].ToString());
+                var compService = new src.BLL.MayTinhService();
+                var roomNames = compService.GetRoomNames();
+                foreach (var rn in roomNames)
+                    cboRoom.Items.Add(rn);
             }
             catch { /* giữ mặc định */ }
 
@@ -294,8 +293,9 @@ namespace src.Views
             cboRoom.Items.Add("Tất cả phòng");
             try
             {
-                var dtP = DatabaseHelper.ExecuteQuery("SELECT TenPhong FROM PHONG_MAY ORDER BY TenPhong");
-                foreach (DataRow r in dtP.Rows) cboRoom.Items.Add(r["TenPhong"].ToString());
+                var compService = new src.BLL.MayTinhService();
+                var roomNames = compService.GetRoomNames();
+                foreach (var rn in roomNames) cboRoom.Items.Add(rn);
             }
             catch { }
             int idx = cboRoom.Items.IndexOf(selected);
@@ -444,11 +444,10 @@ namespace src.Views
             {
                 try
                 {
-                    var dt = DatabaseHelper.ExecuteQuery(
-                        "SELECT MaPhong FROM PHONG_MAY WHERE TenPhong = @name",
-                        new Microsoft.Data.SqlClient.SqlParameter("@name", selectedRoom));
-                    if (dt.Rows.Count > 0)
-                        initialMaPhong = Convert.ToInt32(dt.Rows[0]["MaPhong"]);
+                    var compService = new src.BLL.MayTinhService();
+                    int? maPhongResult = compService.GetRoomIdByName(selectedRoom);
+                    if (maPhongResult.HasValue)
+                        initialMaPhong = maPhongResult.Value;
                 }
                 catch { }
             }
@@ -499,20 +498,18 @@ namespace src.Views
             if (maMay == 0) { MessageBox.Show("Không thể sửa dữ liệu mẫu!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             try
             {
-                var dt = DatabaseHelper.ExecuteQuery(
-                    "SELECT * FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE m.MaMay=@id",
-                    new SqlParameter("@id", maMay));
-                if (dt.Rows.Count == 0) return;
-                var r = dt.Rows[0];
+                var compService = new src.BLL.MayTinhService();
+                var comp = compService.GetComputerById(maMay);
+                if (comp == null) return;
 
-                using var dlg = BuildComputerDialog("Sửa Máy: " + r["TenMay"],
-                    r["TenMay"].ToString(), r["CPU"].ToString(),
-                    r["TenTrangThaiMay"].ToString(),
-                    Convert.ToInt32(r["RAM"]),
-                    r["DungLuongLuuTru"] == DBNull.Value ? 256 : Convert.ToInt32(r["DungLuongLuuTru"]),
-                    r["KichThuocManHinh"] == DBNull.Value ? 24 : Convert.ToInt32(r["KichThuocManHinh"]),
-                    Convert.ToInt32(r["MaPhong"]),
-                    r["TenTrangThaiMay"].ToString(),
+                using var dlg = BuildComputerDialog("Sửa Máy: " + comp.TenMay,
+                    comp.TenMay, comp.CPU,
+                    comp.TenTrangThaiMay,
+                    comp.RAM,
+                    comp.DungLuongLuuTru == 0 ? 256 : comp.DungLuongLuuTru,
+                    comp.KichThuocManHinh == 0 ? 24 : comp.KichThuocManHinh,
+                    comp.MaPhong,
+                    comp.TenTrangThaiMay,
                     maMay);
 
                 if (dlg.ShowDialog() != DialogResult.OK) return;
@@ -525,7 +522,6 @@ namespace src.Views
                 int maPhong = (int)Find<ComboBox>(dlg, "cboPhong").SelectedValue;
                 string ttMay = Find<ComboBox>(dlg, "cboTT").SelectedItem?.ToString() ?? "Tốt";
 
-                var compService = new src.BLL.MayTinhService();
                 var result = compService.UpdateComputer(new src.DTO.MayTinhDTO
                 {
                     MaMay = maMay,
@@ -688,7 +684,8 @@ namespace src.Views
                     }
                 };
 
-                var dtP = DatabaseHelper.ExecuteQuery("SELECT MaPhong, TenPhong FROM PHONG_MAY ORDER BY TenPhong");
+                var compService = new src.BLL.MayTinhService();
+                var dtP = compService.GetRoomListForComboBox();
                 cboPh.DisplayMember = "TenPhong"; cboPh.ValueMember = "MaPhong";
                 cboPh.DataSource = dtP;
 
@@ -766,6 +763,15 @@ namespace src.Views
             {
                 if (dlg.DialogResult == DialogResult.OK)
                 {
+                    // Kiểm tra phần suffix (phần người dùng nhập) không được trống
+                    if (string.IsNullOrWhiteSpace(txtSuffix.Text))
+                    {
+                        MessageBox.Show("Vui lòng nhập mã máy (phần số)!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        e.Cancel = true;
+                        txtSuffix.Focus();
+                        return;
+                    }
+
                     string mMay = txtTen.Text.Trim();
                     string mCpu = cboCpu.SelectedItem?.ToString() ?? "";
 
@@ -776,22 +782,27 @@ namespace src.Views
                         return;
                     }
 
-                    int count = 0;
+                    var compService = new src.BLL.MayTinhService();
+                    bool nameExists;
                     if (originalMaMay == 0)
                     {
-                        count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten", new SqlParameter("@ten", mMay)));
+                        nameExists = compService.IsComputerNameExists(mMay);
                     }
                     else if (!mMay.Equals(tenMay, StringComparison.OrdinalIgnoreCase))
                     {
-                        count = Convert.ToInt32(DatabaseHelper.ExecuteScalar("SELECT COUNT(*) FROM MAY_TINH WHERE TenMay=@ten AND MaMay!=@id", new SqlParameter("@ten", mMay), new SqlParameter("@id", originalMaMay)));
+                        nameExists = compService.IsComputerNameExists(mMay, originalMaMay);
+                    }
+                    else
+                    {
+                        nameExists = false;
                     }
 
-                    if (count > 0)
+                    if (nameExists)
                     {
                         MessageBox.Show("Mã máy đã tồn tại! Vui lòng nhập lại.", "Trùng mã máy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
-                        txtTen.SelectAll();
-                        txtTen.Focus();
+                        txtSuffix.SelectAll();
+                        txtSuffix.Focus();
                     }
                 }
             };
