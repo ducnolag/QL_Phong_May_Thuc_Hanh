@@ -190,7 +190,11 @@ namespace src.Views
             foreach (DataGridViewRow row in dgvLopHoc.Rows)
             {
                 if (row.IsNewRow) continue;
-                bool matchKw = string.IsNullOrEmpty(kw) || row.Cells["MaLopHocPhan"].Value?.ToString().ToLower().Contains(kw) == true;
+                bool matchKw = string.IsNullOrEmpty(kw) 
+                    || row.Cells["MaLopHocPhan"].Value?.ToString().ToLower().Contains(kw) == true
+                    || row.Cells["Mon"].Value?.ToString().ToLower().Contains(kw) == true
+                    || row.Cells["SiSo"].Value?.ToString().ToLower().Contains(kw) == true;
+                
                 bool matchMon = !filterByMon || row.Cells["Mon"].Value?.ToString() == selectedMon;
                 row.Visible = matchKw && matchMon;
             }

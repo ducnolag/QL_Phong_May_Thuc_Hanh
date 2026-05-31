@@ -19,13 +19,13 @@ namespace src.Views
         {
             pnlHeader = new System.Windows.Forms.Panel();
             btnAdd = new System.Windows.Forms.Button();
-            chkXemLichCu = new System.Windows.Forms.CheckBox();
             dtpFromDate = new System.Windows.Forms.DateTimePicker();
             lblTuNgay = new System.Windows.Forms.Label();
             dtpToDate = new System.Windows.Forms.DateTimePicker();
             lblDenNgay = new System.Windows.Forms.Label();
             lblSubtitle = new System.Windows.Forms.Label();
             lblTitle = new System.Windows.Forms.Label();
+            chkXemLichCu = new System.Windows.Forms.CheckBox();
             pnlStats = new System.Windows.Forms.FlowLayoutPanel();
             pnlScheduleList = new System.Windows.Forms.FlowLayoutPanel();
             lblListTitle = new System.Windows.Forms.Label();
@@ -71,20 +71,6 @@ namespace src.Views
             btnAdd.Text = "+ Thêm Lịch";
             btnAdd.UseVisualStyleBackColor = false;
             // 
-            // chkXemLichCu
-            // 
-            chkXemLichCu.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            chkXemLichCu.AutoSize = true;
-            chkXemLichCu.Cursor = System.Windows.Forms.Cursors.Hand;
-            chkXemLichCu.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            chkXemLichCu.Location = new System.Drawing.Point(339, 23);
-            chkXemLichCu.Name = "chkXemLichCu";
-            chkXemLichCu.Size = new System.Drawing.Size(111, 25);
-            chkXemLichCu.TabIndex = 8;
-            chkXemLichCu.Text = "Xem lịch cũ";
-            chkXemLichCu.UseVisualStyleBackColor = true;
-            chkXemLichCu.CheckedChanged += chkXemLichCu_CheckedChanged;
-            // 
             // dtpFromDate
             // 
             dtpFromDate.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
@@ -116,6 +102,7 @@ namespace src.Views
             dtpToDate.Name = "dtpToDate";
             dtpToDate.Size = new System.Drawing.Size(100, 29);
             dtpToDate.TabIndex = 5;
+            dtpToDate.Value = new System.DateTime(2026, 6, 20, 20, 8, 0, 0);
             // 
             // lblDenNgay
             // 
@@ -151,6 +138,20 @@ namespace src.Views
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Quản Lý Lịch Thực Hành";
             lblTitle.Click += lblTitle_Click;
+            // 
+            // chkXemLichCu
+            // 
+            chkXemLichCu.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            chkXemLichCu.AutoSize = true;
+            chkXemLichCu.Cursor = System.Windows.Forms.Cursors.Hand;
+            chkXemLichCu.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            chkXemLichCu.Location = new System.Drawing.Point(339, 23);
+            chkXemLichCu.Name = "chkXemLichCu";
+            chkXemLichCu.Size = new System.Drawing.Size(111, 25);
+            chkXemLichCu.TabIndex = 8;
+            chkXemLichCu.Text = "Xem lịch cũ";
+            chkXemLichCu.UseVisualStyleBackColor = true;
+            chkXemLichCu.CheckedChanged += chkXemLichCu_CheckedChanged;
             // 
             // pnlStats
             // 
@@ -221,7 +222,7 @@ namespace src.Views
             txtSearch.Location = new System.Drawing.Point(530, 23);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "🔍 Tìm môn, lớp...";
-            txtSearch.Size = new System.Drawing.Size(200, 26);
+            txtSearch.Size = new System.Drawing.Size(200, 29);
             txtSearch.TabIndex = 9;
             // 
             // cboRoomFilter
@@ -233,7 +234,7 @@ namespace src.Views
             cboRoomFilter.Location = new System.Drawing.Point(740, 23);
             cboRoomFilter.MaxDropDownItems = 5;
             cboRoomFilter.Name = "cboRoomFilter";
-            cboRoomFilter.Size = new System.Drawing.Size(150, 26);
+            cboRoomFilter.Size = new System.Drawing.Size(150, 29);
             cboRoomFilter.TabIndex = 10;
             // 
             // QuanLyLichThucHanhView

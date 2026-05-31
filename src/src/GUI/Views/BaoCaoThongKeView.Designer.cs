@@ -72,6 +72,7 @@ namespace src.Views
             dtpToDate.Name = "dtpToDate";
             dtpToDate.Size = new System.Drawing.Size(102, 29);
             dtpToDate.TabIndex = 1;
+            dtpToDate.Value = new System.DateTime(2026, 6, 20, 20, 9, 0, 0);
             // 
             // lblDenNgay
             // 

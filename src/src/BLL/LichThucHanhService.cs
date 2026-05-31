@@ -74,12 +74,6 @@ namespace src.BLL
 
             if (roomId.HasValue && roomId.Value > 0)
             {
-                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor, reqCpu);
-                if (mayDatYeuCau < soSV)
-                {
-                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\", CPU: {reqCpu}), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
-                }
-
                 if (_repository.CheckRoomConflict(roomId.Value, date, caId) > 0)
                 {
                     throw new Exception("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!");
@@ -123,12 +117,6 @@ namespace src.BLL
 
             if (roomId.HasValue && roomId.Value > 0)
             {
-                int mayDatYeuCau = _repository.CountAvailableComputers(roomId.Value, reqRam, reqStorage, reqMonitor, reqCpu);
-                if (mayDatYeuCau < soSV)
-                {
-                    throw new Exception($"Phòng máy được chọn chỉ có {mayDatYeuCau} máy đáp ứng cấu hình (RAM ≥ {reqRam}GB, Lưu trữ ≥ {reqStorage}GB, Màn hình ≥ {reqMonitor}\", CPU: {reqCpu}), không đủ cho {soSV} sinh viên!\nVui lòng chọn phòng khác hoặc giảm yêu cầu cấu hình.");
-                }
-
                 if (_repository.CheckRoomConflict(roomId.Value, date, caId, scheduleId) > 0)
                 {
                     throw new Exception("Rất tiếc, phòng máy này vừa được người khác đặt trước cho ca học và ngày này. Vui lòng chọn phòng khác!");

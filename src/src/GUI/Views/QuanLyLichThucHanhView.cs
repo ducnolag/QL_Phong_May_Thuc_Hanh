@@ -62,9 +62,9 @@ namespace src.Views
             dtpFromDate.Format = DateTimePickerFormat.Short;
             dtpToDate.Format = DateTimePickerFormat.Short;
 
-            // Mặc định chọn đầu tháng đến cuối tháng
-            dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            // Mặc định chọn từ đầu năm đến cuối tháng 6
+            dtpFromDate.Value = new DateTime(DateTime.Now.Year, 1, 1);
+            dtpToDate.Value = new DateTime(DateTime.Now.Year, 6, 30);
             dtpToDate.MinDate = dtpFromDate.Value;
 
             dtpFromDate.ValueChanged += (s, e) => {
@@ -120,7 +120,6 @@ namespace src.Views
                     // Lay trang thai truc tiep tu DB thay vi tu suy ra
                     string status;
                     if (r.TrangThaiLich == "Đã hủy") status = "Đã hủy";
-                    else if (r.TrangThaiLich == "Không được xếp") status = "Không được xếp";
                     else status = "Đã xếp";
 
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
@@ -139,10 +138,9 @@ namespace src.Views
             }
             catch
             {
-                totalSchedules = 4; assigned = 3; pending = 1; canceled = 0;
+                totalSchedules = 3; assigned = 3; pending = 0; canceled = 0;
                 schedules.Add((1, "KTPM01-01", "Đã xếp", "2026-04-16", "Thứ Năm", "08:00-10:00", 25, "Lab A-301", "Admin"));
                 schedules.Add((2, "CNTT01-01", "Đã xếp", "2026-04-16", "Thứ Năm", "10:00-12:00", 20, "Lab B-205", "NhanVien"));
-                schedules.Add((3, "KTPM02-01", "Chờ xếp", "2026-04-17", "Thứ Sáu", "13:00-15:00", 30, "---", "NhanVien"));
                 schedules.Add((4, "CNTT02-01", "Đã xếp", "2026-04-18", "Thứ Bảy", "08:00-10:00", 35, "Lab C-102", "Admin"));
             }
 
@@ -214,9 +212,7 @@ namespace src.Views
 
             Color badgeBg, badgeFg;
             if (status == "Đã xếp")        { badgeBg = ThemeColors.BadgeBlueBg;   badgeFg = ThemeColors.BadgeBlueFg; }
-            else if (status == "Đã hủy")   { badgeBg = ThemeColors.BadgeRedBg;    badgeFg = ThemeColors.BadgeRedFg; }
-            else if (status == "Không được xếp") { badgeBg = Color.FromArgb(241, 245, 249); badgeFg = Color.FromArgb(100, 116, 139); }
-            else                           { badgeBg = ThemeColors.BadgeOrangeBg; badgeFg = ThemeColors.BadgeOrangeFg; }
+            else                           { badgeBg = ThemeColors.BadgeRedBg;    badgeFg = ThemeColors.BadgeRedFg; }
 
             var iconLabel = new Label
             {
@@ -346,6 +342,14 @@ namespace src.Views
                         int reqMonitor = Convert.ToInt32(cboMonitor.SelectedItem.ToString().Replace("\"", ""));
                         string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
                         int? roomId = GetRoomId(cboRoom.SelectedItem);
+
+                        if (cboRoom.SelectedItem is RoomItem ri && !ri.IsValid)
+                        {
+                            if (MessageBox.Show("Phòng máy này không đáp ứng đủ yêu cầu về số lượng hoặc cấu hình máy.\nBạn có chắc chắn vẫn muốn xếp lịch vào phòng này?", "Cảnh báo", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                            {
+                                return;
+                            }
+                        }
 
                         _LichThucHanhService.ValidateAndCreateSchedule(
                             date, cboLop.Text.Trim(), tenMon,
@@ -498,6 +502,14 @@ namespace src.Views
                             string reqCpu = cboCpu.SelectedItem?.ToString() ?? "Intel Core i5";
 
                             int? roomId = GetRoomId(cboRoom.SelectedItem);
+
+                            if (cboRoom.SelectedItem is RoomItem ri && !ri.IsValid)
+                            {
+                                if (MessageBox.Show("Phòng máy này không đáp ứng đủ yêu cầu về số lượng hoặc cấu hình máy.\nBạn có chắc chắn vẫn muốn xếp lịch vào phòng này?", "Cảnh báo", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                                {
+                                    return;
+                                }
+                            }
 
                             _LichThucHanhService.ValidateAndUpdateSchedule(
                                 scheduleId, date, cboLop.Text.Trim(), tenMon,
@@ -850,7 +862,7 @@ namespace src.Views
                         else
                         {
                             // Thêm vào nhưng đánh dấu là thiếu máy tốt
-                            cboRoom.Items.Add(new RoomItem { Text = $"Phòng {r.TenPhong} không thỏa mãn điều kiện", Id = r.MaPhong, IsValid = false });
+                            cboRoom.Items.Add(new RoomItem { Text = $"Phòng {r.TenPhong} (Không đủ {svCount} máy đạt chuẩn)", Id = r.MaPhong, IsValid = false });
                         }
                     }
 

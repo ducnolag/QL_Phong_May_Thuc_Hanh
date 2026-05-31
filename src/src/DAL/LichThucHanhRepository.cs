@@ -152,16 +152,32 @@ namespace src.DAL
             using (var db = DatabaseHelper.GetConnection())
             {
                 string sql = @"
+                    DECLARE @reqCpuTier INT = CASE @reqCpu
+                        WHEN 'Intel Core i3' THEN 1 WHEN 'AMD Ryzen 3' THEN 1
+                        WHEN 'Intel Core i5' THEN 2 WHEN 'AMD Ryzen 5' THEN 2
+                        WHEN 'Intel Core i7' THEN 3 WHEN 'AMD Ryzen 7' THEN 3
+                        WHEN 'Intel Core i9' THEN 4 ELSE 0 END;
+
                     SELECT p.MaPhong, p.TenPhong, p.SucChua,
                            (SELECT COUNT(*) FROM MAY_TINH m 
                             JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                             WHERE m.MaPhong = p.MaPhong AND tm.TenTrangThaiMay = N'Tốt'
                               AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor
-                              AND (@reqCpu = '' OR ISNULL(m.CPU, '') = @reqCpu)) AS MayTot
+                              AND (@reqCpu = '' OR 
+                                  (CASE 
+                                      WHEN ISNULL(m.CPU, '') LIKE '%i9%' THEN 4
+                                      WHEN ISNULL(m.CPU, '') LIKE '%i7%' THEN 3
+                                      WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 7%' THEN 3
+                                      WHEN ISNULL(m.CPU, '') LIKE '%i5%' THEN 2
+                                      WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 5%' THEN 2
+                                      WHEN ISNULL(m.CPU, '') LIKE '%i3%' THEN 1
+                                      WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 3%' THEN 1
+                                      ELSE 0 END) >= @reqCpuTier
+                              )
+                           ) AS MayTot
                     FROM PHONG_MAY p
                     JOIN TRANG_THAI_PHONG ttp ON p.MaTTPhong = ttp.MaTTPhong
                     WHERE ttp.TenTrangThaiPhong = N'Hoạt động'
-                      AND p.SucChua >= @soSV
                       AND NOT EXISTS (
                           SELECT 1 FROM PHAN_CONG_PHONG pc
                           JOIN LICH_THUC_HANH l ON pc.MaLich = l.MaLich
@@ -223,11 +239,28 @@ namespace src.DAL
         {
             using (var db = DatabaseHelper.GetConnection())
             {
-                return db.ExecuteScalar<int>(@"SELECT COUNT(*) FROM MAY_TINH m
+                return db.ExecuteScalar<int>(@"
+                                               DECLARE @reqCpuTier INT = CASE @reqCpu
+                                                   WHEN 'Intel Core i3' THEN 1 WHEN 'AMD Ryzen 3' THEN 1
+                                                   WHEN 'Intel Core i5' THEN 2 WHEN 'AMD Ryzen 5' THEN 2
+                                                   WHEN 'Intel Core i7' THEN 3 WHEN 'AMD Ryzen 7' THEN 3
+                                                   WHEN 'Intel Core i9' THEN 4 ELSE 0 END;
+
+                                               SELECT COUNT(*) FROM MAY_TINH m
                                                JOIN TRANG_THAI_MAY tm ON m.MaTTMay = tm.MaTTMay
                                                WHERE m.MaPhong = @roomId AND tm.TenTrangThaiMay = N'Tốt'
                                                  AND m.RAM >= @reqRam AND m.DungLuongLuuTru >= @reqStorage AND ISNULL(m.KichThuocManHinh, 0) >= @reqMonitor
-                                                 AND (@reqCpu = '' OR ISNULL(m.CPU, '') = @reqCpu)", 
+                                                 AND (@reqCpu = '' OR 
+                                                     (CASE 
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%i9%' THEN 4
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%i7%' THEN 3
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 7%' THEN 3
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%i5%' THEN 2
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 5%' THEN 2
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%i3%' THEN 1
+                                                         WHEN ISNULL(m.CPU, '') LIKE '%Ryzen 3%' THEN 1
+                                                         ELSE 0 END) >= @reqCpuTier
+                                                 )", 
                                                new { roomId, reqRam, reqStorage, reqMonitor, reqCpu = reqCpu ?? "" });
             }
         }

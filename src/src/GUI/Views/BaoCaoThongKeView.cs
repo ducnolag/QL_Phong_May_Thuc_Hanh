@@ -57,9 +57,9 @@ namespace src.Views
             dtpFromDate.Format = DateTimePickerFormat.Short;
             dtpToDate.Format = DateTimePickerFormat.Short;
             
-            // Mặc định chọn đầu tháng đến cuối tháng
-            dtpFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            dtpToDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            // Mặc định chọn từ đầu năm đến cuối tháng 6
+            dtpFromDate.Value = new DateTime(DateTime.Now.Year, 1, 1);
+            dtpToDate.Value = new DateTime(DateTime.Now.Year, 6, 30);
             dtpToDate.MinDate = dtpFromDate.Value;
 
             dtpFromDate.ValueChanged += (s, e) => {
@@ -199,7 +199,7 @@ namespace src.Views
             {
                 ("Tổng phòng máy",   _totalRooms.ToString(), $"Hoạt động: {_activeRooms}  ·  Đóng cửa: {_closedRooms}",              "🏢", ThemeColors.PrimaryBlue),
                 ("Tổng máy tính",    _totalMay.ToString(),   $"Tốt: {_mayTot}  ·  Hỏng: {_mayHong}",    "💻", ThemeColors.AccentGreen),
-                ("Lịch thực hành",   _totalLich.ToString(),  $"Đã xếp: {_lichDaXep}  ·  Chờ: {_lichChoXep}  ·  Hủy: {_lichDaHuy}","📅", ThemeColors.AccentOrange),
+                ("Lịch thực hành",   _totalLich.ToString(),  $"Đã xếp: {_lichDaXep}  ·  Hủy: {_lichDaHuy}","📅", ThemeColors.AccentOrange),
                 ("Người dùng",       _totalUsers.ToString(), "Quản trị viên + Nhân viên",                                          "👤", ThemeColors.AccentPurple),
             };
             foreach (var d in defs) _pnlCards.Controls.Add(MakeStatCard(d.title, d.val, d.sub, d.icon, d.accent));

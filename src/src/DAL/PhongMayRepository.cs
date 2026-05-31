@@ -121,40 +121,86 @@ namespace src.DAL
 
         /// <summary>
         /// Cập nhật phòng máy (có CONTEXT_INFO cho trigger log).
+        /// Đồng thời tự động thêm máy tính (MAY_TINH) nếu sức chứa (SucChua) tăng lên.
         /// </summary>
         public bool UpdateRoom(PhongMayDTO room, int userId)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                int statusId = db.ExecuteScalar<int>(
-                    "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
-                    new { s = room.TenTrangThaiPhong });
-
-                db.Execute(
-                    "DECLARE @ctx VARBINARY(128) = CONVERT(VARBINARY(128), CONVERT(BINARY(4), @uid)); SET CONTEXT_INFO @ctx",
-                    new { uid = userId });
-
-                // Lấy tên phòng cũ để so sánh
-                string oldName = db.ExecuteScalar<string>(
-                    "SELECT TenPhong FROM PHONG_MAY WHERE MaPhong=@MaPhong",
-                    new { room.MaPhong });
-
-                int rows = db.Execute(
-                    @"UPDATE PHONG_MAY SET TenPhong=@TenPhong, ViTri=@ViTri, SucChua=@SucChua, MaTTPhong=@statusId, UpdatedAt=GETDATE()
-                      WHERE MaPhong=@MaPhong",
-                    new { room.TenPhong, room.ViTri, room.SucChua, statusId, room.MaPhong });
-
-                // Nếu tên phòng thay đổi → cập nhật tiền tố mã máy tương ứng
-                if (!string.IsNullOrEmpty(oldName) && oldName != room.TenPhong)
+                if (db.State != ConnectionState.Open) db.Open();
+                
+                using (var transaction = db.BeginTransaction())
                 {
-                    db.Execute(
-                        @"UPDATE MAY_TINH 
-                          SET TenMay = REPLACE(TenMay, @oldPrefix, @newPrefix), UpdatedAt=GETDATE()
-                          WHERE MaPhong=@MaPhong AND TenMay LIKE @oldPrefix + '%'",
-                        new { oldPrefix = oldName, newPrefix = room.TenPhong, room.MaPhong });
-                }
+                    try
+                    {
+                        int statusId = db.ExecuteScalar<int>(
+                            "SELECT MaTTPhong FROM TRANG_THAI_PHONG WHERE TenTrangThaiPhong=@s",
+                            new { s = room.TenTrangThaiPhong }, transaction);
 
-                return rows > 0;
+                        db.Execute(
+                            "DECLARE @ctx VARBINARY(128) = CONVERT(VARBINARY(128), CONVERT(BINARY(4), @uid)); SET CONTEXT_INFO @ctx",
+                            new { uid = userId }, transaction);
+
+                        // Lấy tên phòng cũ để so sánh
+                        string oldName = db.ExecuteScalar<string>(
+                            "SELECT TenPhong FROM PHONG_MAY WHERE MaPhong=@MaPhong",
+                            new { room.MaPhong }, transaction);
+
+                        int rows = db.Execute(
+                            @"UPDATE PHONG_MAY SET TenPhong=@TenPhong, ViTri=@ViTri, SucChua=@SucChua, MaTTPhong=@statusId, UpdatedAt=GETDATE()
+                              WHERE MaPhong=@MaPhong",
+                            new { room.TenPhong, room.ViTri, room.SucChua, statusId, room.MaPhong }, transaction);
+
+                        // Nếu tên phòng thay đổi → cập nhật tiền tố mã máy tương ứng
+                        if (!string.IsNullOrEmpty(oldName) && oldName != room.TenPhong)
+                        {
+                            db.Execute(
+                                @"UPDATE MAY_TINH 
+                                  SET TenMay = REPLACE(TenMay, @oldPrefix, @newPrefix), UpdatedAt=GETDATE()
+                                  WHERE MaPhong=@MaPhong AND TenMay LIKE @oldPrefix + '%'",
+                                new { oldPrefix = oldName, newPrefix = room.TenPhong, room.MaPhong }, transaction);
+                        }
+
+                        // Tự động thêm máy tính nếu sức chứa mới lớn hơn số lượng máy tính thực tế hiện có trong bảng MAY_TINH
+                        int currentComputerCount = db.ExecuteScalar<int>(
+                            "SELECT COUNT(*) FROM MAY_TINH WHERE MaPhong=@MaPhong",
+                            new { room.MaPhong }, transaction);
+
+                        if (currentComputerCount < room.SucChua)
+                        {
+                            int diff = room.SucChua - currentComputerCount;
+                            
+                            // Lấy cấu hình của máy đầu tiên trong phòng làm mẫu
+                            var template = db.QueryFirstOrDefault(
+                                "SELECT TOP 1 CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaTTMay FROM MAY_TINH WHERE MaPhong=@MaPhong",
+                                new { room.MaPhong }, transaction);
+
+                            string cpu = template?.CPU ?? "Intel Core i5";
+                            int ram = template?.RAM ?? 8;
+                            int storage = template?.DungLuongLuuTru ?? 256;
+                            double monitor = template?.KichThuocManHinh ?? 24.0;
+                            int ttMayId = template?.MaTTMay ?? 1;
+
+                            for (int i = 1; i <= diff; i++)
+                            {
+                                int nextIndex = currentComputerCount + i;
+                                string tenMay = $"{room.TenPhong}-PC{nextIndex:D2}";
+                                db.Execute(
+                                    @"INSERT INTO MAY_TINH (TenMay, CPU, RAM, DungLuongLuuTru, KichThuocManHinh, MaPhong, MaTTMay)
+                                      VALUES (@tenMay, @cpu, @ram, @storage, @monitor, @MaPhong, @ttMayId)",
+                                    new { tenMay, cpu, ram, storage, monitor, room.MaPhong, ttMayId }, transaction);
+                            }
+                        }
+                        
+                        transaction.Commit();
+                        return rows > 0;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
         }
 
