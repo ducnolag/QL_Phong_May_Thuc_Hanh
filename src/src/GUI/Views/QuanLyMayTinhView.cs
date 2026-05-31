@@ -645,6 +645,13 @@ namespace src.Views
                 txtSuffix.Text = "";
             }
 
+            if (originalMaMay > 0)
+            {
+                txtSuffix.Enabled = false;
+                lblPrefix.Enabled = false;
+                pnlMaMay.BackColor = Color.FromArgb(245, 245, 245);
+            }
+
             AddRow("Mã máy *:", pnlMaMay);
 
             var cboCpu = new ComboBox { Name = "cboCPU", DropDownStyle = ComboBoxStyle.DropDownList, MaxDropDownItems = 5, IntegralHeight = false };
