@@ -54,6 +54,12 @@ namespace src.DAL
                     computer.DungLuongLuuTru, computer.KichThuocManHinh, 
                     computer.MaPhong, MaTTMay = ttId 
                 });
+                
+                if (rows > 0)
+                {
+                    db.Execute("UPDATE PHONG_MAY SET SucChua = (SELECT COUNT(*) FROM MAY_TINH WHERE MaPhong = @MaPhong) WHERE MaPhong = @MaPhong", new { computer.MaPhong });
+                }
+                
                 return rows > 0;
             }
         }
@@ -62,6 +68,9 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
+                // Lấy mã phòng cũ trước khi cập nhật
+                int oldMaPhong = db.ExecuteScalar<int>("SELECT MaPhong FROM MAY_TINH WHERE MaMay=@MaMay", new { computer.MaMay });
+
                 int ttId = GetStatusId(computer.TenTrangThaiMay, db);
 
                 // Truyền MaNguoiDung vào CONTEXT_INFO để trigger trg_LogTrangThaiMayTinh đọc được
@@ -78,6 +87,16 @@ namespace src.DAL
                     computer.DungLuongLuuTru, computer.KichThuocManHinh, 
                     computer.MaPhong, MaTTMay = ttId, computer.MaMay 
                 });
+                
+                if (rows > 0)
+                {
+                    db.Execute("UPDATE PHONG_MAY SET SucChua = (SELECT COUNT(*) FROM MAY_TINH WHERE MaPhong = @MaPhong) WHERE MaPhong = @MaPhong", new { computer.MaPhong });
+                    if (oldMaPhong > 0 && oldMaPhong != computer.MaPhong)
+                    {
+                        db.Execute("UPDATE PHONG_MAY SET SucChua = (SELECT COUNT(*) FROM MAY_TINH WHERE MaPhong = @MaPhong) WHERE MaPhong = @MaPhong", new { MaPhong = oldMaPhong });
+                    }
+                }
+                
                 return rows > 0;
             }
         }
@@ -86,10 +105,18 @@ namespace src.DAL
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
+                int maPhong = db.ExecuteScalar<int>("SELECT MaPhong FROM MAY_TINH WHERE MaMay=@id", new { id = maMay });
+
                 string sql = @"
                     DELETE FROM CAP_NHAT_MAY WHERE MaMay=@id;
                     DELETE FROM MAY_TINH WHERE MaMay=@id;";
                 int rows = db.Execute(sql, new { id = maMay });
+                
+                if (rows > 0 && maPhong > 0)
+                {
+                    db.Execute("UPDATE PHONG_MAY SET SucChua = (SELECT COUNT(*) FROM MAY_TINH WHERE MaPhong = @MaPhong) WHERE MaPhong = @MaPhong", new { MaPhong = maPhong });
+                }
+                
                 return rows > 0;
             }
         }
