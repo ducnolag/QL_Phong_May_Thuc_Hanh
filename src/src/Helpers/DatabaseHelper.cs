@@ -3,6 +3,8 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using DbUp;
+using System.Reflection;
 
 namespace src.Helpers
 {
@@ -97,6 +99,51 @@ namespace src.Helpers
         {
             try
             {
+                // Run DbUp Migrations
+                EnsureDatabase.For.SqlDatabase(ConnectionString);
+
+                // Compatibility check for legacy databases
+                // If the legacy CA_HOC table exists, we mark 0000_Core_Schema as executed to prevent DbUp from throwing errors
+                try 
+                {
+                    var isLegacy = ExecuteScalar("SELECT COUNT(*) FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CA_HOC]') AND type in (N'U')");
+                    if (isLegacy != null && Convert.ToInt32(isLegacy) > 0)
+                    {
+                        ExecuteNonQuery(@"
+                            IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SchemaVersions]') AND type in (N'U'))
+                            BEGIN
+                                CREATE TABLE [dbo].[SchemaVersions](
+                                    [Id] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                                    [ScriptName] [nvarchar](255) NOT NULL,
+                                    [Applied] [datetime] NOT NULL
+                                )
+                            END
+                            IF NOT EXISTS (SELECT * FROM [dbo].[SchemaVersions] WHERE ScriptName = 'src.Migrations.0000_Core_Schema.sql')
+                            BEGIN
+                                INSERT INTO [dbo].[SchemaVersions] (ScriptName, Applied) VALUES ('src.Migrations.0000_Core_Schema.sql', GETDATE())
+                            END
+                        ");
+                    }
+                } 
+                catch { /* Ignore if DB doesn't exist yet */ }
+
+                var upgrader = DeployChanges.To
+                    .SqlDatabase(ConnectionString)
+                    .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+                    .LogToConsole()
+                    .Build();
+
+                var result = upgrader.PerformUpgrade();
+                if (!result.Successful)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "Lỗi migration: " + result.Error.Message,
+                        "Database Migration Error",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    return;
+                }
+
                 // Check if roles exist, insert if not
                 var roleCount = ExecuteScalar("SELECT COUNT(*) FROM VAI_TRO");
                 if (Convert.ToInt32(roleCount) == 0)
@@ -151,129 +198,6 @@ namespace src.Helpers
                     ExecuteNonQuery("INSERT INTO TRANG_THAI_MAY (TenTrangThaiMay) VALUES (N'Hỏng')");
                 }
 
-                // Add CreatedAt and UpdatedAt to PHONG_MAY if not exists
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'PHONG_MAY') AND name = 'CreatedAt')
-                    BEGIN
-                        ALTER TABLE PHONG_MAY ADD CreatedAt DATETIME DEFAULT GETDATE();
-                        ALTER TABLE PHONG_MAY ADD UpdatedAt DATETIME DEFAULT GETDATE();
-                        EXEC('UPDATE PHONG_MAY SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
-                    END
-                ");
-
-                // Add CreatedAt and UpdatedAt to MAY_TINH if not exists
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'MAY_TINH') AND name = 'CreatedAt')
-                    BEGIN
-                        ALTER TABLE MAY_TINH ADD CreatedAt DATETIME DEFAULT GETDATE();
-                        ALTER TABLE MAY_TINH ADD UpdatedAt DATETIME DEFAULT GETDATE();
-                        EXEC('UPDATE MAY_TINH SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
-                    END
-                ");
-
-                // Add CreatedAt and UpdatedAt to NGUOI_DUNG if not exists
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'NGUOI_DUNG') AND name = 'CreatedAt')
-                    BEGIN
-                        ALTER TABLE NGUOI_DUNG ADD CreatedAt DATETIME DEFAULT GETDATE();
-                        ALTER TABLE NGUOI_DUNG ADD UpdatedAt DATETIME DEFAULT GETDATE();
-                        EXEC('UPDATE NGUOI_DUNG SET CreatedAt = GETDATE(), UpdatedAt = GETDATE() WHERE CreatedAt IS NULL');
-                    END
-                ");
-
-                // Thêm trường MaHocPhan vào bảng LOP_HOC để biến thành Lớp Học Phần
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'LOP_HOC') AND name = 'MaHocPhan')
-                    BEGIN
-                        ALTER TABLE LOP_HOC ADD MaHocPhan INT NULL;
-                        ALTER TABLE LOP_HOC ADD CONSTRAINT FK_LOP_HOC_MON_HOC FOREIGN KEY (MaHocPhan) REFERENCES MON_HOC(MaHocPhan);
-                    END
-                ");
-
-                // Thêm trường MaHocPhan vào MON_HOC
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'MON_HOC') AND name = 'MaHocPhan')
-                    BEGIN
-                        ALTER TABLE MON_HOC ADD MaHocPhan NVARCHAR(50) NULL;
-                    END
-                ");
-
-                // Thêm trường MaLopHocPhan vào LOP_HOC
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'LOP_HOC') AND name = 'MaLopHocPhan')
-                    BEGIN
-                        ALTER TABLE LOP_HOC ADD MaLopHocPhan NVARCHAR(50) NULL;
-                    END
-                ");
-
-                // Create CHOT_SO_LIEU table if it doesn't exist
-                ExecuteNonQuery(@"
-                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'CHOT_SO_LIEU') AND type in (N'U'))
-                    BEGIN
-                        CREATE TABLE CHOT_SO_LIEU (
-                            NgayChot DATE PRIMARY KEY,
-                            TotalRooms INT,
-                            ActiveRooms INT,
-                            TotalMay INT,
-                            MayTot INT,
-                            MayHong INT,
-                            TotalUsers INT
-                        )
-                    END
-                ");
-
-                // Snapshot today's data and backfill historical data
-                ExecuteNonQuery(@"
-                    DECLARE @Today DATE = CAST(GETDATE() AS DATE);
-                    
-                    -- Delete today's snapshot if exists to recalculate
-                    DELETE FROM CHOT_SO_LIEU WHERE NgayChot = @Today;
-                    
-                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
-                    SELECT 
-                        @Today,
-                        (SELECT COUNT(*) FROM PHONG_MAY),
-                        (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động'),
-                        (SELECT COUNT(*) FROM MAY_TINH),
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt'),
-                        (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng'),
-                        (SELECT COUNT(*) FROM NGUOI_DUNG);
-                        
-                    -- Backfill missing historical dates
-                    INSERT INTO CHOT_SO_LIEU (NgayChot, TotalRooms, ActiveRooms, TotalMay, MayTot, MayHong, TotalUsers)
-                    SELECT DISTINCT d, 0, 0, 0, 0, 0, 0
-                    FROM (
-                        SELECT CAST(CreatedAt AS DATE) as d FROM NGUOI_DUNG
-                        UNION SELECT CAST(CreatedAt AS DATE) FROM PHONG_MAY
-                        UNION SELECT CAST(CreatedAt AS DATE) FROM MAY_TINH
-                    ) dates
-                    WHERE d < @Today AND d NOT IN (SELECT NgayChot FROM CHOT_SO_LIEU);
-                    
-                    -- Update running totals for the backfilled historical dates (only newly inserted ones which have 0s)
-                    UPDATE C
-                    SET 
-                        TotalRooms = (SELECT COUNT(*) FROM PHONG_MAY WHERE CAST(CreatedAt AS DATE) <= C.NgayChot),
-                        ActiveRooms = (SELECT COUNT(*) FROM PHONG_MAY p JOIN TRANG_THAI_PHONG t ON p.MaTTPhong=t.MaTTPhong WHERE t.TenTrangThaiPhong=N'Hoạt động' AND CAST(p.CreatedAt AS DATE) <= C.NgayChot),
-                        TotalMay = (SELECT COUNT(*) FROM MAY_TINH WHERE CAST(CreatedAt AS DATE) <= C.NgayChot),
-                        MayTot = (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Tốt' AND CAST(m.CreatedAt AS DATE) <= C.NgayChot),
-                        MayHong = (SELECT COUNT(*) FROM MAY_TINH m JOIN TRANG_THAI_MAY t ON m.MaTTMay=t.MaTTMay WHERE t.TenTrangThaiMay=N'Hỏng' AND CAST(m.CreatedAt AS DATE) <= C.NgayChot),
-                        TotalUsers = (SELECT COUNT(*) FROM NGUOI_DUNG WHERE CAST(CreatedAt AS DATE) <= C.NgayChot)
-                    FROM CHOT_SO_LIEU C
-                    WHERE NgayChot < @Today AND TotalUsers = 0 AND TotalRooms = 0;
-                ");
-
-                // Fix: Backdate initial seed data to 2026-05-01 so historical reports don't show 0
-                ExecuteNonQuery(@"
-                    UPDATE PHONG_MAY SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
-                    UPDATE MAY_TINH SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
-                    UPDATE NGUOI_DUNG SET CreatedAt = '2026-05-01' WHERE CAST(CreatedAt AS DATE) = '2024-01-01';
-                    
-                    -- Always keep Admin created in 2020 so there is always at least 1 user in the past
-                    UPDATE NGUOI_DUNG SET CreatedAt = '2020-01-01' WHERE TenDangNhap = 'admin';
-                    
-                    -- Remove accidentally stored unencrypted passwords
-                    UPDATE NGUOI_DUNG SET SoDienThoai = '' WHERE SoDienThoai NOT LIKE '0%';
-                ");
             }
             catch (Exception ex)
             {
