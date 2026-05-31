@@ -747,8 +747,8 @@ namespace src.Views
                     {
                         MessageBox.Show("Mã máy đã tồn tại! Vui lòng nhập lại.", "Trùng mã máy", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
-                        txtTen.SelectAll();
-                        txtTen.Focus();
+                        txtSuffix.SelectAll();
+                        txtSuffix.Focus();
                     }
                 }
             };
