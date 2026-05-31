@@ -283,6 +283,9 @@ namespace src.Views
             var dlg = BuildDialog(title, 380, 230);
             dlg.Controls.Add(new Label { Text = "Mã môn học:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
             var txtMa = new TextBox { Text = defaultMa, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
+            if (!string.IsNullOrEmpty(defaultMa)) {
+                txtMa.Enabled = false;
+            }
             dlg.Controls.Add(txtMa);
             
             dlg.Controls.Add(new Label { Text = "Tên môn:", Location = new Point(20, 84), AutoSize = true, Font = new Font("Segoe UI", 10F) });
@@ -307,6 +310,9 @@ namespace src.Views
             
             dlg.Controls.Add(new Label { Text = "Mã lớp học phần:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10F) });
             var txtMa = new TextBox { Text = defaultMa, Location = new Point(20, 46), Size = new Size(330, 28), Font = new Font("Segoe UI", 10F) };
+            if (!string.IsNullOrEmpty(defaultMa)) {
+                txtMa.Enabled = false;
+            }
             dlg.Controls.Add(txtMa);
 
             dlg.Controls.Add(new Label { Text = "Sĩ số:", Location = new Point(20, 84), AutoSize = true, Font = new Font("Segoe UI", 10F) });

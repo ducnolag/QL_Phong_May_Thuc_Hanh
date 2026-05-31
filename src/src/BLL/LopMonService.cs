@@ -78,7 +78,7 @@ namespace src.BLL
             if (allLops.Any(l => l.MaLopHocPhan?.Equals(maLopHocPhan, StringComparison.OrdinalIgnoreCase) == true && !l.MaLopHocPhan.Equals(oldMaLopHocPhan, StringComparison.OrdinalIgnoreCase)))
                 throw new Exception("Mã lớp học phần đã tồn tại.");
 
-            _repository.UpdateLopHoc(maLopHocPhan, name, siSo, MaHocPhan);
+            _repository.UpdateLopHoc(oldMaLopHocPhan, maLopHocPhan, name, siSo, MaHocPhan);
         }
 
         public void UpdateMonHoc(string oldMaMon, string MaHocPhan, string name)
@@ -90,7 +90,7 @@ namespace src.BLL
             if (allMons.Any(m => m.MaHocPhan?.Equals(MaHocPhan, StringComparison.OrdinalIgnoreCase) == true && !m.MaHocPhan.Equals(oldMaMon, StringComparison.OrdinalIgnoreCase)))
                 throw new Exception("Mã môn đã tồn tại.");
 
-            _repository.UpdateMonHoc(MaHocPhan, name);
+            _repository.UpdateMonHoc(oldMaMon, MaHocPhan, name);
         }
 
         public void DeleteLopHoc(string maLopHocPhan)

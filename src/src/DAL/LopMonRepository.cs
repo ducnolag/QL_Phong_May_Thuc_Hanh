@@ -12,8 +12,8 @@ namespace src.DAL
         IEnumerable<MonHocDTO> GetAllMonHoc();
         void CreateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan);
         void CreateMonHoc(string MaHocPhan, string tenMon);
-        void UpdateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan);
-        void UpdateMonHoc(string MaHocPhan, string tenMon);
+        void UpdateLopHoc(string oldMaLopHocPhan, string maLopHocPhan, string tenLop, int siSo, string MaHocPhan);
+        void UpdateMonHoc(string oldMaHocPhan, string MaHocPhan, string tenMon);
         void DeleteLopHoc(string maLopHocPhan);
         void DeleteMonHoc(string MaHocPhan);
 
@@ -64,19 +64,19 @@ namespace src.DAL
             }
         }
 
-        public void UpdateLopHoc(string maLopHocPhan, string tenLop, int siSo, string MaHocPhan)
+        public void UpdateLopHoc(string oldMaLopHocPhan, string maLopHocPhan, string tenLop, int siSo, string MaHocPhan)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE LOP_HOC SET TenLop=@tenLop, SiSo=@siSo, MaHocPhan=@MaHocPhan WHERE MaLopHocPhan=@maLopHocPhan", new { maLopHocPhan, tenLop, siSo, MaHocPhan });
+                db.Execute("UPDATE LOP_HOC SET MaLopHocPhan=@maLopHocPhan, TenLop=@tenLop, SiSo=@siSo, MaHocPhan=@MaHocPhan WHERE MaLopHocPhan=@oldMaLopHocPhan", new { maLopHocPhan, tenLop, siSo, MaHocPhan, oldMaLopHocPhan });
             }
         }
 
-        public void UpdateMonHoc(string MaHocPhan, string tenMon)
+        public void UpdateMonHoc(string oldMaHocPhan, string MaHocPhan, string tenMon)
         {
             using (IDbConnection db = DatabaseHelper.GetConnection())
             {
-                db.Execute("UPDATE MON_HOC SET TenMon=@tenMon WHERE MaHocPhan=@MaHocPhan", new { tenMon, MaHocPhan });
+                db.Execute("UPDATE MON_HOC SET MaHocPhan=@MaHocPhan, TenMon=@tenMon WHERE MaHocPhan=@oldMaHocPhan", new { MaHocPhan, tenMon, oldMaHocPhan });
             }
         }
 
