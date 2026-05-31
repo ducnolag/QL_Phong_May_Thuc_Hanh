@@ -10,7 +10,7 @@ namespace src.DAL
 {
     public interface ILichThucHanhRepository
     {
-        (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end);
+        (int total, int assigned, int pending, int canceled, int unassigned) GetStatistics(DateTime? start, DateTime? end);
         IEnumerable<LichThucHanhDTO> GetActiveSchedules(DateTime? start, DateTime? end, bool includePast = false);
         LichThucHanhDTO GetScheduleById(int id);
         (int RAMToiThieu, int LuuTruToiThieu, int ManHinhToiThieu, string CPUToiThieu) GetScheduleRequirements(int id);
@@ -55,7 +55,7 @@ namespace src.DAL
                        OR (NgayThucHanh = CAST(GETDATE() AS DATE) AND MaCa IN (SELECT MaCa FROM CA_HOC WHERE GioKetThuc < CAST(GETDATE() AS TIME))))");
         }
 
-        public (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start, DateTime? end)
+        public (int total, int assigned, int pending, int canceled, int unassigned) GetStatistics(DateTime? start, DateTime? end)
         {
             using (var db = DatabaseHelper.GetConnection())
             {
@@ -69,9 +69,10 @@ namespace src.DAL
 
                 int total    = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE {dtCond}", new { start, end });
                 int assigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich != N'Đã hủy' AND MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) AND {dtCond}", new { start, end });
-                int pending  = 0;
+                int pending  = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Chờ xếp phòng' AND {dtCond}", new { start, end });
                 int canceled = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Đã hủy' AND {dtCond}", new { start, end });
-                return (total, assigned, pending, canceled);
+                int unassigned = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM LICH_THUC_HANH WHERE TrangThaiLich = N'Không được xếp' AND {dtCond}", new { start, end });
+                return (total, assigned, pending, canceled, unassigned);
             }
         }
 
@@ -287,8 +288,8 @@ namespace src.DAL
                     try
                     {
                         int newId = conn.ExecuteScalar<int>(
-                            @"INSERT INTO LICH_THUC_HANH (NgayThucHanh, SoLuongSinhVien, MaLopHocPhan, MaHocPhan, MaCa, NguoiTao)
-                              OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLopHocPhan, @MaHocPhan, @MaCa, @NguoiTao)",
+                            @"INSERT INTO LICH_THUC_HANH (NgayThucHanh, SoLuongSinhVien, MaLopHocPhan, MaHocPhan, MaCa, NguoiTao, TrangThaiLich)
+                              OUTPUT INSERTED.MaLich VALUES (@NgayThucHanh, @SoLuongSinhVien, @MaLopHocPhan, @MaHocPhan, @MaCa, @NguoiTao, @TrangThaiLich)",
                             schedule, trans);
 
                         conn.Execute("INSERT INTO YEU_CAU_CAU_HINH (MaLich, RAMToiThieu, LuuTruToiThieu, ManHinhToiThieu, CPUToiThieu) VALUES (@newId, @reqRam, @reqStorage, @reqMonitor, @reqCpu)", 
@@ -322,7 +323,7 @@ namespace src.DAL
                     try
                     {
                         conn.Execute(@"UPDATE LICH_THUC_HANH SET NgayThucHanh=@NgayThucHanh, SoLuongSinhVien=@SoLuongSinhVien,
-                                       MaLopHocPhan=@MaLopHocPhan, MaHocPhan=@MaHocPhan, MaCa=@MaCa WHERE MaLich=@MaLich", schedule, trans);
+                                       MaLopHocPhan=@MaLopHocPhan, MaHocPhan=@MaHocPhan, MaCa=@MaCa, TrangThaiLich=@TrangThaiLich WHERE MaLich=@MaLich", schedule, trans);
 
                         int countYc = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM YEU_CAU_CAU_HINH WHERE MaLich=@MaLich", new { schedule.MaLich }, trans);
                         if (countYc > 0)

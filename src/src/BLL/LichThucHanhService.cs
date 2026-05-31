@@ -15,7 +15,7 @@ namespace src.BLL
             _repository = new LichThucHanhRepository();
         }
 
-        public (int total, int assigned, int pending, int canceled) GetStatistics(DateTime? start = null, DateTime? end = null)
+        public (int total, int assigned, int pending, int canceled, int unassigned) GetStatistics(DateTime? start = null, DateTime? end = null)
         {
             return _repository.GetStatistics(start, end);
         }
@@ -87,7 +87,8 @@ namespace src.BLL
                 MaLopHocPhan = lopId,
                 MaHocPhan = monId,
                 MaCa = caId,
-                NguoiTao = creatorId
+                NguoiTao = creatorId,
+                TrangThaiLich = (roomId.HasValue && roomId.Value > 0) ? "Đã xếp" : "Chờ xếp phòng"
             };
 
             _repository.CreateSchedule(schedule, reqRam, reqStorage, reqMonitor, reqCpu, roomId > 0 ? roomId : null);
@@ -131,7 +132,8 @@ namespace src.BLL
                 MaLopHocPhan = lopId,
                 MaHocPhan = monId,
                 MaCa = caId,
-                NguoiTao = updaterId // In update, this might not strictly overwrite creator, but serves as context for PHAN_CONG_PHONG
+                NguoiTao = updaterId, // In update, this might not strictly overwrite creator, but serves as context for PHAN_CONG_PHONG
+                TrangThaiLich = (roomId.HasValue && roomId.Value > 0) ? "Đã xếp" : "Chờ xếp phòng"
             };
 
             _repository.UpdateSchedule(schedule, reqRam, reqStorage, reqMonitor, reqCpu, roomId > 0 ? roomId : null);

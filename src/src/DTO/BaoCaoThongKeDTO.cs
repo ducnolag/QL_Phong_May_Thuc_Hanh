@@ -15,6 +15,7 @@ namespace src.DTO
         public int TotalLich { get; set; }
         public int LichDaXep { get; set; }
         public int LichChoXep { get; set; }
+        public int LichKhongDuocXep { get; set; }
         public int LichDaHuy { get; set; }
         
         public int TotalUsers { get; set; }

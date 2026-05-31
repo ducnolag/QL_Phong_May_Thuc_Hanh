@@ -53,6 +53,8 @@ namespace src.DAL
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE 1=1 {dtCond}) as TotalLich,
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich != N'Đã hủy' AND l.MaLich IN (SELECT MaLich FROM PHAN_CONG_PHONG) {dtCond}) as LichDaXep,
                         (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Đã hủy' {dtCond}) as LichDaHuy,
+                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Chờ xếp phòng' {dtCond}) as LichChoXep,
+                        (SELECT COUNT(*) FROM LICH_THUC_HANH l WHERE l.TrangThaiLich=N'Không được xếp' {dtCond}) as LichKhongDuocXep,
                         ISNULL((SELECT TOP 1 TotalUsers FROM CHOT_SO_LIEU WHERE NgayChot <= @endDate ORDER BY NgayChot DESC), 0) as TotalUsers
                 ";
 
@@ -71,7 +73,8 @@ namespace src.DAL
                     dto.TotalLich = result.TotalLich ?? 0;
                     dto.LichDaXep = result.LichDaXep ?? 0;
                     dto.LichDaHuy = result.LichDaHuy ?? 0;
-                    dto.LichChoXep = dto.TotalLich - dto.LichDaXep - dto.LichDaHuy;
+                    dto.LichChoXep = result.LichChoXep ?? 0;
+                    dto.LichKhongDuocXep = result.LichKhongDuocXep ?? 0;
 
                     dto.TotalUsers = result.TotalUsers ?? 0;
                 }

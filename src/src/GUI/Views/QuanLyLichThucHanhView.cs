@@ -81,13 +81,38 @@ namespace src.Views
             } catch {}
             cboRoomFilter.SelectedIndex = 0;
 
+            UpdateStatusFilterOptions();
+            cboStatusFilter.SelectedIndexChanged += (s, e) => LoadData();
+
             txtSearch.TextChanged += (s, e) => LoadData();
             cboRoomFilter.SelectedIndexChanged += (s, e) => LoadData();
         }
 
         private void chkXemLichCu_CheckedChanged(object sender, EventArgs e)
         {
+            UpdateStatusFilterOptions();
             LoadData();
+        }
+
+        private void UpdateStatusFilterOptions()
+        {
+            string selected = cboStatusFilter.SelectedItem?.ToString() ?? "Tất cả trạng thái";
+            cboStatusFilter.Items.Clear();
+            cboStatusFilter.Items.Add("Tất cả trạng thái");
+            cboStatusFilter.Items.Add("Đã xếp");
+            cboStatusFilter.Items.Add("Chờ xếp");
+
+            if (chkXemLichCu.Checked)
+            {
+                cboStatusFilter.Items.Add("Không được xếp");
+                cboStatusFilter.Items.Add("Đã hủy");
+            }
+            else if (selected == "Không được xếp" || selected == "Đã hủy")
+            {
+                selected = "Tất cả trạng thái";
+            }
+
+            cboStatusFilter.SelectedItem = selected;
         }
 
         /// <summary>
@@ -98,7 +123,7 @@ namespace src.Views
             pnlStats.Controls.Clear();
             pnlScheduleList.Controls.Clear();
 
-            int totalSchedules = 0, assigned = 0, pending = 0, canceled = 0;
+            int totalSchedules = 0, assigned = 0, pending = 0, canceled = 0, unassigned = 0;
             var schedules = new System.Collections.Generic.List<(int id, string className, string status, string date, string dayName, string time, int students, string room, string creator)>();
 
             try
@@ -111,16 +136,19 @@ namespace src.Views
                 assigned = stats.assigned;
                 pending = stats.pending;
                 canceled = stats.canceled;
+                unassigned = stats.unassigned;
 
                 bool includePast = chkXemLichCu.Checked;
                 var dt = _LichThucHanhService.GetActiveSchedules(startDate, endDate, includePast);
 
                 foreach (var r in dt)
                 {
-                    // Lay trang thai truc tiep tu DB thay vi tu suy ra
-                    string status;
-                    if (r.TrangThaiLich == "Đã hủy") status = "Đã hủy";
-                    else status = "Đã xếp";
+                    // Lay trang thai truc tiep tu DB
+                    string status = r.TrangThaiLich;
+                    if (status == "Chờ xếp phòng") status = "Chờ xếp";
+                    else if (status == "Không được xếp") status = "Không được xếp";
+                    else if (status == "Đã hủy") status = "Đã hủy";
+                    else if (string.IsNullOrEmpty(status)) status = "Đã xếp";
 
                     string timeStr = $"{r.GioBatDau.ToString(@"hh\:mm")}-{r.GioKetThuc.ToString(@"hh\:mm")}";
                     schedules.Add((
@@ -144,19 +172,23 @@ namespace src.Views
                 schedules.Add((4, "CNTT02-01", "Đã xếp", "2026-04-18", "Thứ Bảy", "08:00-10:00", 35, "Lab C-102", "Admin"));
             }
 
-            // === Summary cards: Tổng lịch | Đã xếp | Đã hủy ===
+            // === Summary cards: Tổng lịch | Đã xếp | Chờ xếp | Không được xếp | Đã hủy ===
             pnlStats.Controls.Add(MakeSummaryCard("Tổng lịch hiện tại", totalSchedules.ToString(), ThemeColors.PrimaryBlue));
             pnlStats.Controls.Add(MakeSummaryCard("Đã xếp phòng", assigned.ToString(), ThemeColors.AccentGreen));
-            pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.AccentRed));
+            pnlStats.Controls.Add(MakeSummaryCard("Chờ xếp", pending.ToString(), ThemeColors.AccentOrange));
+            pnlStats.Controls.Add(MakeSummaryCard("Không được xếp", unassigned.ToString(), ThemeColors.AccentRed));
+            pnlStats.Controls.Add(MakeSummaryCard("Đã hủy", canceled.ToString(), ThemeColors.TextSecondary));
 
             // === Schedule cards ===
             string searchTxt = txtSearch?.Text.ToLower() ?? "";
             string roomFilter = cboRoomFilter?.SelectedItem?.ToString() ?? "Tất cả phòng";
+            string statusFilter = cboStatusFilter?.SelectedItem?.ToString() ?? "Tất cả trạng thái";
 
             foreach (var sch in schedules)
             {
                 if (!string.IsNullOrEmpty(searchTxt) && !sch.className.ToLower().Contains(searchTxt) && !sch.room.ToLower().Contains(searchTxt)) continue;
                 if (roomFilter != "Tất cả phòng" && sch.room != roomFilter) continue;
+                if (statusFilter != "Tất cả trạng thái" && sch.status != statusFilter) continue;
 
                 // Mode xem lich cu: SQL da loc lich qua khu, isOld=true cho tat ca
                 bool isOld = chkXemLichCu.Checked;
@@ -212,6 +244,7 @@ namespace src.Views
 
             Color badgeBg, badgeFg;
             if (status == "Đã xếp")        { badgeBg = ThemeColors.BadgeBlueBg;   badgeFg = ThemeColors.BadgeBlueFg; }
+            else if (status == "Chờ xếp")  { badgeBg = ThemeColors.BadgeOrangeBg; badgeFg = ThemeColors.BadgeOrangeFg; }
             else                           { badgeBg = ThemeColors.BadgeRedBg;    badgeFg = ThemeColors.BadgeRedFg; }
 
             var iconLabel = new Label
@@ -264,22 +297,24 @@ namespace src.Views
             card.Controls.Add(new Label { Text = $"Phòng: {room}", Font = new Font("Segoe UI", 9F), ForeColor = ThemeColors.TextSecondary, Location = new Point(300, infoY + 20), AutoSize = true });
 
             // Nút Edit bằng Guna2Button
+            string editBtnText = status == "Chờ xếp" ? "Xếp lịch" : "✏";
+            int editBtnWidth = status == "Chờ xếp" ? 80 : 34;
             var btnEdit = new Guna.UI2.WinForms.Guna2Button
             {
-                Text = "✏",
-                Size = new Size(34, 30),
-                Location = new Point(card.Width - 130, 16),
+                Text = editBtnText,
+                Size = new Size(editBtnWidth, 30),
+                Location = new Point(card.Width - 90 - editBtnWidth - 6, 16),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 FillColor = Color.White,
                 ForeColor = ThemeColors.TextSecondary,
-                Font = new Font("Segoe UI", 11F),
+                Font = new Font("Segoe UI", editBtnText == "✏" ? 11F : 9F),
                 Cursor = Cursors.Hand,
                 BorderRadius = 6,
                 BorderThickness = 1,
                 BorderColor = Color.FromArgb(226, 232, 240),
-                Enabled = !isOld
+                Visible = !isOld && status != "Đã hủy" && status != "Không được xếp"
             };
-            if (!isOld) btnEdit.Click += (s, ev) => ShowEditDialog(id);
+            if (!isOld && status != "Đã hủy" && status != "Không được xếp") btnEdit.Click += (s, ev) => ShowEditDialog(id);
             card.Controls.Add(btnEdit);
 
             // Nút Cancel bằng Guna2Button
@@ -296,9 +331,9 @@ namespace src.Views
                 BorderRadius = 6,
                 BorderThickness = 1,
                 BorderColor = Color.FromArgb(226, 232, 240),
-                Enabled = !isOld
+                Visible = !isOld && status != "Đã hủy" && status != "Không được xếp"
             };
-            if (!isOld) btnCancel.Click += (s, ev) => CancelSchedule(id);
+            if (!isOld && status != "Đã hủy" && status != "Không được xếp") btnCancel.Click += (s, ev) => CancelSchedule(id);
             card.Controls.Add(btnCancel);
 
             return card;

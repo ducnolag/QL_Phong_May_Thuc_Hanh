@@ -25,7 +25,7 @@ namespace src.Views
         // ── Dữ liệu ─────────────────────────────────────────────────────────
         private int _totalRooms, _activeRooms, _closedRooms;
         private int _totalMay,   _mayTot,      _mayHong;
-        private int _totalLich,  _lichDaXep,   _lichChoXep, _lichDaHuy;
+        private int _totalLich,  _lichDaXep,   _lichChoXep, _lichKhongDuocXep, _lichDaHuy;
         private int _totalUsers;
 
         private Panel _pnlCards, _pnlChartRooms, _pnlChartMay, _pnlMayTable, _pnlLichTable;
@@ -179,6 +179,7 @@ namespace src.Views
                 _lichDaXep = dto.LichDaXep;
                 _lichDaHuy = dto.LichDaHuy;
                 _lichChoXep = dto.LichChoXep;
+                _lichKhongDuocXep = dto.LichKhongDuocXep;
 
                 _totalUsers = dto.TotalUsers;
             }
@@ -186,7 +187,7 @@ namespace src.Views
             {
                 _totalRooms=6; _activeRooms=5; _closedRooms=1;
                 _totalMay=30;  _mayTot=25;    _mayHong=5;
-                _totalLich=8;  _lichDaXep=5;  _lichChoXep=2; _lichDaHuy=1;
+                _totalLich=8;  _lichDaXep=5;  _lichChoXep=2; _lichKhongDuocXep=0; _lichDaHuy=1;
                 _totalUsers=3;
             }
         }
@@ -199,7 +200,7 @@ namespace src.Views
             {
                 ("Tổng phòng máy",   _totalRooms.ToString(), $"Hoạt động: {_activeRooms}  ·  Đóng cửa: {_closedRooms}",              "🏢", ThemeColors.PrimaryBlue),
                 ("Tổng máy tính",    _totalMay.ToString(),   $"Tốt: {_mayTot}  ·  Hỏng: {_mayHong}",    "💻", ThemeColors.AccentGreen),
-                ("Lịch thực hành",   _totalLich.ToString(),  $"Đã xếp: {_lichDaXep}  ·  Hủy: {_lichDaHuy}","📅", ThemeColors.AccentOrange),
+                ("Lịch thực hành",   _totalLich.ToString(),  $"Đã xếp: {_lichDaXep} · Chờ xếp: {_lichChoXep} · Không xếp: {_lichKhongDuocXep} · Hủy: {_lichDaHuy}","📅", ThemeColors.AccentOrange),
                 ("Người dùng",       _totalUsers.ToString(), "Quản trị viên + Nhân viên",                                          "👤", ThemeColors.AccentPurple),
             };
             foreach (var d in defs) _pnlCards.Controls.Add(MakeStatCard(d.title, d.val, d.sub, d.icon, d.accent));
@@ -355,9 +356,12 @@ namespace src.Views
 
                 foreach (var item in list)
                 {
-                    string trangThai = item.TrangThaiLich == "Đã hủy" ? "Đã hủy"
-                        : item.TenPhong == "Chưa xếp" ? "Chờ xếp phòng"
-                        : "Đã xếp phòng";
+                    string trangThai = item.TrangThaiLich;
+                    if (string.IsNullOrEmpty(trangThai))
+                    {
+                        trangThai = item.TenPhong == "Chưa xếp" ? "Chờ xếp" : "Đã xếp";
+                    }
+                    else if (trangThai == "Chờ xếp phòng") trangThai = "Chờ xếp";
                     
                     dgv.Rows.Add(
                         item.NgayThucHanh.ToString("dd/MM/yyyy"),

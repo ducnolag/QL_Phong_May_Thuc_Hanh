@@ -32,6 +32,7 @@ namespace src.Views
             lblListSub = new System.Windows.Forms.Label();
             pnlListHeader = new System.Windows.Forms.Panel();
             txtSearch = new System.Windows.Forms.TextBox();
+            cboStatusFilter = new System.Windows.Forms.ComboBox();
             cboRoomFilter = new System.Windows.Forms.ComboBox();
             pnlHeader.SuspendLayout();
             pnlListHeader.SuspendLayout();
@@ -145,7 +146,7 @@ namespace src.Views
             chkXemLichCu.AutoSize = true;
             chkXemLichCu.Cursor = System.Windows.Forms.Cursors.Hand;
             chkXemLichCu.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            chkXemLichCu.Location = new System.Drawing.Point(339, 23);
+            chkXemLichCu.Location = new System.Drawing.Point(370, 27);
             chkXemLichCu.Name = "chkXemLichCu";
             chkXemLichCu.Size = new System.Drawing.Size(111, 25);
             chkXemLichCu.TabIndex = 8;
@@ -206,6 +207,7 @@ namespace src.Views
             pnlListHeader.Controls.Add(chkXemLichCu);
             pnlListHeader.Controls.Add(lblListTitle);
             pnlListHeader.Controls.Add(txtSearch);
+            pnlListHeader.Controls.Add(cboStatusFilter);
             pnlListHeader.Controls.Add(cboRoomFilter);
             pnlListHeader.Dock = System.Windows.Forms.DockStyle.Top;
             pnlListHeader.Location = new System.Drawing.Point(23, 240);
@@ -219,11 +221,23 @@ namespace src.Views
             txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             txtSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             txtSearch.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            txtSearch.Location = new System.Drawing.Point(530, 23);
+            txtSearch.Location = new System.Drawing.Point(487, 23);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "🔍 Tìm môn, lớp...";
             txtSearch.Size = new System.Drawing.Size(200, 29);
             txtSearch.TabIndex = 9;
+            // 
+            // cboStatusFilter
+            // 
+            cboStatusFilter.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            cboStatusFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboStatusFilter.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            cboStatusFilter.IntegralHeight = false;
+            cboStatusFilter.Location = new System.Drawing.Point(706, 23);
+            cboStatusFilter.MaxDropDownItems = 5;
+            cboStatusFilter.Name = "cboStatusFilter";
+            cboStatusFilter.Size = new System.Drawing.Size(150, 29);
+            cboStatusFilter.TabIndex = 11;
             // 
             // cboRoomFilter
             // 
@@ -231,7 +245,7 @@ namespace src.Views
             cboRoomFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cboRoomFilter.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             cboRoomFilter.IntegralHeight = false;
-            cboRoomFilter.Location = new System.Drawing.Point(740, 23);
+            cboRoomFilter.Location = new System.Drawing.Point(862, 23);
             cboRoomFilter.MaxDropDownItems = 5;
             cboRoomFilter.Name = "cboRoomFilter";
             cboRoomFilter.Size = new System.Drawing.Size(150, 29);
@@ -275,6 +289,7 @@ namespace src.Views
         public System.Windows.Forms.Label lblDenNgay;
         public System.Windows.Forms.FlowLayoutPanel pnlScheduleList;
         public System.Windows.Forms.TextBox txtSearch;
+        public System.Windows.Forms.ComboBox cboStatusFilter;
         public System.Windows.Forms.ComboBox cboRoomFilter;
     }
 }
