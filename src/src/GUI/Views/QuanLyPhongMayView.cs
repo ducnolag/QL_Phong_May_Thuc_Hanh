@@ -15,6 +15,9 @@ namespace src.Views
         private int currentPage = 1;
         private int pageSize = 6;
         private System.Collections.Generic.List<Control> allRoomCards = new System.Collections.Generic.List<Control>();
+        private System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)> allRoomsData = new System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)>();
+        private TextBox txtSearch;
+        private ComboBox cboFilterStatus;
         private Guna.UI2.WinForms.Guna2Panel pnlPagination;
         private Button btnPrev;
         private Button btnNext;
@@ -139,6 +142,31 @@ namespace src.Views
             };
             btnAdd.Click += (s, e) => ShowAddDialog();
 
+            txtSearch = new TextBox
+            {
+                Size = new Size(250, 30),
+                Location = new Point(btnAdd.Left - 270, btnAdd.Top + 10),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Font = new Font("Segoe UI", 10F),
+                PlaceholderText = "Tìm theo tên hoặc vị trí..."
+            };
+            txtSearch.TextChanged += (s, e) => FilterRooms();
+
+            cboFilterStatus = new ComboBox
+            {
+                Size = new Size(150, 30),
+                Location = new Point(txtSearch.Left - 160, txtSearch.Top),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Font = new Font("Segoe UI", 10F),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cboFilterStatus.Items.AddRange(new object[] { "Tất cả", "Hoạt động", "Đóng cửa" });
+            cboFilterStatus.SelectedIndex = 0;
+            cboFilterStatus.SelectedIndexChanged += (s, e) => FilterRooms();
+
+            pnlHeader.Controls.Add(txtSearch);
+            pnlHeader.Controls.Add(cboFilterStatus);
+
             LoadData();
         }
 
@@ -148,10 +176,9 @@ namespace src.Views
         private void LoadData()
         {
             pnlStats.Controls.Clear();
-            allRoomCards.Clear();
+            allRoomsData.Clear();
 
             int totalRooms = 0, available = 0, occupied = 0;
-            var rooms = new System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)>();
 
             try
             {
@@ -165,18 +192,18 @@ namespace src.Views
                 var dtRooms = PhongMayService.GetAllRooms();
                 foreach (var r in dtRooms)
                 {
-                    rooms.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.TenTrangThaiPhong)); // Use Vietnamese status
+                    allRoomsData.Add((r.MaPhong, r.TenPhong, r.ViTri, r.SucChua, r.SoMay, r.TenTrangThaiPhong)); // Use Vietnamese status
                 }
             }
             catch
             {
                 // Dữ liệu mẫu
                 totalRooms = 6; available = 3; occupied = 2;
-                rooms.Add((1, "Lab A-301", "Tòa A, Tầng 3", 30, 30, "Hoạt động"));
-                rooms.Add((2, "Lab A-302", "Tòa A, Tầng 3", 25, 25, "Đang sử dụng"));
-                rooms.Add((3, "Lab B-205", "Tòa B, Tầng 2", 20, 20, "Hoạt động"));
-                rooms.Add((4, "Lab B-206", "Tòa B, Tầng 2", 20, 15, "Đang sử dụng"));
-                rooms.Add((6, "Lab C-201", "Tòa C, Tầng 2", 30, 28, "Hoạt động"));
+                allRoomsData.Add((1, "Lab A-301", "Tòa A, Tầng 3", 30, 30, "Hoạt động"));
+                allRoomsData.Add((2, "Lab A-302", "Tòa A, Tầng 3", 25, 25, "Đang sử dụng"));
+                allRoomsData.Add((3, "Lab B-205", "Tòa B, Tầng 2", 20, 20, "Hoạt động"));
+                allRoomsData.Add((4, "Lab B-206", "Tòa B, Tầng 2", 20, 15, "Đang sử dụng"));
+                allRoomsData.Add((6, "Lab C-201", "Tòa C, Tầng 2", 30, 28, "Hoạt động"));
             }
 
             // === Tạo summary cards theo Figma ===
@@ -184,11 +211,28 @@ namespace src.Views
             pnlStats.Controls.Add(MakeSummaryCard("Đang hoạt động", available.ToString(), ThemeColors.AccentGreen));
             pnlStats.Controls.Add(MakeSummaryCard("Đóng cửa", occupied.ToString(), ThemeColors.AccentRed));
 
-            // === Tạo room cards theo Figma ===
-            foreach (var room in rooms)
+            FilterRooms();
+        }
+
+        private void FilterRooms()
+        {
+            allRoomCards.Clear();
+            string searchTxt = txtSearch?.Text?.Trim().ToLower() ?? "";
+            string filterStatus = cboFilterStatus?.SelectedItem?.ToString() ?? "Tất cả";
+
+            foreach (var room in allRoomsData)
             {
-                allRoomCards.Add(MakeRoomCard(room.id, room.name, room.location,
-                    room.capacity, room.computerCount, room.status));
+                bool matchSearch = string.IsNullOrEmpty(searchTxt) || 
+                                   room.name.ToLower().Contains(searchTxt) || 
+                                   room.location.ToLower().Contains(searchTxt);
+                bool matchStatus = filterStatus == "Tất cả" || 
+                                   room.status.Equals(filterStatus, StringComparison.OrdinalIgnoreCase);
+
+                if (matchSearch && matchStatus)
+                {
+                    allRoomCards.Add(MakeRoomCard(room.id, room.name, room.location,
+                        room.capacity, room.computerCount, room.status));
+                }
             }
 
             currentPage = 1;
