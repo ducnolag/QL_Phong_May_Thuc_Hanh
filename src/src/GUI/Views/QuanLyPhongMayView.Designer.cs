@@ -19,6 +19,8 @@ namespace src.Views
         {
             pnlHeader = new System.Windows.Forms.Panel();
             btnAdd = new System.Windows.Forms.Button();
+            txtSearch = new System.Windows.Forms.TextBox();
+            cboFilterStatus = new System.Windows.Forms.ComboBox();
             lblSubtitle = new System.Windows.Forms.Label();
             lblTitle = new System.Windows.Forms.Label();
             pnlStats = new System.Windows.Forms.FlowLayoutPanel();
@@ -29,6 +31,8 @@ namespace src.Views
             // pnlHeader
             // 
             pnlHeader.BackColor = System.Drawing.Color.Transparent;
+            pnlHeader.Controls.Add(cboFilterStatus);
+            pnlHeader.Controls.Add(txtSearch);
             pnlHeader.Controls.Add(btnAdd);
             pnlHeader.Controls.Add(lblSubtitle);
             pnlHeader.Controls.Add(lblTitle);
@@ -55,6 +59,26 @@ namespace src.Views
             btnAdd.TabIndex = 2;
             btnAdd.Text = "+ Thêm Phòng";
             btnAdd.UseVisualStyleBackColor = false;
+            // 
+            // txtSearch
+            // 
+            txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            txtSearch.Font = new System.Drawing.Font("Segoe UI", 10F);
+            txtSearch.Location = new System.Drawing.Point(661, 37);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "Tìm theo tên hoặc vị trí...";
+            txtSearch.Size = new System.Drawing.Size(250, 30);
+            txtSearch.TabIndex = 3;
+            // 
+            // cboFilterStatus
+            // 
+            cboFilterStatus.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            cboFilterStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboFilterStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cboFilterStatus.Location = new System.Drawing.Point(501, 37);
+            cboFilterStatus.Name = "cboFilterStatus";
+            cboFilterStatus.Size = new System.Drawing.Size(150, 31);
+            cboFilterStatus.TabIndex = 4;
             // 
             // lblSubtitle
             // 
@@ -126,6 +150,8 @@ namespace src.Views
         public System.Windows.Forms.Label lblTitle;
         public System.Windows.Forms.Label lblSubtitle;
         public System.Windows.Forms.Button btnAdd;
+        public System.Windows.Forms.TextBox txtSearch;
+        public System.Windows.Forms.ComboBox cboFilterStatus;
         public System.Windows.Forms.FlowLayoutPanel pnlStats;
         public System.Windows.Forms.FlowLayoutPanel pnlRoomCards;
     }

@@ -16,8 +16,6 @@ namespace src.Views
         private int pageSize = 6;
         private System.Collections.Generic.List<Control> allRoomCards = new System.Collections.Generic.List<Control>();
         private System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)> allRoomsData = new System.Collections.Generic.List<(int id, string name, string location, int capacity, int computerCount, string status)>();
-        private TextBox txtSearch;
-        private ComboBox cboFilterStatus;
         private Guna.UI2.WinForms.Guna2Panel pnlPagination;
         private Button btnPrev;
         private Button btnNext;
@@ -135,37 +133,17 @@ namespace src.Views
         /// </summary>
         private void SetupView()
         {
-            // Bo tròn nút Add
             btnAdd.Paint += (s, e) =>
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             };
             btnAdd.Click += (s, e) => ShowAddDialog();
 
-            txtSearch = new TextBox
-            {
-                Size = new Size(250, 30),
-                Location = new Point(btnAdd.Left - 270, btnAdd.Top + 10),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Font = new Font("Segoe UI", 10F),
-                PlaceholderText = "Tìm theo tên hoặc vị trí..."
-            };
             txtSearch.TextChanged += (s, e) => FilterRooms();
 
-            cboFilterStatus = new ComboBox
-            {
-                Size = new Size(150, 30),
-                Location = new Point(txtSearch.Left - 160, txtSearch.Top),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Font = new Font("Segoe UI", 10F),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
             cboFilterStatus.Items.AddRange(new object[] { "Tất cả", "Hoạt động", "Đóng cửa" });
             cboFilterStatus.SelectedIndex = 0;
             cboFilterStatus.SelectedIndexChanged += (s, e) => FilterRooms();
-
-            pnlHeader.Controls.Add(txtSearch);
-            pnlHeader.Controls.Add(cboFilterStatus);
 
             LoadData();
         }
