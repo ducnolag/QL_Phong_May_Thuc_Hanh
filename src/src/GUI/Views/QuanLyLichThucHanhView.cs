@@ -655,11 +655,9 @@ namespace src.Views
                 Name = "cboLop",
                 Location = new Point(140, y),
                 Size = new Size(290, 26),
-                DropDownStyle = ComboBoxStyle.DropDown,
-                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems,
+                DropDownStyle = ComboBoxStyle.DropDownList,
                 IntegralHeight = false,
-                MaxDropDownItems = 5
+                MaxDropDownItems = 8
             };
             try
             {
