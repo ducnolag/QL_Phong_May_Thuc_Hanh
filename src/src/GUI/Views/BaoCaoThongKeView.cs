@@ -46,6 +46,17 @@ namespace src.Views
 
             btnRefresh.Click += (s, e) => Reload();
 
+            // Responsive: dịch các controls ngày/nút khi header resize theo form
+            pnlHeader.Resize += (s, e) =>
+            {
+                int w = pnlHeader.Width;
+                btnRefresh.Left   = w - btnRefresh.Width - 16;
+                dtpToDate.Left    = btnRefresh.Left - dtpToDate.Width - 8;
+                lblDenNgay.Left   = dtpToDate.Left - lblDenNgay.Width - 6;
+                dtpFromDate.Left  = lblDenNgay.Left - dtpFromDate.Width - 8;
+                lblTuNgay.Left    = dtpFromDate.Left - lblTuNgay.Width - 6;
+            };
+
             pnlScroll.Resize += (s, e) => RelayoutBody(pnlScroll, pnlBody);
             this.Load += (s, e) => RelayoutBody(pnlScroll, pnlBody);
 

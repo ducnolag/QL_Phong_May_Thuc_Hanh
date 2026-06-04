@@ -128,7 +128,13 @@ namespace src.Views
 
         private void SetupView()
         {
-            // Toolbar và Grid đã được style bằng Guna2Panel trong Designer
+            // pnlFilterRow (hàng 2 bộ lọc) tự co giãn khi toolbar resize
+            pnlToolbar.Resize += (s, e) =>
+            {
+                int pad = 10;
+                int filterW = pnlToolbar.ClientSize.Width - pad * 2;
+                if (filterW > 100) pnlFilterRow.Width = filterW;
+            };
 
             // Load danh sách phòng vào cboRoom
             cboRoom.Items.Clear();

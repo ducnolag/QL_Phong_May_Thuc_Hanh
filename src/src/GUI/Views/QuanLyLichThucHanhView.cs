@@ -53,6 +53,29 @@ namespace src.Views
                 pnlScheduleList.ResumeLayout();
             };
 
+            // Responsive pnlHeader: btnAdd, ngày tháng bám phải
+            pnlHeader.Resize += (s, e) =>
+            {
+                int w = pnlHeader.Width;
+                btnAdd.Left       = w - btnAdd.Width - 10;
+                dtpToDate.Left    = btnAdd.Left - dtpToDate.Width - 10;
+                lblDenNgay.Left   = dtpToDate.Left - lblDenNgay.Width - 6;
+                dtpFromDate.Left  = lblDenNgay.Left - dtpFromDate.Width - 8;
+                lblTuNgay.Left    = dtpFromDate.Left - lblTuNgay.Width - 6;
+                // chkXemLichCu nằm trong pnlListHeader, Anchor=Left → cố định, không di chuyển
+            };
+
+            // Responsive pnlListHeader hàng 2 (y=54): 3 filter bám phải
+            // Căn chỉnh chkXemLichCu cách tiêu đề 20px (tránh lỗi font scale to bị đè)
+            pnlListHeader.Resize += (s, e) =>
+            {
+                int w = pnlListHeader.Width;
+                cboRoomFilter.Left   = w - cboRoomFilter.Width - 10;
+                cboStatusFilter.Left = cboRoomFilter.Left - cboStatusFilter.Width - 8;
+                txtSearch.Left       = cboStatusFilter.Left - txtSearch.Width - 8;
+                chkXemLichCu.Left    = lblListTitle.Right + 20;
+            };
+
             InitFilters();
             LoadData();
         }
